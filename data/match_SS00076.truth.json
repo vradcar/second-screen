@@ -1,0 +1,189 @@
+{
+  "match_id": "SS00076",
+  "seed": 76,
+  "final_score": {
+    "HAL": 4,
+    "RED": 2
+  },
+  "arcs": [
+    {
+      "kind": "pressing_spell",
+      "team_id": "RED",
+      "start_min": 21.4,
+      "end_min": 33.0,
+      "player_id": null,
+      "description": "Redmarsh Rovers press high and aggressively"
+    },
+    {
+      "kind": "star_takeover",
+      "team_id": "RED",
+      "start_min": 56.7,
+      "end_min": 70.1,
+      "player_id": "RED-09",
+      "description": "Isak Quarry takes over the game"
+    },
+    {
+      "kind": "fatigue_fade",
+      "team_id": "RED",
+      "start_min": 67.0,
+      "end_min": 95.0,
+      "player_id": null,
+      "description": "Redmarsh Rovers tire and lose control late on"
+    },
+    {
+      "kind": "late_surge",
+      "team_id": "HAL",
+      "start_min": 72.3,
+      "end_min": 95.0,
+      "player_id": null,
+      "description": "Halcyon City throw everything forward"
+    }
+  ],
+  "tactical_timeline": [
+    {
+      "minute": 0.0,
+      "period": 1,
+      "team_id": "HAL",
+      "block": "mid_block"
+    },
+    {
+      "minute": 0.0,
+      "period": 1,
+      "team_id": "RED",
+      "block": "high_press"
+    },
+    {
+      "minute": 70.2,
+      "period": 2,
+      "team_id": "HAL",
+      "block": "high_press"
+    },
+    {
+      "minute": 75.0,
+      "period": 2,
+      "team_id": "RED",
+      "block": "low_block"
+    },
+    {
+      "minute": 80.9,
+      "period": 2,
+      "team_id": "RED",
+      "block": "high_press"
+    }
+  ],
+  "goals": [
+    {
+      "minute": 11.9,
+      "period": 1,
+      "team_id": "HAL",
+      "player_id": "HAL-02",
+      "situation": "counter",
+      "xg": 0.1059
+    },
+    {
+      "minute": 14.4,
+      "period": 1,
+      "team_id": "RED",
+      "player_id": "RED-09",
+      "situation": "open_play",
+      "xg": 0.2375
+    },
+    {
+      "minute": 52.0,
+      "period": 2,
+      "team_id": "RED",
+      "player_id": "RED-07",
+      "situation": "counter",
+      "xg": 0.2295
+    },
+    {
+      "minute": 79.8,
+      "period": 2,
+      "team_id": "HAL",
+      "player_id": "HAL-08",
+      "situation": "open_play",
+      "xg": 0.1109
+    },
+    {
+      "minute": 86.1,
+      "period": 2,
+      "team_id": "HAL",
+      "player_id": "HAL-05",
+      "situation": "open_play",
+      "xg": 0.2038
+    },
+    {
+      "minute": 92.5,
+      "period": 2,
+      "team_id": "HAL",
+      "player_id": "HAL-08",
+      "situation": "open_play",
+      "xg": 0.546
+    }
+  ],
+  "momentum_windows": [
+    {
+      "team_id": "RED",
+      "from_minute": 11.9,
+      "minutes": 8,
+      "trigger": "conceded"
+    },
+    {
+      "team_id": "HAL",
+      "from_minute": 14.4,
+      "minutes": 8,
+      "trigger": "conceded"
+    },
+    {
+      "team_id": "HAL",
+      "from_minute": 52.0,
+      "minutes": 8,
+      "trigger": "conceded"
+    },
+    {
+      "team_id": "RED",
+      "from_minute": 79.8,
+      "minutes": 8,
+      "trigger": "conceded"
+    },
+    {
+      "team_id": "RED",
+      "from_minute": 86.1,
+      "minutes": 8,
+      "trigger": "conceded"
+    },
+    {
+      "team_id": "RED",
+      "from_minute": 92.5,
+      "minutes": 8,
+      "trigger": "conceded"
+    }
+  ],
+  "cards": [
+    {
+      "minute": 22.5,
+      "player_id": "RED-04",
+      "card": "yellow"
+    },
+    {
+      "minute": 23.4,
+      "player_id": "RED-03",
+      "card": "yellow"
+    },
+    {
+      "minute": 54.0,
+      "player_id": "RED-03",
+      "card": "second_yellow"
+    },
+    {
+      "minute": 62.3,
+      "player_id": "RED-06",
+      "card": "yellow"
+    },
+    {
+      "minute": 74.5,
+      "player_id": "HAL-08",
+      "card": "yellow"
+    }
+  ]
+}
