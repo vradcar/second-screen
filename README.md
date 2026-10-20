@@ -11,7 +11,7 @@ All clubs, players, and match data are fictional and synthetically generated.
 | Stage | Component | Status |
 |---|---|---|
 | Ingest | `secondscreen.simulator`: synthetic match engine → event stream | ✅ |
-| Interpret | Stats engine: possession, pressure index, PPDA, xG, pass difficulty, momentum | 🚧 |
+| Interpret | `secondscreen.stats`: possession, PPDA, pressing intensity, xG, pass difficulty, momentum, control/chaos, evidence-linked signals | ✅ |
 | Explain | Agents: Moment Detector, Tactical Explainer, Fact-Checker, Recap | 🚧 |
 | Render | Overlay cues: timed JSON synced to the match clock | 🚧 |
 | Personalize | Persona agent: analyst / casual, favourite club & player, language | 🚧 |
@@ -72,6 +72,48 @@ at 54', fade physically, and get overrun as Halcyon throw everything forward in 
 ```
 
 Coordinates are normalised so the home team always attacks toward x = 105.
+
+## The stats engine
+
+`secondscreen.stats.StatsEngine` ingests events one at a time (the same code path for live
+streams and batch replays) and emits **signals**: goals with game state, big chances, red cards,
+speed alerts, elite passes, momentum swings, control/chaos regime changes, pressing spells,
+hot streaks, fatigue fades, and late surges.
+
+Every signal carries the stat values (`facts`) and the event IDs (`evidence`) behind it.
+That contract is what lets the Fact-Checker agent reject any sentence it can't trace to data.
+
+Key definitions:
+- **xG**: location model (distance + goal-mouth angle), discounted for headers and free kicks
+- **Pass difficulty (0–10)**: how often an average passer fails that pass, from distance,
+  progression, pressure and whether it ends in the box
+- **PPDA**: opponent passes in their own 60% per defensive action there
+- **Pressing intensity**: high defensive actions per minute of opponent possession versus the
+  team's own baseline, shrunk with a pseudo-count so low-pressing sides don't trigger on noise
+- **Momentum (−100…100)**: exponentially decayed threat (box entries, shots weighted by xG,
+  high turnovers, corners)
+- **Regime**: control (one side ≥66% of the ball over 5 minutes), chaos (≥3.4 possession
+  changes a minute), or balanced, with confirmation and dwell time to avoid flicker
+
+### Does it find the hidden stories?
+
+Detectors were tuned on seeds 0–39 and scored on 60 **held-out** matches (`seeds 1000–1059`):
+
+| Hidden arc | Recall | Precision | Detections per match |
+|---|---|---|---|
+| Late surge | 0.87 | 0.65 | 1.2 |
+| Fatigue fade | 0.78 | 0.57 | 1.4 |
+| Pressing spell | 0.68 | 0.36 | 2.7 |
+| Star takeover (hot streak) | 0.35 | 0.48 | 0.7 |
+
+Pressing precision counts detections that line up with a real tactical switch (e.g. a side
+chasing the game) as correct. Hot streaks deliberately favour precision: a false
+"he's taking over" on air is worse than a missed one.
+
+```bash
+python -m secondscreen.stats data/match_SS00076.jsonl --out data   # signals + snapshot
+python -m secondscreen.stats.evaluate --seeds 60 --start 1000       # detector scorecard
+```
 
 ## Tech stack (target)
 

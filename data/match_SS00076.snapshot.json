@@ -1,0 +1,2407 @@
+{
+ "match_id": "SS00076",
+ "period": 2,
+ "clock": "90+5'",
+ "minute": 94.9,
+ "score": {
+  "HAL": 4,
+  "RED": 2
+ },
+ "home": "HAL",
+ "away": "RED",
+ "teams": {
+  "HAL": {
+   "team_id": "HAL",
+   "name": "Halcyon City",
+   "goals": 4,
+   "xg": 2.36,
+   "shots": 15,
+   "shots_on_target": 7,
+   "big_chances": 2,
+   "possession_pct": 50.3,
+   "field_tilt_pct": 47.0,
+   "passes": 550,
+   "pass_completion": 0.791,
+   "progressive_passes": 104,
+   "box_entries": 33,
+   "avg_pass_difficulty": 1.17,
+   "pressures": 204,
+   "tackles_won": 8,
+   "interceptions": 77,
+   "high_turnovers": 23,
+   "ppda": 6.36,
+   "fouls": 14,
+   "yellow_cards": 1,
+   "red_cards": 0,
+   "corners": 4,
+   "players_on_pitch": 11
+  },
+  "RED": {
+   "team_id": "RED",
+   "name": "Redmarsh Rovers",
+   "goals": 2,
+   "xg": 5.02,
+   "shots": 20,
+   "shots_on_target": 7,
+   "big_chances": 5,
+   "possession_pct": 49.7,
+   "field_tilt_pct": 53.0,
+   "passes": 513,
+   "pass_completion": 0.784,
+   "progressive_passes": 113,
+   "box_entries": 34,
+   "avg_pass_difficulty": 1.25,
+   "pressures": 259,
+   "tackles_won": 7,
+   "interceptions": 83,
+   "high_turnovers": 24,
+   "ppda": 7.1,
+   "fouls": 8,
+   "yellow_cards": 4,
+   "red_cards": 1,
+   "corners": 6,
+   "players_on_pitch": 10
+  }
+ },
+ "momentum": 66.6,
+ "regime": "balanced",
+ "pressing": {
+  "HAL": {
+   "active": true,
+   "rate": 11.31
+  },
+  "RED": {
+   "active": false,
+   "rate": 1.46
+  }
+ },
+ "players": [
+  {
+   "player_id": "HAL-01",
+   "name": "Idris Esterly",
+   "team_id": "HAL",
+   "position": "GK",
+   "number": 1,
+   "on_pitch": true,
+   "touches": 27,
+   "passes": 27,
+   "passes_completed": 15,
+   "progressive_passes": 8,
+   "key_passes": 0,
+   "elite_passes": 0,
+   "shots": 0,
+   "shots_on_target": 0,
+   "xg": 0.0,
+   "goals": 0,
+   "assists": 0,
+   "dribbles": 0,
+   "tackles_won": 0,
+   "interceptions": 0,
+   "pressures": 0,
+   "fouls": 0,
+   "yellow_cards": 0,
+   "red_card": false,
+   "distance_m": 5399,
+   "top_speed_kmh": 0.0,
+   "max_shot_speed_kmh": 0.0,
+   "pass_completion": 0.556
+  },
+  {
+   "player_id": "HAL-02",
+   "name": "Bastian Fontaine",
+   "team_id": "HAL",
+   "position": "RB",
+   "number": 2,
+   "on_pitch": false,
+   "touches": 62,
+   "passes": 53,
+   "passes_completed": 38,
+   "progressive_passes": 8,
+   "key_passes": 0,
+   "elite_passes": 0,
+   "shots": 1,
+   "shots_on_target": 1,
+   "xg": 0.106,
+   "goals": 1,
+   "assists": 0,
+   "dribbles": 3,
+   "tackles_won": 2,
+   "interceptions": 11,
+   "pressures": 18,
+   "fouls": 0,
+   "yellow_cards": 0,
+   "red_card": false,
+   "distance_m": 9544,
+   "top_speed_kmh": 33.6,
+   "max_shot_speed_kmh": 87.0,
+   "pass_completion": 0.717
+  },
+  {
+   "player_id": "HAL-05",
+   "name": "Lenny Amsel",
+   "team_id": "HAL",
+   "position": "CB",
+   "number": 5,
+   "on_pitch": true,
+   "touches": 36,
+   "passes": 34,
+   "passes_completed": 24,
+   "progressive_passes": 4,
+   "key_passes": 0,
+   "elite_passes": 0,
+   "shots": 1,
+   "shots_on_target": 1,
+   "xg": 0.203,
+   "goals": 1,
+   "assists": 0,
+   "dribbles": 0,
+   "tackles_won": 1,
+   "interceptions": 6,
+   "pressures": 12,
+   "fouls": 4,
+   "yellow_cards": 0,
+   "red_card": false,
+   "distance_m": 11803,
+   "top_speed_kmh": 26.1,
+   "max_shot_speed_kmh": 51.9,
+   "pass_completion": 0.706
+  },
+  {
+   "player_id": "HAL-04",
+   "name": "Ilan Embry",
+   "team_id": "HAL",
+   "position": "CB",
+   "number": 4,
+   "on_pitch": true,
+   "touches": 59,
+   "passes": 55,
+   "passes_completed": 43,
+   "progressive_passes": 14,
+   "key_passes": 0,
+   "elite_passes": 0,
+   "shots": 1,
+   "shots_on_target": 1,
+   "xg": 0.04,
+   "goals": 0,
+   "assists": 0,
+   "dribbles": 1,
+   "tackles_won": 1,
+   "interceptions": 8,
+   "pressures": 16,
+   "fouls": 0,
+   "yellow_cards": 0,
+   "red_card": false,
+   "distance_m": 11662,
+   "top_speed_kmh": 26.9,
+   "max_shot_speed_kmh": 86.5,
+   "pass_completion": 0.782
+  },
+  {
+   "player_id": "HAL-03",
+   "name": "Mateus Zelenko",
+   "team_id": "HAL",
+   "position": "LB",
+   "number": 3,
+   "on_pitch": true,
+   "touches": 50,
+   "passes": 44,
+   "passes_completed": 38,
+   "progressive_passes": 15,
+   "key_passes": 0,
+   "elite_passes": 0,
+   "shots": 0,
+   "shots_on_target": 0,
+   "xg": 0.0,
+   "goals": 0,
+   "assists": 0,
+   "dribbles": 0,
+   "tackles_won": 0,
+   "interceptions": 7,
+   "pressures": 21,
+   "fouls": 1,
+   "yellow_cards": 0,
+   "red_card": false,
+   "distance_m": 13132,
+   "top_speed_kmh": 31.1,
+   "max_shot_speed_kmh": 0.0,
+   "pass_completion": 0.864
+  },
+  {
+   "player_id": "HAL-06",
+   "name": "Ruben Moreau",
+   "team_id": "HAL",
+   "position": "DM",
+   "number": 6,
+   "on_pitch": true,
+   "touches": 65,
+   "passes": 55,
+   "passes_completed": 48,
+   "progressive_passes": 7,
+   "key_passes": 0,
+   "elite_passes": 0,
+   "shots": 0,
+   "shots_on_target": 0,
+   "xg": 0.0,
+   "goals": 0,
+   "assists": 0,
+   "dribbles": 4,
+   "tackles_won": 1,
+   "interceptions": 11,
+   "pressures": 23,
+   "fouls": 1,
+   "yellow_cards": 0,
+   "red_card": false,
+   "distance_m": 13471,
+   "top_speed_kmh": 31.6,
+   "max_shot_speed_kmh": 0.0,
+   "pass_completion": 0.873
+  },
+  {
+   "player_id": "HAL-08",
+   "name": "Ezra Lazaro",
+   "team_id": "HAL",
+   "position": "CM",
+   "number": 8,
+   "on_pitch": true,
+   "touches": 72,
+   "passes": 61,
+   "passes_completed": 50,
+   "progressive_passes": 16,
+   "key_passes": 1,
+   "elite_passes": 0,
+   "shots": 3,
+   "shots_on_target": 2,
+   "xg": 0.811,
+   "goals": 2,
+   "assists": 1,
+   "dribbles": 3,
+   "tackles_won": 2,
+   "interceptions": 7,
+   "pressures": 21,
+   "fouls": 5,
+   "yellow_cards": 1,
+   "red_card": false,
+   "distance_m": 13916,
+   "top_speed_kmh": 27.1,
+   "max_shot_speed_kmh": 77.8,
+   "pass_completion": 0.82
+  },
+  {
+   "player_id": "HAL-10",
+   "name": "Tomas Cardell",
+   "team_id": "HAL",
+   "position": "CM",
+   "number": 10,
+   "on_pitch": true,
+   "touches": 70,
+   "passes": 57,
+   "passes_completed": 52,
+   "progressive_passes": 10,
+   "key_passes": 2,
+   "elite_passes": 1,
+   "shots": 2,
+   "shots_on_target": 1,
+   "xg": 0.399,
+   "goals": 0,
+   "assists": 0,
+   "dribbles": 2,
+   "tackles_won": 1,
+   "interceptions": 10,
+   "pressures": 30,
+   "fouls": 2,
+   "yellow_cards": 0,
+   "red_card": false,
+   "distance_m": 14041,
+   "top_speed_kmh": 29.5,
+   "max_shot_speed_kmh": 80.8,
+   "pass_completion": 0.912
+  },
+  {
+   "player_id": "HAL-07",
+   "name": "Nico Nakamura",
+   "team_id": "HAL",
+   "position": "RW",
+   "number": 7,
+   "on_pitch": false,
+   "touches": 57,
+   "passes": 46,
+   "passes_completed": 36,
+   "progressive_passes": 5,
+   "key_passes": 3,
+   "elite_passes": 0,
+   "shots": 2,
+   "shots_on_target": 0,
+   "xg": 0.138,
+   "goals": 0,
+   "assists": 0,
+   "dribbles": 3,
+   "tackles_won": 0,
+   "interceptions": 4,
+   "pressures": 9,
+   "fouls": 0,
+   "yellow_cards": 0,
+   "red_card": false,
+   "distance_m": 9312,
+   "top_speed_kmh": 31.0,
+   "max_shot_speed_kmh": 98.0,
+   "pass_completion": 0.783
+  },
+  {
+   "player_id": "HAL-09",
+   "name": "Remy Juhl",
+   "team_id": "HAL",
+   "position": "ST",
+   "number": 9,
+   "on_pitch": false,
+   "touches": 32,
+   "passes": 26,
+   "passes_completed": 20,
+   "progressive_passes": 4,
+   "key_passes": 1,
+   "elite_passes": 0,
+   "shots": 1,
+   "shots_on_target": 0,
+   "xg": 0.191,
+   "goals": 0,
+   "assists": 0,
+   "dribbles": 1,
+   "tackles_won": 0,
+   "interceptions": 1,
+   "pressures": 7,
+   "fouls": 0,
+   "yellow_cards": 0,
+   "red_card": false,
+   "distance_m": 8327,
+   "top_speed_kmh": 32.7,
+   "max_shot_speed_kmh": 82.5,
+   "pass_completion": 0.769
+  },
+  {
+   "player_id": "HAL-11",
+   "name": "Leon Ellery",
+   "team_id": "HAL",
+   "position": "LW",
+   "number": 11,
+   "on_pitch": true,
+   "touches": 73,
+   "passes": 48,
+   "passes_completed": 38,
+   "progressive_passes": 8,
+   "key_passes": 0,
+   "elite_passes": 0,
+   "shots": 2,
+   "shots_on_target": 0,
+   "xg": 0.171,
+   "goals": 0,
+   "assists": 0,
+   "dribbles": 9,
+   "tackles_won": 0,
+   "interceptions": 5,
+   "pressures": 24,
+   "fouls": 1,
+   "yellow_cards": 0,
+   "red_card": false,
+   "distance_m": 12812,
+   "top_speed_kmh": 33.6,
+   "max_shot_speed_kmh": 94.5,
+   "pass_completion": 0.792
+  },
+  {
+   "player_id": "HAL-12",
+   "name": "Rafael Yarrow",
+   "team_id": "HAL",
+   "position": "RB",
+   "number": 12,
+   "on_pitch": true,
+   "touches": 14,
+   "passes": 14,
+   "passes_completed": 11,
+   "progressive_passes": 2,
+   "key_passes": 2,
+   "elite_passes": 0,
+   "shots": 0,
+   "shots_on_target": 0,
+   "xg": 0.0,
+   "goals": 0,
+   "assists": 0,
+   "dribbles": 0,
+   "tackles_won": 0,
+   "interceptions": 1,
+   "pressures": 11,
+   "fouls": 0,
+   "yellow_cards": 0,
+   "red_card": false,
+   "distance_m": 3221,
+   "top_speed_kmh": 0.0,
+   "max_shot_speed_kmh": 0.0,
+   "pass_completion": 0.786
+  },
+  {
+   "player_id": "HAL-17",
+   "name": "Emil Ilunga",
+   "team_id": "HAL",
+   "position": "RW",
+   "number": 17,
+   "on_pitch": true,
+   "touches": 25,
+   "passes": 16,
+   "passes_completed": 12,
+   "progressive_passes": 1,
+   "key_passes": 2,
+   "elite_passes": 0,
+   "shots": 2,
+   "shots_on_target": 1,
+   "xg": 0.299,
+   "goals": 0,
+   "assists": 2,
+   "dribbles": 3,
+   "tackles_won": 0,
+   "interceptions": 3,
+   "pressures": 5,
+   "fouls": 0,
+   "yellow_cards": 0,
+   "red_card": false,
+   "distance_m": 3257,
+   "top_speed_kmh": 32.9,
+   "max_shot_speed_kmh": 94.3,
+   "pass_completion": 0.75
+  },
+  {
+   "player_id": "HAL-19",
+   "name": "Femi Varga",
+   "team_id": "HAL",
+   "position": "ST",
+   "number": 19,
+   "on_pitch": true,
+   "touches": 18,
+   "passes": 14,
+   "passes_completed": 10,
+   "progressive_passes": 2,
+   "key_passes": 0,
+   "elite_passes": 0,
+   "shots": 0,
+   "shots_on_target": 0,
+   "xg": 0.0,
+   "goals": 0,
+   "assists": 0,
+   "dribbles": 0,
+   "tackles_won": 0,
+   "interceptions": 3,
+   "pressures": 7,
+   "fouls": 0,
+   "yellow_cards": 0,
+   "red_card": false,
+   "distance_m": 4104,
+   "top_speed_kmh": 28.6,
+   "max_shot_speed_kmh": 0.0,
+   "pass_completion": 0.714
+  },
+  {
+   "player_id": "RED-01",
+   "name": "Ayo Arkwell",
+   "team_id": "RED",
+   "position": "GK",
+   "number": 1,
+   "on_pitch": true,
+   "touches": 16,
+   "passes": 16,
+   "passes_completed": 8,
+   "progressive_passes": 4,
+   "key_passes": 0,
+   "elite_passes": 1,
+   "shots": 0,
+   "shots_on_target": 0,
+   "xg": 0.0,
+   "goals": 0,
+   "assists": 0,
+   "dribbles": 0,
+   "tackles_won": 0,
+   "interceptions": 0,
+   "pressures": 0,
+   "fouls": 0,
+   "yellow_cards": 0,
+   "red_card": false,
+   "distance_m": 5631,
+   "top_speed_kmh": 0.0,
+   "max_shot_speed_kmh": 0.0,
+   "pass_completion": 0.5
+  },
+  {
+   "player_id": "RED-02",
+   "name": "Theo Norwood",
+   "team_id": "RED",
+   "position": "RB",
+   "number": 2,
+   "on_pitch": true,
+   "touches": 71,
+   "passes": 63,
+   "passes_completed": 45,
+   "progressive_passes": 11,
+   "key_passes": 2,
+   "elite_passes": 0,
+   "shots": 3,
+   "shots_on_target": 2,
+   "xg": 0.705,
+   "goals": 0,
+   "assists": 0,
+   "dribbles": 1,
+   "tackles_won": 1,
+   "interceptions": 14,
+   "pressures": 29,
+   "fouls": 2,
+   "yellow_cards": 0,
+   "red_card": false,
+   "distance_m": 13498,
+   "top_speed_kmh": 32.1,
+   "max_shot_speed_kmh": 89.7,
+   "pass_completion": 0.714
+  },
+  {
+   "player_id": "RED-05",
+   "name": "Oskar Hadley",
+   "team_id": "RED",
+   "position": "CB",
+   "number": 5,
+   "on_pitch": true,
+   "touches": 34,
+   "passes": 29,
+   "passes_completed": 15,
+   "progressive_passes": 7,
+   "key_passes": 1,
+   "elite_passes": 0,
+   "shots": 0,
+   "shots_on_target": 0,
+   "xg": 0.0,
+   "goals": 0,
+   "assists": 0,
+   "dribbles": 2,
+   "tackles_won": 1,
+   "interceptions": 8,
+   "pressures": 11,
+   "fouls": 0,
+   "yellow_cards": 0,
+   "red_card": false,
+   "distance_m": 12060,
+   "top_speed_kmh": 31.3,
+   "max_shot_speed_kmh": 0.0,
+   "pass_completion": 0.517
+  },
+  {
+   "player_id": "RED-04",
+   "name": "Arlo Bexley",
+   "team_id": "RED",
+   "position": "CB",
+   "number": 4,
+   "on_pitch": true,
+   "touches": 45,
+   "passes": 41,
+   "passes_completed": 34,
+   "progressive_passes": 13,
+   "key_passes": 0,
+   "elite_passes": 0,
+   "shots": 0,
+   "shots_on_target": 0,
+   "xg": 0.0,
+   "goals": 0,
+   "assists": 0,
+   "dribbles": 1,
+   "tackles_won": 2,
+   "interceptions": 10,
+   "pressures": 17,
+   "fouls": 2,
+   "yellow_cards": 1,
+   "red_card": false,
+   "distance_m": 12107,
+   "top_speed_kmh": 29.2,
+   "max_shot_speed_kmh": 0.0,
+   "pass_completion": 0.829
+  },
+  {
+   "player_id": "RED-03",
+   "name": "Kian Steen",
+   "team_id": "RED",
+   "position": "LB",
+   "number": 3,
+   "on_pitch": false,
+   "touches": 35,
+   "passes": 29,
+   "passes_completed": 24,
+   "progressive_passes": 6,
+   "key_passes": 2,
+   "elite_passes": 0,
+   "shots": 0,
+   "shots_on_target": 0,
+   "xg": 0.0,
+   "goals": 0,
+   "assists": 0,
+   "dribbles": 1,
+   "tackles_won": 0,
+   "interceptions": 6,
+   "pressures": 14,
+   "fouls": 2,
+   "yellow_cards": 2,
+   "red_card": true,
+   "distance_m": 8190,
+   "top_speed_kmh": 27.7,
+   "max_shot_speed_kmh": 0.0,
+   "pass_completion": 0.828
+  },
+  {
+   "player_id": "RED-06",
+   "name": "Bram Fallow",
+   "team_id": "RED",
+   "position": "DM",
+   "number": 6,
+   "on_pitch": true,
+   "touches": 59,
+   "passes": 54,
+   "passes_completed": 45,
+   "progressive_passes": 12,
+   "key_passes": 3,
+   "elite_passes": 0,
+   "shots": 0,
+   "shots_on_target": 0,
+   "xg": 0.0,
+   "goals": 0,
+   "assists": 1,
+   "dribbles": 0,
+   "tackles_won": 0,
+   "interceptions": 8,
+   "pressures": 22,
+   "fouls": 1,
+   "yellow_cards": 1,
+   "red_card": false,
+   "distance_m": 13862,
+   "top_speed_kmh": 29.2,
+   "max_shot_speed_kmh": 0.0,
+   "pass_completion": 0.833
+  },
+  {
+   "player_id": "RED-08",
+   "name": "Tariq Thorne",
+   "team_id": "RED",
+   "position": "CM",
+   "number": 8,
+   "on_pitch": false,
+   "touches": 42,
+   "passes": 40,
+   "passes_completed": 32,
+   "progressive_passes": 8,
+   "key_passes": 2,
+   "elite_passes": 0,
+   "shots": 0,
+   "shots_on_target": 0,
+   "xg": 0.0,
+   "goals": 0,
+   "assists": 1,
+   "dribbles": 0,
+   "tackles_won": 1,
+   "interceptions": 7,
+   "pressures": 32,
+   "fouls": 0,
+   "yellow_cards": 0,
+   "red_card": false,
+   "distance_m": 10823,
+   "top_speed_kmh": 26.2,
+   "max_shot_speed_kmh": 0.0,
+   "pass_completion": 0.8
+  },
+  {
+   "player_id": "RED-10",
+   "name": "Callum Abernath",
+   "team_id": "RED",
+   "position": "CM",
+   "number": 10,
+   "on_pitch": true,
+   "touches": 68,
+   "passes": 56,
+   "passes_completed": 45,
+   "progressive_passes": 10,
+   "key_passes": 2,
+   "elite_passes": 0,
+   "shots": 2,
+   "shots_on_target": 1,
+   "xg": 0.364,
+   "goals": 0,
+   "assists": 0,
+   "dribbles": 4,
+   "tackles_won": 2,
+   "interceptions": 9,
+   "pressures": 37,
+   "fouls": 0,
+   "yellow_cards": 0,
+   "red_card": false,
+   "distance_m": 14427,
+   "top_speed_kmh": 28.9,
+   "max_shot_speed_kmh": 91.4,
+   "pass_completion": 0.804
+  },
+  {
+   "player_id": "RED-07",
+   "name": "Luca Rask",
+   "team_id": "RED",
+   "position": "RW",
+   "number": 7,
+   "on_pitch": false,
+   "touches": 81,
+   "passes": 55,
+   "passes_completed": 50,
+   "progressive_passes": 15,
+   "key_passes": 1,
+   "elite_passes": 0,
+   "shots": 7,
+   "shots_on_target": 2,
+   "xg": 2.13,
+   "goals": 1,
+   "assists": 0,
+   "dribbles": 5,
+   "tackles_won": 0,
+   "interceptions": 10,
+   "pressures": 31,
+   "fouls": 0,
+   "yellow_cards": 0,
+   "red_card": false,
+   "distance_m": 11864,
+   "top_speed_kmh": 32.7,
+   "max_shot_speed_kmh": 99.2,
+   "pass_completion": 0.909
+  },
+  {
+   "player_id": "RED-09",
+   "name": "Isak Quarry",
+   "team_id": "RED",
+   "position": "ST",
+   "number": 9,
+   "on_pitch": false,
+   "touches": 35,
+   "passes": 28,
+   "passes_completed": 22,
+   "progressive_passes": 3,
+   "key_passes": 0,
+   "elite_passes": 0,
+   "shots": 3,
+   "shots_on_target": 2,
+   "xg": 0.427,
+   "goals": 1,
+   "assists": 0,
+   "dribbles": 1,
+   "tackles_won": 0,
+   "interceptions": 2,
+   "pressures": 26,
+   "fouls": 1,
+   "yellow_cards": 0,
+   "red_card": false,
+   "distance_m": 8261,
+   "top_speed_kmh": 32.2,
+   "max_shot_speed_kmh": 106.1,
+   "pass_completion": 0.786
+  },
+  {
+   "player_id": "RED-11",
+   "name": "Hugo Ueda",
+   "team_id": "RED",
+   "position": "LW",
+   "number": 11,
+   "on_pitch": true,
+   "touches": 113,
+   "passes": 77,
+   "passes_completed": 62,
+   "progressive_passes": 20,
+   "key_passes": 6,
+   "elite_passes": 0,
+   "shots": 4,
+   "shots_on_target": 0,
+   "xg": 1.139,
+   "goals": 0,
+   "assists": 0,
+   "dribbles": 13,
+   "tackles_won": 0,
+   "interceptions": 7,
+   "pressures": 27,
+   "fouls": 0,
+   "yellow_cards": 0,
+   "red_card": false,
+   "distance_m": 13249,
+   "top_speed_kmh": 33.8,
+   "max_shot_speed_kmh": 102.3,
+   "pass_completion": 0.805
+  },
+  {
+   "player_id": "RED-14",
+   "name": "Joaquin Corvin",
+   "team_id": "RED",
+   "position": "CM",
+   "number": 14,
+   "on_pitch": true,
+   "touches": 13,
+   "passes": 12,
+   "passes_completed": 11,
+   "progressive_passes": 4,
+   "key_passes": 0,
+   "elite_passes": 0,
+   "shots": 1,
+   "shots_on_target": 0,
+   "xg": 0.253,
+   "goals": 0,
+   "assists": 0,
+   "dribbles": 0,
+   "tackles_won": 0,
+   "interceptions": 1,
+   "pressures": 4,
+   "fouls": 0,
+   "yellow_cards": 0,
+   "red_card": false,
+   "distance_m": 3941,
+   "top_speed_kmh": 24.8,
+   "max_shot_speed_kmh": 90.3,
+   "pass_completion": 0.917
+  },
+  {
+   "player_id": "RED-17",
+   "name": "Felix Lowrie",
+   "team_id": "RED",
+   "position": "RW",
+   "number": 17,
+   "on_pitch": true,
+   "touches": 2,
+   "passes": 2,
+   "passes_completed": 1,
+   "progressive_passes": 0,
+   "key_passes": 0,
+   "elite_passes": 0,
+   "shots": 0,
+   "shots_on_target": 0,
+   "xg": 0.0,
+   "goals": 0,
+   "assists": 0,
+   "dribbles": 0,
+   "tackles_won": 0,
+   "interceptions": 1,
+   "pressures": 5,
+   "fouls": 0,
+   "yellow_cards": 0,
+   "red_card": false,
+   "distance_m": 1391,
+   "top_speed_kmh": 0.0,
+   "max_shot_speed_kmh": 0.0,
+   "pass_completion": 0.5
+  },
+  {
+   "player_id": "RED-19",
+   "name": "Cyrus Hollins",
+   "team_id": "RED",
+   "position": "ST",
+   "number": 19,
+   "on_pitch": true,
+   "touches": 14,
+   "passes": 11,
+   "passes_completed": 8,
+   "progressive_passes": 0,
+   "key_passes": 0,
+   "elite_passes": 0,
+   "shots": 0,
+   "shots_on_target": 0,
+   "xg": 0.0,
+   "goals": 0,
+   "assists": 0,
+   "dribbles": 0,
+   "tackles_won": 0,
+   "interceptions": 0,
+   "pressures": 4,
+   "fouls": 0,
+   "yellow_cards": 0,
+   "red_card": false,
+   "distance_m": 4571,
+   "top_speed_kmh": 27.6,
+   "max_shot_speed_kmh": 0.0,
+   "pass_completion": 0.727
+  }
+ ],
+ "series": [
+  {
+   "minute": 1.0,
+   "period": 1,
+   "elapsed": 61,
+   "momentum": 3.3,
+   "regime": "balanced",
+   "score": {
+    "HAL": 0,
+    "RED": 0
+   },
+   "xg": {
+    "HAL": 0.0,
+    "RED": 0.0
+   }
+  },
+  {
+   "minute": 2.1,
+   "period": 1,
+   "elapsed": 124,
+   "momentum": -71.4,
+   "regime": "balanced",
+   "score": {
+    "HAL": 0,
+    "RED": 0
+   },
+   "xg": {
+    "HAL": 0.0,
+    "RED": 0.0
+   }
+  },
+  {
+   "minute": 3.0,
+   "period": 1,
+   "elapsed": 181,
+   "momentum": -60.1,
+   "regime": "balanced",
+   "score": {
+    "HAL": 0,
+    "RED": 0
+   },
+   "xg": {
+    "HAL": 0.0,
+    "RED": 0.0
+   }
+  },
+  {
+   "minute": 4.0,
+   "period": 1,
+   "elapsed": 241,
+   "momentum": -54.0,
+   "regime": "balanced",
+   "score": {
+    "HAL": 0,
+    "RED": 0
+   },
+   "xg": {
+    "HAL": 0.0,
+    "RED": 0.0
+   }
+  },
+  {
+   "minute": 5.0,
+   "period": 1,
+   "elapsed": 303,
+   "momentum": -60.3,
+   "regime": "balanced",
+   "score": {
+    "HAL": 0,
+    "RED": 0
+   },
+   "xg": {
+    "HAL": 0.0,
+    "RED": 0.12
+   }
+  },
+  {
+   "minute": 6.0,
+   "period": 1,
+   "elapsed": 363,
+   "momentum": -53.5,
+   "regime": "balanced",
+   "score": {
+    "HAL": 0,
+    "RED": 0
+   },
+   "xg": {
+    "HAL": 0.0,
+    "RED": 0.12
+   }
+  },
+  {
+   "minute": 7.0,
+   "period": 1,
+   "elapsed": 420,
+   "momentum": -70.2,
+   "regime": "balanced",
+   "score": {
+    "HAL": 0,
+    "RED": 0
+   },
+   "xg": {
+    "HAL": 0.0,
+    "RED": 0.12
+   }
+  },
+  {
+   "minute": 8.0,
+   "period": 1,
+   "elapsed": 483,
+   "momentum": -83.7,
+   "regime": "balanced",
+   "score": {
+    "HAL": 0,
+    "RED": 0
+   },
+   "xg": {
+    "HAL": 0.0,
+    "RED": 0.12
+   }
+  },
+  {
+   "minute": 9.1,
+   "period": 1,
+   "elapsed": 544,
+   "momentum": -96.1,
+   "regime": "balanced",
+   "score": {
+    "HAL": 0,
+    "RED": 0
+   },
+   "xg": {
+    "HAL": 0.0,
+    "RED": 1.21
+   }
+  },
+  {
+   "minute": 10.0,
+   "period": 1,
+   "elapsed": 601,
+   "momentum": -84.0,
+   "regime": "balanced",
+   "score": {
+    "HAL": 0,
+    "RED": 0
+   },
+   "xg": {
+    "HAL": 0.0,
+    "RED": 1.21
+   }
+  },
+  {
+   "minute": 11.0,
+   "period": 1,
+   "elapsed": 660,
+   "momentum": -60.0,
+   "regime": "balanced",
+   "score": {
+    "HAL": 0,
+    "RED": 0
+   },
+   "xg": {
+    "HAL": 0.0,
+    "RED": 1.21
+   }
+  },
+  {
+   "minute": 13.1,
+   "period": 1,
+   "elapsed": 786,
+   "momentum": 3.2,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 0
+   },
+   "xg": {
+    "HAL": 0.11,
+    "RED": 1.21
+   }
+  },
+  {
+   "minute": 13.1,
+   "period": 1,
+   "elapsed": 786,
+   "momentum": 3.2,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 0
+   },
+   "xg": {
+    "HAL": 0.11,
+    "RED": 1.21
+   }
+  },
+  {
+   "minute": 14.4,
+   "period": 1,
+   "elapsed": 864,
+   "momentum": -63.0,
+   "regime": "control:HAL",
+   "score": {
+    "HAL": 1,
+    "RED": 0
+   },
+   "xg": {
+    "HAL": 0.11,
+    "RED": 1.92
+   }
+  },
+  {
+   "minute": 15.6,
+   "period": 1,
+   "elapsed": 934,
+   "momentum": -68.3,
+   "regime": "control:HAL",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.11,
+    "RED": 2.16
+   }
+  },
+  {
+   "minute": 16.0,
+   "period": 1,
+   "elapsed": 962,
+   "momentum": -61.4,
+   "regime": "control:HAL",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.11,
+    "RED": 2.16
+   }
+  },
+  {
+   "minute": 17.0,
+   "period": 1,
+   "elapsed": 1022,
+   "momentum": -78.7,
+   "regime": "control:HAL",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.11,
+    "RED": 2.3
+   }
+  },
+  {
+   "minute": 18.0,
+   "period": 1,
+   "elapsed": 1080,
+   "momentum": -65.6,
+   "regime": "control:HAL",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.11,
+    "RED": 2.3
+   }
+  },
+  {
+   "minute": 19.0,
+   "period": 1,
+   "elapsed": 1141,
+   "momentum": -71.6,
+   "regime": "control:HAL",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.11,
+    "RED": 2.53
+   }
+  },
+  {
+   "minute": 20.0,
+   "period": 1,
+   "elapsed": 1200,
+   "momentum": -81.7,
+   "regime": "control:RED",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.11,
+    "RED": 2.53
+   }
+  },
+  {
+   "minute": 21.0,
+   "period": 1,
+   "elapsed": 1261,
+   "momentum": -21.2,
+   "regime": "control:RED",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.15,
+    "RED": 2.53
+   }
+  },
+  {
+   "minute": 22.0,
+   "period": 1,
+   "elapsed": 1321,
+   "momentum": 3.3,
+   "regime": "control:RED",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.19,
+    "RED": 2.53
+   }
+  },
+  {
+   "minute": 23.0,
+   "period": 1,
+   "elapsed": 1382,
+   "momentum": -24.1,
+   "regime": "control:RED",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.19,
+    "RED": 2.53
+   }
+  },
+  {
+   "minute": 24.0,
+   "period": 1,
+   "elapsed": 1443,
+   "momentum": 30.4,
+   "regime": "control:RED",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.32,
+    "RED": 2.53
+   }
+  },
+  {
+   "minute": 25.1,
+   "period": 1,
+   "elapsed": 1503,
+   "momentum": 70.3,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 2.53
+   }
+  },
+  {
+   "minute": 26.0,
+   "period": 1,
+   "elapsed": 1562,
+   "momentum": 53.6,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 2.53
+   }
+  },
+  {
+   "minute": 27.0,
+   "period": 1,
+   "elapsed": 1620,
+   "momentum": -4.4,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 2.53
+   }
+  },
+  {
+   "minute": 28.3,
+   "period": 1,
+   "elapsed": 1695,
+   "momentum": -17.4,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 2.53
+   }
+  },
+  {
+   "minute": 29.0,
+   "period": 1,
+   "elapsed": 1742,
+   "momentum": -56.0,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 2.78
+   }
+  },
+  {
+   "minute": 30.0,
+   "period": 1,
+   "elapsed": 1802,
+   "momentum": -38.9,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 2.78
+   }
+  },
+  {
+   "minute": 31.0,
+   "period": 1,
+   "elapsed": 1861,
+   "momentum": -38.2,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 2.78
+   }
+  },
+  {
+   "minute": 32.1,
+   "period": 1,
+   "elapsed": 1929,
+   "momentum": -64.4,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 2.93
+   }
+  },
+  {
+   "minute": 33.0,
+   "period": 1,
+   "elapsed": 1982,
+   "momentum": -67.4,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 2.93
+   }
+  },
+  {
+   "minute": 34.0,
+   "period": 1,
+   "elapsed": 2043,
+   "momentum": -62.1,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 2.93
+   }
+  },
+  {
+   "minute": 35.2,
+   "period": 1,
+   "elapsed": 2112,
+   "momentum": -82.8,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 2.93
+   }
+  },
+  {
+   "minute": 36.0,
+   "period": 1,
+   "elapsed": 2162,
+   "momentum": -87.1,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 3.08
+   }
+  },
+  {
+   "minute": 37.0,
+   "period": 1,
+   "elapsed": 2220,
+   "momentum": -73.9,
+   "regime": "control:RED",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 3.08
+   }
+  },
+  {
+   "minute": 38.0,
+   "period": 1,
+   "elapsed": 2280,
+   "momentum": -65.1,
+   "regime": "control:RED",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 3.08
+   }
+  },
+  {
+   "minute": 39.0,
+   "period": 1,
+   "elapsed": 2340,
+   "momentum": -67.2,
+   "regime": "control:RED",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 3.08
+   }
+  },
+  {
+   "minute": 40.0,
+   "period": 1,
+   "elapsed": 2402,
+   "momentum": -52.1,
+   "regime": "control:RED",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 3.08
+   }
+  },
+  {
+   "minute": 41.0,
+   "period": 1,
+   "elapsed": 2461,
+   "momentum": -45.1,
+   "regime": "control:RED",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 3.08
+   }
+  },
+  {
+   "minute": 42.1,
+   "period": 1,
+   "elapsed": 2524,
+   "momentum": -9.8,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 3.08
+   }
+  },
+  {
+   "minute": 43.1,
+   "period": 1,
+   "elapsed": 2584,
+   "momentum": -67.5,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 3.08
+   }
+  },
+  {
+   "minute": 44.1,
+   "period": 1,
+   "elapsed": 2644,
+   "momentum": -52.4,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 3.08
+   }
+  },
+  {
+   "minute": 45.0,
+   "period": 1,
+   "elapsed": 2703,
+   "momentum": 22.7,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 3.08
+   }
+  },
+  {
+   "minute": 46.0,
+   "period": 1,
+   "elapsed": 2760,
+   "momentum": 75.9,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 3.08
+   }
+  },
+  {
+   "minute": 47.1,
+   "period": 1,
+   "elapsed": 2828,
+   "momentum": 84.8,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 3.08
+   }
+  },
+  {
+   "minute": 47.3,
+   "period": 1,
+   "elapsed": 2837,
+   "momentum": 91.4,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 3.08
+   }
+  },
+  {
+   "minute": 45.7,
+   "period": 2,
+   "elapsed": 2880,
+   "momentum": 84.1,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 3.08
+   }
+  },
+  {
+   "minute": 46.7,
+   "period": 2,
+   "elapsed": 2942,
+   "momentum": 29.0,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 3.08
+   }
+  },
+  {
+   "minute": 47.7,
+   "period": 2,
+   "elapsed": 3001,
+   "momentum": -50.3,
+   "regime": "chaos",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 3.39
+   }
+  },
+  {
+   "minute": 48.7,
+   "period": 2,
+   "elapsed": 3060,
+   "momentum": -55.4,
+   "regime": "chaos",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 3.52
+   }
+  },
+  {
+   "minute": 49.7,
+   "period": 2,
+   "elapsed": 3122,
+   "momentum": -55.3,
+   "regime": "chaos",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.67,
+    "RED": 3.52
+   }
+  },
+  {
+   "minute": 50.7,
+   "period": 2,
+   "elapsed": 3181,
+   "momentum": 18.8,
+   "regime": "chaos",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.79,
+    "RED": 3.52
+   }
+  },
+  {
+   "minute": 51.8,
+   "period": 2,
+   "elapsed": 3244,
+   "momentum": 13.3,
+   "regime": "chaos",
+   "score": {
+    "HAL": 1,
+    "RED": 1
+   },
+   "xg": {
+    "HAL": 0.79,
+    "RED": 3.52
+   }
+  },
+  {
+   "minute": 52.8,
+   "period": 2,
+   "elapsed": 3307,
+   "momentum": -34.0,
+   "regime": "chaos",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 0.79,
+    "RED": 3.75
+   }
+  },
+  {
+   "minute": 53.7,
+   "period": 2,
+   "elapsed": 3360,
+   "momentum": -26.5,
+   "regime": "chaos",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 0.79,
+    "RED": 3.75
+   }
+  },
+  {
+   "minute": 54.7,
+   "period": 2,
+   "elapsed": 3422,
+   "momentum": -30.9,
+   "regime": "chaos",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 0.79,
+    "RED": 3.75
+   }
+  },
+  {
+   "minute": 55.7,
+   "period": 2,
+   "elapsed": 3481,
+   "momentum": -47.3,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 0.79,
+    "RED": 3.95
+   }
+  },
+  {
+   "minute": 56.7,
+   "period": 2,
+   "elapsed": 3542,
+   "momentum": 22.6,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 0.79,
+    "RED": 3.95
+   }
+  },
+  {
+   "minute": 57.9,
+   "period": 2,
+   "elapsed": 3611,
+   "momentum": 74.5,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 0.98,
+    "RED": 3.95
+   }
+  },
+  {
+   "minute": 58.7,
+   "period": 2,
+   "elapsed": 3662,
+   "momentum": 62.4,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 0.98,
+    "RED": 3.95
+   }
+  },
+  {
+   "minute": 59.7,
+   "period": 2,
+   "elapsed": 3720,
+   "momentum": 56.1,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 0.98,
+    "RED": 3.95
+   }
+  },
+  {
+   "minute": 60.8,
+   "period": 2,
+   "elapsed": 3786,
+   "momentum": 46.1,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 0.98,
+    "RED": 3.95
+   }
+  },
+  {
+   "minute": 61.7,
+   "period": 2,
+   "elapsed": 3842,
+   "momentum": 43.8,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 0.98,
+    "RED": 3.95
+   }
+  },
+  {
+   "minute": 63.0,
+   "period": 2,
+   "elapsed": 3919,
+   "momentum": 29.2,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 0.98,
+    "RED": 3.95
+   }
+  },
+  {
+   "minute": 63.7,
+   "period": 2,
+   "elapsed": 3960,
+   "momentum": 44.6,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.0,
+    "RED": 3.95
+   }
+  },
+  {
+   "minute": 64.7,
+   "period": 2,
+   "elapsed": 4022,
+   "momentum": 45.8,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.0,
+    "RED": 3.95
+   }
+  },
+  {
+   "minute": 65.8,
+   "period": 2,
+   "elapsed": 4082,
+   "momentum": 2.4,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.0,
+    "RED": 3.95
+   }
+  },
+  {
+   "minute": 66.7,
+   "period": 2,
+   "elapsed": 4141,
+   "momentum": -14.1,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.0,
+    "RED": 3.95
+   }
+  },
+  {
+   "minute": 67.8,
+   "period": 2,
+   "elapsed": 4202,
+   "momentum": -21.0,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.0,
+    "RED": 3.95
+   }
+  },
+  {
+   "minute": 68.8,
+   "period": 2,
+   "elapsed": 4264,
+   "momentum": -29.8,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.0,
+    "RED": 3.95
+   }
+  },
+  {
+   "minute": 69.7,
+   "period": 2,
+   "elapsed": 4321,
+   "momentum": -14.2,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.0,
+    "RED": 3.95
+   }
+  },
+  {
+   "minute": 70.7,
+   "period": 2,
+   "elapsed": 4382,
+   "momentum": 26.3,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.0,
+    "RED": 3.95
+   }
+  },
+  {
+   "minute": 72.0,
+   "period": 2,
+   "elapsed": 4457,
+   "momentum": 49.2,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.0,
+    "RED": 3.95
+   }
+  },
+  {
+   "minute": 72.8,
+   "period": 2,
+   "elapsed": 4502,
+   "momentum": 39.6,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.0,
+    "RED": 3.95
+   }
+  },
+  {
+   "minute": 73.8,
+   "period": 2,
+   "elapsed": 4563,
+   "momentum": -26.2,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.0,
+    "RED": 4.27
+   }
+  },
+  {
+   "minute": 74.7,
+   "period": 2,
+   "elapsed": 4622,
+   "momentum": -19.0,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.0,
+    "RED": 4.27
+   }
+  },
+  {
+   "minute": 75.7,
+   "period": 2,
+   "elapsed": 4682,
+   "momentum": -36.7,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.0,
+    "RED": 4.27
+   }
+  },
+  {
+   "minute": 76.7,
+   "period": 2,
+   "elapsed": 4742,
+   "momentum": -39.2,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.0,
+    "RED": 4.27
+   }
+  },
+  {
+   "minute": 77.7,
+   "period": 2,
+   "elapsed": 4802,
+   "momentum": -28.6,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.0,
+    "RED": 4.27
+   }
+  },
+  {
+   "minute": 78.7,
+   "period": 2,
+   "elapsed": 4861,
+   "momentum": 65.4,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.0,
+    "RED": 4.27
+   }
+  },
+  {
+   "minute": 79.8,
+   "period": 2,
+   "elapsed": 4923,
+   "momentum": 81.5,
+   "regime": "balanced",
+   "score": {
+    "HAL": 1,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.04,
+    "RED": 4.27
+   }
+  },
+  {
+   "minute": 80.7,
+   "period": 2,
+   "elapsed": 4981,
+   "momentum": 77.9,
+   "regime": "balanced",
+   "score": {
+    "HAL": 2,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.16,
+    "RED": 4.27
+   }
+  },
+  {
+   "minute": 81.8,
+   "period": 2,
+   "elapsed": 5042,
+   "momentum": 60.7,
+   "regime": "balanced",
+   "score": {
+    "HAL": 2,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.16,
+    "RED": 4.27
+   }
+  },
+  {
+   "minute": 82.9,
+   "period": 2,
+   "elapsed": 5109,
+   "momentum": 77.4,
+   "regime": "balanced",
+   "score": {
+    "HAL": 2,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.16,
+    "RED": 4.27
+   }
+  },
+  {
+   "minute": 83.7,
+   "period": 2,
+   "elapsed": 5161,
+   "momentum": 23.0,
+   "regime": "balanced",
+   "score": {
+    "HAL": 2,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.16,
+    "RED": 4.66
+   }
+  },
+  {
+   "minute": 84.7,
+   "period": 2,
+   "elapsed": 5222,
+   "momentum": -10.6,
+   "regime": "balanced",
+   "score": {
+    "HAL": 2,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.16,
+    "RED": 4.76
+   }
+  },
+  {
+   "minute": 85.7,
+   "period": 2,
+   "elapsed": 5280,
+   "momentum": 18.4,
+   "regime": "balanced",
+   "score": {
+    "HAL": 2,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.16,
+    "RED": 4.76
+   }
+  },
+  {
+   "minute": 87.0,
+   "period": 2,
+   "elapsed": 5359,
+   "momentum": 55.5,
+   "regime": "balanced",
+   "score": {
+    "HAL": 3,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.64,
+    "RED": 4.76
+   }
+  },
+  {
+   "minute": 87.8,
+   "period": 2,
+   "elapsed": 5402,
+   "momentum": -17.6,
+   "regime": "balanced",
+   "score": {
+    "HAL": 3,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.64,
+    "RED": 5.02
+   }
+  },
+  {
+   "minute": 88.8,
+   "period": 2,
+   "elapsed": 5466,
+   "momentum": 19.1,
+   "regime": "balanced",
+   "score": {
+    "HAL": 3,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.64,
+    "RED": 5.02
+   }
+  },
+  {
+   "minute": 89.7,
+   "period": 2,
+   "elapsed": 5522,
+   "momentum": 3.2,
+   "regime": "balanced",
+   "score": {
+    "HAL": 3,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.64,
+    "RED": 5.02
+   }
+  },
+  {
+   "minute": 90.7,
+   "period": 2,
+   "elapsed": 5581,
+   "momentum": 9.7,
+   "regime": "balanced",
+   "score": {
+    "HAL": 3,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.66,
+    "RED": 5.02
+   }
+  },
+  {
+   "minute": 92.0,
+   "period": 2,
+   "elapsed": 5657,
+   "momentum": 60.6,
+   "regime": "balanced",
+   "score": {
+    "HAL": 3,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 1.81,
+    "RED": 5.02
+   }
+  },
+  {
+   "minute": 93.4,
+   "period": 2,
+   "elapsed": 5738,
+   "momentum": 82.6,
+   "regime": "balanced",
+   "score": {
+    "HAL": 4,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 2.36,
+    "RED": 5.02
+   }
+  },
+  {
+   "minute": 93.7,
+   "period": 2,
+   "elapsed": 5762,
+   "momentum": 77.6,
+   "regime": "balanced",
+   "score": {
+    "HAL": 4,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 2.36,
+    "RED": 5.02
+   }
+  },
+  {
+   "minute": 94.7,
+   "period": 2,
+   "elapsed": 5820,
+   "momentum": 69.4,
+   "regime": "balanced",
+   "score": {
+    "HAL": 4,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 2.36,
+    "RED": 5.02
+   }
+  },
+  {
+   "minute": 94.9,
+   "period": 2,
+   "elapsed": 5832,
+   "momentum": 66.6,
+   "regime": "balanced",
+   "score": {
+    "HAL": 4,
+    "RED": 2
+   },
+   "xg": {
+    "HAL": 2.36,
+    "RED": 5.02
+   }
+  }
+ ]
+}
