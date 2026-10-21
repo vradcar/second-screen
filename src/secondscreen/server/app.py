@@ -47,6 +47,8 @@ START_TOKEN = os.environ.get("BROADCAST_START_TOKEN")               # optional: 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     from secondscreen.server.broadcast import Broadcast
+    from secondscreen.telemetry import setup_tracing
+    setup_tracing("second-screen-server")
     app.state.broadcast = Broadcast(make_feed(), make_store(), DATA, compact_snapshot, anim_event)
     yield
     await app.state.broadcast.stop()

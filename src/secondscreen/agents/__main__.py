@@ -15,10 +15,13 @@ from pathlib import Path
 
 from secondscreen.agents.llm import describe_backend, load_dotenv, make_client
 from secondscreen.agents.orchestrator import MatchOrchestrator
+from secondscreen.telemetry import setup_tracing
 
 
 async def run(args) -> None:
     load_dotenv()
+    if setup_tracing("second-screen-agents"):
+        print("Tracing: Azure Monitor (see the Foundry project's Tracing tab)", flush=True)
     client = make_client(args.mode, args.cache, inject_error_every=args.inject_errors)
     if args.mode in ("live", "record"):
         print("Backend:", describe_backend(), flush=True)

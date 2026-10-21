@@ -18,7 +18,9 @@ agents = [
     "pydantic>=2.10",
 ]
 server = ["fastapi>=0.115", "uvicorn[standard]>=0.32"]
-azure = ["azure-eventhub>=5.12", "azure-cosmos>=4.9", "azure-identity>=1.26", "aiohttp>=3.9"]
+azure = ["azure-eventhub>=5.12", "azure-cosmos>=4.9", "azure-identity>=1.26", "aiohttp>=3.9",
+         "azure-monitor-opentelemetry-exporter>=1.0.0b40"]
+eval = ["azure-ai-evaluation>=1.18"]
 dev = ["pytest>=8", "pytest-asyncio>=0.24", "httpx>=0.27"]
 
 [tool.setuptools.packages.find]
