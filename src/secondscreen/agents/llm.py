@@ -103,22 +103,37 @@ class CachingChatClient(BaseChatClient):
         return ChatResponse(messages=[Message(role="assistant", contents=[text])], response_id=f"rec-{k}")
 
 
+def _env(name: str) -> str | None:
+    """Env var, ignoring blanks and unfilled template placeholders like <resource>."""
+    v = (os.environ.get(name) or "").strip().strip('"').strip("'")
+    return v if v and "<" not in v else None
+
+
+def describe_backend() -> str:
+    dep = _env("AZURE_OPENAI_DEPLOYMENT") or "gpt-4.1-mini"
+    if _env("AZURE_OPENAI_API_KEY") and _env("AZURE_OPENAI_ENDPOINT"):
+        return f"Azure OpenAI (API key) {_env('AZURE_OPENAI_ENDPOINT')} deployment={dep}"
+    if _env("AZURE_AI_PROJECT_ENDPOINT"):
+        return f"Foundry project (Entra ID) {_env('AZURE_AI_PROJECT_ENDPOINT')} deployment={dep}"
+    return "not configured"
+
+
 def live_client():
     """Foundry project client if configured, else Azure OpenAI with a key."""
-    deployment = os.environ.get("AZURE_OPENAI_DEPLOYMENT", "gpt-4.1-mini")
-    if os.environ.get("AZURE_OPENAI_API_KEY") and os.environ.get("AZURE_OPENAI_ENDPOINT"):
+    deployment = _env("AZURE_OPENAI_DEPLOYMENT") or "gpt-4.1-mini"
+    if _env("AZURE_OPENAI_API_KEY") and _env("AZURE_OPENAI_ENDPOINT"):
         from agent_framework.openai import OpenAIChatCompletionClient
         return OpenAIChatCompletionClient(
-            model=deployment, api_key=os.environ["AZURE_OPENAI_API_KEY"],
-            azure_endpoint=os.environ["AZURE_OPENAI_ENDPOINT"],
-            api_version=os.environ.get("AZURE_OPENAI_API_VERSION", "2024-10-21"))
-    if os.environ.get("AZURE_AI_PROJECT_ENDPOINT"):
+            model=deployment, api_key=_env("AZURE_OPENAI_API_KEY"),
+            azure_endpoint=_env("AZURE_OPENAI_ENDPOINT"),
+            api_version=_env("AZURE_OPENAI_API_VERSION") or "2024-10-21")
+    if _env("AZURE_AI_PROJECT_ENDPOINT"):
         from agent_framework.foundry import FoundryChatClient
         from azure.identity.aio import DefaultAzureCredential
-        return FoundryChatClient(project_endpoint=os.environ["AZURE_AI_PROJECT_ENDPOINT"],
+        return FoundryChatClient(project_endpoint=_env("AZURE_AI_PROJECT_ENDPOINT"),
                                  model=deployment, credential=DefaultAzureCredential())
-    raise RuntimeError("Set AZURE_AI_PROJECT_ENDPOINT (with az login) or AZURE_OPENAI_ENDPOINT + "
-                       "AZURE_OPENAI_API_KEY. See .env.example.")
+    raise RuntimeError("No model configured. In .env set AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY "
+                       "(or AZURE_AI_PROJECT_ENDPOINT and run `az login`). See .env.example.")
 
 
 def load_dotenv(path: str = ".env") -> None:
@@ -129,7 +144,7 @@ def load_dotenv(path: str = ".env") -> None:
         line = line.strip()
         if line and not line.startswith("#") and "=" in line:
             k, v = line.split("=", 1)
-            os.environ.setdefault(k.strip(), v.strip())
+            os.environ.setdefault(k.strip(), v.strip().strip('"').strip("'"))
 
 
 def make_client(mode: str, cache_path: str | Path = "data/llm_cache.jsonl", inject_error_every: int = 0):

@@ -13,18 +13,27 @@ import sys
 import time
 from pathlib import Path
 
-from secondscreen.agents.llm import load_dotenv, make_client
+from secondscreen.agents.llm import describe_backend, load_dotenv, make_client
 from secondscreen.agents.orchestrator import MatchOrchestrator
 
 
 async def run(args) -> None:
     load_dotenv()
     client = make_client(args.mode, args.cache, inject_error_every=args.inject_errors)
+    if args.mode in ("live", "record"):
+        print("Backend:", describe_backend(), flush=True)
     orch = MatchOrchestrator(client, use_judge=not args.no_judge)
 
     async def show(m):
         flag = {"agent": "  ", "fallback": "FB"}[m["source"]]
         print(f"{m['clock']:>7} {flag} x{m['attempts']} {m['kind']:<18} {m['draft']['headline']}", flush=True)
+        # Fail fast: if the first moments all fell back because the model errored, stop and say why.
+        ms = orch.store.moments
+        if args.mode in ("live", "record") and len(ms) == 3 and all(x["source"] == "fallback" for x in ms):
+            errors = [e["error"] for x in ms for e in x["check_log"] if "error" in e]
+            if errors:
+                raise SystemExit(f"\nModel calls are failing, stopping early.\nFirst error: {errors[0]}\n"
+                                 "Run `python -m secondscreen.agents.doctor` for a diagnosis.")
 
     orch.on_moment = show
     t0 = time.perf_counter()
