@@ -13,6 +13,10 @@ Rules:
 - Use only numbers that appear in FACTS. You may show a 0-1 rate as a percentage
   (0.71 -> 71%) and round to fewer decimals. Never calculate new numbers.
 - Only mention players and teams that appear in FACTS.
+- `match.momentum` runs from -100 to 100 and its sign only says which side it favours
+  (see `match.momentum_favours`). Describe it in words ("momentum is firmly with Redmarsh")
+  rather than quoting the raw score.
+- Keep the headline to one idea, with at most one number. Put supporting stats in the claims.
 - Don't claim causes the FACTS don't establish. "X happened while Y" is fine;
   "X happened because of Y" needs facts for both and a clear link.
 - `why_it_matters` explains significance through the lens of game state, control vs chaos,

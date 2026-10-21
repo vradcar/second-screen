@@ -158,3 +158,23 @@ def test_score_of_one_does_not_license_100_percent():
     r = Rendering(persona_id="x", lang="en", lower_third="Lazaro: 18 touches",
                   body="Redmarsh have 1 goal; 99 sprints today.", stat_chips=[])
     assert any("99" in i for i in check_rendering(r, draft(), ctx))
+
+
+def test_presentation_variants_accepted():
+    """Real gpt-4.1-mini phrasings that the first checker wrongly rejected."""
+    ctx = {"facts": {**CTX["facts"], "match.momentum": -70.2, "match.clock": "06:59", "match.minute": 6,
+                     "signal.players_on_pitch.RED": 10, "signal.avg_outfield_distance_km": 8.46},
+           "roster": CTX["roster"], "story_so_far": ["64:44 Redmarsh Rovers are starting to tire"]}
+    d = draft(summary="By the 7th minute momentum sat at 70.2.", claims=[
+        Claim(text="By the 7th minute the momentum value was 70.2.", facts=["match.momentum"]),
+        Claim(text="Redmarsh are down to 10.", facts=["signal.players_on_pitch"]),
+        Claim(text="Their outfield players have run 8,460 metres on average.", facts=["signal.avg_outfield_distance_km"]),
+        Claim(text="They were already tiring.", facts=["64:44 Redmarsh Rovers are starting to tire"]),
+        Claim(text="At 06:59 it was all Redmarsh.", facts=["signal.clock"]),
+    ])
+    assert check_draft(d, ctx) == []
+
+
+def test_foreign_words_are_not_players():
+    r = Rendering(persona_id="x", lang="es", lower_third="Goles Fontaine", body="Buts Fontaine.", stat_chips=[])
+    assert check_rendering(r, draft(), CTX) == []
