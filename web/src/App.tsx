@@ -3,6 +3,7 @@ import { Broadcast } from "./Broadcast";
 import { Explain } from "./Explain";
 import { PERSONAS } from "./personas";
 import { Phone } from "./Phone";
+import type { Lang } from "./translate";
 import { DuelBars, MomentumRiver } from "./Stats";
 import { useMatchStream } from "./stream";
 import { Timeline } from "./Timeline";
@@ -30,9 +31,10 @@ export default function App() {
   const [explain, setExplain] = useState<Moment | null>(null);
   const [paused, setPaused] = useState(false);
   const [liveOk, setLiveOk] = useState(false);
+  const [langs, setLangs] = useState<Lang[]>([]);
   const { state, clockRef, send } = useMatchStream(params);
 
-  useEffect(() => { fetch("/api/matches").then((r) => r.json()).then((d) => setLiveOk(!!d.live_available)).catch(() => {}); }, []);
+  useEffect(() => { fetch("/api/matches").then((r) => r.json()).then((d) => { setLiveOk(!!d.live_available); setLangs(d.translate?.langs ?? []); }).catch(() => {}); }, []);
   const persona = (id: string) => PERSONAS.find((p) => p.id === id) ?? PERSONAS[0];
   const setSpeed = (v: number) => { setParams((p) => ({ ...p, speed: v })); send({ cmd: "speed", value: v }); };
   const restart = (patch: Partial<typeof params>) => { setPaused(false); setParams((p) => ({ ...p, ...patch, run: p.run + 1 })); };
@@ -125,9 +127,9 @@ export default function App() {
           </div>
           <div className="phones">
             <Phone persona={persona(left)} onPersona={setLeft} moments={state.moments} cues={state.cues} meta={meta}
-                   score={score} clock={state.clock} onExplain={setExplain} />
+                   score={score} clock={state.clock} onExplain={setExplain} langs={langs} />
             <Phone persona={persona(right)} onPersona={setRight} moments={state.moments} cues={state.cues} meta={meta}
-                   score={score} clock={state.clock} onExplain={setExplain} />
+                   score={score} clock={state.clock} onExplain={setExplain} langs={langs} />
           </div>
           {state.recap && (
             <section className="recap" aria-label="Full-time report">

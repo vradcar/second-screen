@@ -126,6 +126,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'AZURE_OPENAI_ENDPOINT', value: 'https://${foundryName}.openai.azure.com/' }
             { name: 'AZURE_OPENAI_DEPLOYMENT', value: modelDeployment }
             { name: 'AZURE_USE_IDENTITY', value: '1' }
+            { name: 'AZURE_TRANSLATOR_ENDPOINT', value: 'https://${foundryName}.cognitiveservices.azure.com' }
             { name: 'COSMOS_ENDPOINT', value: cosmos.properties.documentEndpoint }
             { name: 'EVENTHUB_NAMESPACE', value: '${eventHubs.name}.servicebus.windows.net' }
             { name: 'EVENTHUB_NAME', value: matchEvents.name }
@@ -147,6 +148,7 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
 // ------------------------------------------------- managed identity access
 var eventHubsDataOwner = 'f526a384-b230-433a-b45c-95f59c4a2dec'
 var openAiUser = '5e0bd9bd-7b93-4f28-af87-19fc36ad61bd'
+var cognitiveServicesUser = 'a97b65f3-24c7-4388-baec-2e87135dc908'   // Translator, Speech on the same resource
 
 resource ehRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   name: guid(eventHubs.id, app.id, eventHubsDataOwner)
@@ -163,6 +165,16 @@ resource aiRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
   scope: foundry
   properties: {
     roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', openAiUser)
+    principalId: app.identity.principalId
+    principalType: 'ServicePrincipal'
+  }
+}
+
+resource aiUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
+  name: guid(foundry.id, app.id, cognitiveServicesUser)
+  scope: foundry
+  properties: {
+    roleDefinitionId: subscriptionResourceId('Microsoft.Authorization/roleDefinitions', cognitiveServicesUser)
     principalId: app.identity.principalId
     principalType: 'ServicePrincipal'
   }

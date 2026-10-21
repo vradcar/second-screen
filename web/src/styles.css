@@ -231,3 +231,11 @@ button, select { font: inherit; color: inherit; }
 .onair-idle h2 { font: 700 30px/1.05 var(--cond); margin: 0 0 8px; }
 .onair-idle p { margin: 0 0 16px; color: var(--ink-2); }
 .linkish { border: 0; background: none; color: var(--halcyon); text-decoration: underline; cursor: pointer; padding: 0 0 0 8px; font-size: 14px; }
+
+/* Translator */
+.lang-pick { display: flex; align-items: center; gap: 6px; margin-top: 8px; color: var(--ink-2); }
+.lang-pick select { flex: 1; border: 1px solid var(--line, #d8dde4); border-radius: 999px; background: transparent; padding: 3px 8px;
+  font: 500 12px/1.2 inherit; color: var(--ink-2); cursor: pointer; }
+.card-pending .card-title, .card-pending .card-body { opacity: .55; transition: opacity .2s; }
+.tr-note { font-weight: 500; opacity: .8; }
+.feed[dir="rtl"] .card-meta, .feed[dir="rtl"] .tick { direction: rtl; }

@@ -39,6 +39,7 @@ from fastapi import HTTPException  # noqa: E402
 
 from secondscreen.cloud.feed import make_feed  # noqa: E402
 from secondscreen.cloud.store import make_store  # noqa: E402
+from secondscreen.cloud.translate import Translator  # noqa: E402
 
 BROADCAST_AGENTS = os.environ.get("BROADCAST_AGENTS", "recorded")   # recorded | mock | live
 START_TOKEN = os.environ.get("BROADCAST_START_TOKEN")               # optional: protect start/stop
@@ -49,6 +50,7 @@ async def lifespan(app: FastAPI):
     from secondscreen.server.broadcast import Broadcast
     from secondscreen.telemetry import setup_tracing
     setup_tracing("second-screen-server")
+    app.state.translator = Translator()
     app.state.broadcast = Broadcast(make_feed(), make_store(), DATA, compact_snapshot, anim_event)
     yield
     await app.state.broadcast.stop()
@@ -237,7 +239,27 @@ PUBLIC_LIVE = os.environ.get("ALLOW_PUBLIC_LIVE", "1" if not os.environ.get("CON
 @app.get("/api/matches")
 def matches():
     return {"matches": match_files(), "live_available": _model_configured() and PUBLIC_LIVE,
-            "start_protected": bool(START_TOKEN)}
+            "start_protected": bool(START_TOKEN), "translate": _translator().status()}
+
+
+def _translator() -> Translator:
+    if not hasattr(app.state, "translator"):
+        app.state.translator = Translator()
+    return app.state.translator
+
+
+@app.post("/api/translate")
+async def translate(body: dict):
+    """{texts: [...], to: "de", from?: "es"} -> {items: [{text, ok, why?}]}. Azure AI Translator,
+    cached, budgeted, and number-checked against the original."""
+    texts = body.get("texts")
+    if not isinstance(texts, list) or not all(isinstance(t, str) for t in texts):
+        raise HTTPException(status_code=400, detail="texts must be a list of strings")
+    try:
+        items = await _translator().translate(texts, str(body.get("to", "")), body.get("from"))
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e)) from e
+    return {"items": items}
 
 
 @app.get("/api/health")
