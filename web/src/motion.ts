@@ -10,6 +10,11 @@ const TRAVEL: Record<string, (e: MatchEvent) => number> = {
   clearance: () => 1.4,
 };
 
+/** Seconds of match time the ball takes to travel for this event (pass flight, carry, shot). */
+export function travelTime(e: MatchEvent): number {
+  return Math.min((TRAVEL[e.type] ?? (() => 1))(e), 4);
+}
+
 export function ballKeys(events: MatchEvent[]): Key[] {
   const keys: Key[] = [];
   for (const e of events) {
@@ -17,8 +22,7 @@ export function ballKeys(events: MatchEvent[]): Key[] {
     if (e.type === "physical_snapshot" || e.type === "possession_change") continue;
     keys.push({ t: e.elapsed_seconds, x: e.x, y: e.y });
     if (e.end_x !== undefined && e.end_y !== undefined) {
-      const dur = (TRAVEL[e.type] ?? (() => 1))(e);
-      keys.push({ t: e.elapsed_seconds + Math.min(dur, 4), x: e.end_x, y: e.end_y });
+      keys.push({ t: e.elapsed_seconds + travelTime(e), x: e.end_x, y: e.end_y });
     }
   }
   keys.sort((a, b) => a.t - b.t);

@@ -81,6 +81,11 @@ export default function App() {
                   {PERSONAS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
                 </select>
               </label>
+              <span className="pass-key" aria-label="Pass colours">
+                <span><i style={{ background: "#3FBF6E" }} />Completed pass</span>
+                <span><i style={{ background: "#E0453A" }} />Lost pass</span>
+                <span>Click a player to follow him</span>
+              </span>
               <span className="pipeline">
                 {state.events.length.toLocaleString()} events streamed, {state.moments.length} moments published
                 {state.status === "ended" ? ", full time" : ""}

@@ -47,7 +47,7 @@ def match_files() -> list[str]:
 
 ANIM_KEYS = ("event_id", "seq", "type", "team_id", "player_id", "player_name", "x", "y", "end_x", "end_y",
              "outcome", "recipient_id", "elapsed_seconds", "clock", "period", "distance_m", "ball_speed_kmh",
-             "speed_kmh", "shot_speed_kmh", "score", "card", "player_off_id", "assist_name", "body_part")
+             "speed_kmh", "shot_speed_kmh", "score", "card", "player_off_id", "assist_name", "body_part", "height")
 
 
 def anim_event(e: dict) -> dict:

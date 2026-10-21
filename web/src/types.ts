@@ -12,7 +12,7 @@ export interface MatchEvent {
   x?: number; y?: number; end_x?: number; end_y?: number; outcome?: string; recipient_id?: string;
   elapsed_seconds: number; clock: string; period: number; distance_m?: number; ball_speed_kmh?: number;
   speed_kmh?: number; shot_speed_kmh?: number; score?: Record<string, number>; card?: string;
-  player_off_id?: string; assist_name?: string; body_part?: string;
+  player_off_id?: string; assist_name?: string; body_part?: string; height?: string;
 }
 export interface StatChip { label: string; value: string }
 export interface Cue {
