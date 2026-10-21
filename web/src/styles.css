@@ -224,3 +224,10 @@ button, select { font: inherit; color: inherit; }
 .tl-preview { position: absolute; top: -24px; transform: translateX(-50%); background: var(--ink); color: #fff;
               font: 700 13px/1 var(--cond); padding: 4px 7px; border-radius: 4px; pointer-events: none; }
 .tl-clock { font: 700 16px/1 var(--cond); font-variant-numeric: tabular-nums; min-width: 48px; text-align: right; }
+
+/* ---------- on air ---------- */
+.onair-chip { background: #d1271c; color: #fff; font: 700 14px/1 var(--cond); padding: 7px 12px; border-radius: 6px; }
+.onair-idle { margin: 24px 32px; max-width: 620px; background: var(--paper); border-radius: 10px; padding: 26px 30px; }
+.onair-idle h2 { font: 700 30px/1.05 var(--cond); margin: 0 0 8px; }
+.onair-idle p { margin: 0 0 16px; color: var(--ink-2); }
+.linkish { border: 0; background: none; color: var(--halcyon); text-decoration: underline; cursor: pointer; padding: 0 0 0 8px; font-size: 14px; }

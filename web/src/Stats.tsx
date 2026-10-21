@@ -61,6 +61,7 @@ const ROWS: { label: string; get: (t: Snapshot["teams"][string]) => number | nul
 export function DuelBars({ snap, meta }: { snap?: Snapshot; meta: Meta }) {
   if (!snap) return <div className="duel duel-empty">Stats start with the first touch.</div>;
   const h = snap.teams[meta.home.team_id], a = snap.teams[meta.away.team_id];
+  if (!h || !a) return <div className="duel duel-empty">Stats start with the first touch.</div>;
   return (
     <div className="duel">
       {ROWS.map((r) => {

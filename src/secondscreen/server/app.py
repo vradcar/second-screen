@@ -33,7 +33,28 @@ LEAD = 6.0                # match seconds of events sent ahead for animation
 SNAP_EVERY = 4.0          # match seconds between stats snapshots
 RECORDED_LATENCY = 3.0    # wall seconds a recorded moment appears after its signal (honest-ish agent delay)
 
-app = FastAPI(title="Second Screen")
+from contextlib import asynccontextmanager  # noqa: E402
+
+from fastapi import HTTPException  # noqa: E402
+
+from secondscreen.cloud.feed import make_feed  # noqa: E402
+from secondscreen.cloud.store import make_store  # noqa: E402
+
+BROADCAST_AGENTS = os.environ.get("BROADCAST_AGENTS", "recorded")   # recorded | mock | live
+START_TOKEN = os.environ.get("BROADCAST_START_TOKEN")               # optional: protect start/stop
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    from secondscreen.server.broadcast import Broadcast
+    app.state.broadcast = Broadcast(make_feed(), make_store(), DATA, compact_snapshot, anim_event)
+    yield
+    await app.state.broadcast.stop()
+    await app.state.broadcast.feed.close()
+    await app.state.broadcast.store.close()
+
+
+app = FastAPI(title="Second Screen", lifespan=lifespan)
 
 
 def load_jsonl(path: Path) -> list[dict]:
@@ -205,12 +226,65 @@ class Session:
 @app.get("/api/matches")
 def matches():
     return {"matches": match_files(), "live_available": bool(os.environ.get("AZURE_OPENAI_API_KEY")
-                                                             or os.environ.get("AZURE_AI_PROJECT_ENDPOINT"))}
+                                                             or os.environ.get("AZURE_AI_PROJECT_ENDPOINT")),
+            "start_protected": bool(START_TOKEN)}
 
 
 @app.get("/api/health")
 def health():
     return {"ok": True}
+
+
+def _check_token(token: str | None) -> None:
+    if START_TOKEN and token != START_TOKEN:
+        raise HTTPException(status_code=403, detail="This broadcast is protected. Pass ?token=...")
+
+
+@app.get("/api/broadcast")
+def broadcast_status():
+    return app.state.broadcast.status()
+
+
+@app.post("/api/broadcast/start")
+async def broadcast_start(match: str = "SS00076", speed: float = 5.0, agents: str | None = None,
+                          publish: bool = True, token: str | None = None):
+    """Start the shared live broadcast. With publish=false, an external publisher
+    (python -m secondscreen.cloud.feed) supplies the events."""
+    _check_token(token)
+    if not (DATA / f"match_{match}.jsonl").exists():
+        raise HTTPException(status_code=404, detail=f"no match {match}")
+    agents = agents or BROADCAST_AGENTS
+    if agents == "live" and not matches()["live_available"]:
+        agents = "recorded"
+    return await app.state.broadcast.start(match, speed, agents, publish=publish)
+
+
+@app.post("/api/broadcast/stop")
+async def broadcast_stop(token: str | None = None):
+    _check_token(token)
+    await app.state.broadcast.stop()
+    return app.state.broadcast.status()
+
+
+@app.websocket("/ws/broadcast")
+async def ws_broadcast(ws: WebSocket):
+    await ws.accept()
+    hub = app.state.broadcast
+    q = await hub.join()
+
+    async def writer():
+        while True:
+            await ws.send_text(json.dumps(await q.get(), ensure_ascii=False, default=str))
+
+    w = asyncio.create_task(writer())
+    try:
+        while True:
+            await ws.receive_text()      # viewers don't control the broadcast; keep the socket open
+    except WebSocketDisconnect:
+        pass
+    finally:
+        w.cancel()
+        hub.leave(q)
 
 
 @app.websocket("/ws")

@@ -6,7 +6,7 @@ export interface StreamParams { match: string; mode: string; speed: number; star
 export interface ClockRef { elapsed: number; at: number; speed: number; paused: boolean; clock: string; period: number }
 
 export interface StreamState {
-  status: "connecting" | "live" | "ended" | "error";
+  status: "connecting" | "live" | "ended" | "error" | "idle";
   error?: string;
   meta?: Meta;
   events: MatchEvent[];
@@ -57,7 +57,9 @@ export function useMatchStream(p: StreamParams) {
     dispatch({ t: "reset" });
     const proto = location.protocol === "https:" ? "wss" : "ws";
     const qs = new URLSearchParams({ match: p.match, mode: p.mode, speed: String(p.speed), start: String(p.start), at: String(p.at) });
-    const ws = new WebSocket(`${proto}://${location.host}/ws?${qs}`);
+    // "On air" joins the one shared broadcast; the other modes get a private replay.
+    const url = p.mode === "onair" ? `${proto}://${location.host}/ws/broadcast` : `${proto}://${location.host}/ws?${qs}`;
+    const ws = new WebSocket(url);
     wsRef.current = ws;
     clockRef.current = { elapsed: Math.max(p.at, 0), at: performance.now(), speed: p.speed, paused: false, clock: clockRef.current.clock, period: clockRef.current.period };
     let evBuf: MatchEvent[] = [];
@@ -81,6 +83,7 @@ export function useMatchStream(p: StreamParams) {
         case "recap": dispatch({ t: "recap", r: msg.r }); break;
         case "state": clockRef.current.speed = msg.speed; clockRef.current.paused = msg.paused; break;
         case "end": dispatch({ t: "status", status: "ended" }); break;
+        case "idle": dispatch({ t: "status", status: "idle" }); break;
         case "error": dispatch({ t: "status", status: "error", error: msg.message }); break;
       }
     };

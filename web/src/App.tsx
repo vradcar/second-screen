@@ -10,7 +10,7 @@ import type { Moment } from "./types";
 
 const SPEEDS = [5, 10, 20, 40];
 const STARTS: [number, string][] = [[0, "Kick-off"], [45, "Second half"], [75, "Last 15"]];
-const MODES: [string, string][] = [["recorded", "Recorded agents"], ["mock", "Offline model"], ["live", "Live Foundry"]];
+const MODES: [string, string][] = [["recorded", "Recorded agents"], ["mock", "Offline model"], ["live", "Live Foundry"], ["onair", "On air"]];
 
 function readParams() {
   const q = new URLSearchParams(location.search);
@@ -40,6 +40,18 @@ export default function App() {
   const closeExplain = useCallback(() => setExplain(null), []);
 
   const { meta, snap } = state;
+  const onAir = params.mode === "onair";
+  const [starting, setStarting] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
+  const startBroadcast = async () => {
+    setStarting(true); setStartError(null);
+    try {
+      const r = await fetch(`/api/broadcast/start?match=${params.match}&speed=${params.speed}`, { method: "POST" });
+      if (!r.ok) throw new Error((await r.json()).detail ?? r.statusText);
+      if (state.status === "ended") restart({});
+    } catch (e) { setStartError(String((e as Error).message)); }
+    finally { setStarting(false); }
+  };
   const score = snap?.score ?? {};
 
   return (
@@ -58,18 +70,31 @@ export default function App() {
                       onClick={() => restart({ mode: m, at: m === "recorded" ? params.at : -1 })}>{label}</button>
             ))}
           </div>
-          <div className="seg" role="group" aria-label="Start from">
-            {STARTS.map(([s, label]) => <button key={s} aria-pressed={params.at < 0 && params.start === s} onClick={() => restart({ start: s, at: -1 })}>{label}</button>)}
-          </div>
+          {!onAir && (
+            <div className="seg" role="group" aria-label="Start from">
+              {STARTS.map(([s, label]) => <button key={s} aria-pressed={params.at < 0 && params.start === s} onClick={() => restart({ start: s, at: -1 })}>{label}</button>)}
+            </div>
+          )}
           <div className="seg" role="group" aria-label="Speed">
-            {SPEEDS.map((s) => <button key={s} aria-pressed={params.speed === s} onClick={() => setSpeed(s)}>{s}×</button>)}
+            {SPEEDS.map((s) => <button key={s} aria-pressed={params.speed === s} disabled={onAir && state.status === "live"}
+                                       onClick={() => (onAir ? setParams((p) => ({ ...p, speed: s })) : setSpeed(s))}>{s}×</button>)}
           </div>
-          <button className="play" onClick={togglePause} aria-label={paused ? "Resume" : "Pause"}>{paused ? "Resume" : "Pause"}</button>
+          {!onAir && <button className="play" onClick={togglePause} aria-label={paused ? "Resume" : "Pause"}>{paused ? "Resume" : "Pause"}</button>}
+          {onAir && state.status === "live" && <span className="onair-chip">On air</span>}
         </nav>
       </header>
 
       {state.status === "error" && <p className="notice">{state.error}</p>}
-      {!meta && state.status !== "error" && <p className="notice">Connecting to the match feed…</p>}
+      {onAir && (state.status === "idle" || (state.status === "ended" && !meta)) && (
+        <section className="onair-idle">
+          <h2>Nothing is on air</h2>
+          <p>Start the broadcast and everyone who opens this page watches the same match, live. Events flow through the
+             live feed into one shared pipeline, and moments are saved so late joiners catch up.</p>
+          <button className="play" onClick={startBroadcast} disabled={starting}>{starting ? "Starting…" : `Start the broadcast at ${params.speed}×`}</button>
+          {startError && <p className="notice">{startError}</p>}
+        </section>
+      )}
+      {!meta && state.status !== "error" && state.status !== "idle" && <p className="notice">Connecting to the match feed…</p>}
 
       {meta && (
         <main className="stage">
@@ -92,6 +117,7 @@ export default function App() {
               <span className="pipeline">
                 {state.events.length.toLocaleString()} events streamed, {state.moments.length} moments published
                 {state.status === "ended" ? ", full time" : ""}
+                {onAir && state.status === "ended" && <button className="linkish" onClick={startBroadcast}>Start a new broadcast</button>}
               </span>
             </div>
             <MomentumRiver snap={snap} meta={meta} events={state.events} duration={meta.duration} />
