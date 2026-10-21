@@ -10,7 +10,7 @@ import time
 
 from agent_framework import Agent
 
-from secondscreen.agents.llm import describe_backend, live_client, load_dotenv
+from secondscreen.agents.llm import _env, describe_backend, live_client, load_dotenv
 from secondscreen.agents.schemas import MomentDraft
 
 HINTS = [
@@ -24,6 +24,8 @@ HINTS = [
     ("ConnectError", "Can't reach the endpoint. Check the URL and your network/VPN."),
     ("Connection error", "Can't reach the endpoint. Check AZURE_OPENAI_ENDPOINT (https://secondscreen-ai-ae9ze.openai.azure.com/) and your network/VPN."),
     ("CredentialUnavailable", "Entra auth isn't set up. Use the API key, or run `az login` first."),
+    ("DefaultAzureCredential failed", "No Azure login on this machine. Easiest fix: set AZURE_OPENAI_ENDPOINT and "
+     "AZURE_OPENAI_API_KEY in .env so the key route is used instead."),
     ("PermissionDenied", "Your account lacks the Foundry User role. Run infra/grant-access.sh in Cloud Shell."),
     ("403", "Permission denied. With az login you need the Foundry User role (infra/grant-access.sh)."),
 ]
@@ -35,6 +37,12 @@ async def main() -> int:
             stream.reconfigure(encoding="utf-8", errors="replace")
     load_dotenv()
     print("Backend:", describe_backend())
+    for name in ("AZURE_OPENAI_ENDPOINT", "AZURE_OPENAI_API_KEY", "AZURE_OPENAI_DEPLOYMENT", "AZURE_AI_PROJECT_ENDPOINT"):
+        v = _env(name)
+        shown = "missing / placeholder" if not v else (f"set ({len(v)} chars)" if "KEY" in name else v)
+        print(f"  {name:<26} {shown}")
+    if _env("AZURE_AI_PROJECT_ENDPOINT") and ".openai.azure.com" in _env("AZURE_AI_PROJECT_ENDPOINT"):
+        print("  ! AZURE_AI_PROJECT_ENDPOINT holds the OpenAI URL. That URL belongs in AZURE_OPENAI_ENDPOINT.")
     try:
         client = live_client()
     except Exception as e:  # noqa: BLE001
