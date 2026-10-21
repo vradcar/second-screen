@@ -2,6 +2,8 @@
 # Create the Foundry resource, project and model deployment for Second Screen.
 # Run in Azure Cloud Shell (Bash):  bash setup-foundry.sh
 # Override defaults with env vars, e.g.  LOCATION=swedencentral bash setup-foundry.sh
+# Student subscriptions restrict regions; list yours with:
+#   az policy assignment list --query "[].parameters.listOfAllowedLocations.value" -o json
 set -euo pipefail
 
 LOCATION="${LOCATION:-eastus2}"
@@ -16,8 +18,12 @@ CAPACITY="${CAPACITY:-30}"   # thousands of tokens per minute
 echo "==> Registering provider (no-op if already registered)"
 az provider register --namespace Microsoft.CognitiveServices --wait
 
-echo "==> Resource group $RG in $LOCATION"
-az group create --name "$RG" --location "$LOCATION" --tags project=second-screen -o none
+if [ "$(az group exists --name "$RG")" = "true" ]; then
+  echo "==> Resource group $RG already exists, reusing it"
+else
+  echo "==> Resource group $RG in $LOCATION"
+  az group create --name "$RG" --location "$LOCATION" --tags project=second-screen -o none
+fi
 
 echo "==> Foundry resource $RESOURCE"
 az cognitiveservices account create \
