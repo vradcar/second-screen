@@ -20,10 +20,10 @@ def write_match(seed: int, out_dir: Path) -> tuple[Path, Path, dict]:
     out_dir.mkdir(parents=True, exist_ok=True)
     ev_path = out_dir / f"match_{events[0]['match_id']}.jsonl"
     truth_path = out_dir / f"match_{events[0]['match_id']}.truth.json"
-    with ev_path.open("w") as f:
+    with ev_path.open("w", encoding="utf-8") as f:
         for e in events:
             f.write(json.dumps(e, separators=(",", ":")) + "\n")
-    truth_path.write_text(json.dumps(truth, indent=2))
+    truth_path.write_text(json.dumps(truth, indent=2), encoding="utf-8")
     return ev_path, truth_path, truth
 
 
@@ -80,7 +80,7 @@ def cmd_replay(args) -> None:
     """Emit events to stdout in (scaled) real time. Swap the sink for Event Hubs later."""
     path = Path(args.path)
     prev = None
-    for line in path.open():
+    for line in path.open(encoding="utf-8"):
         e = json.loads(line)
         t = e["elapsed_seconds"]
         if prev is not None and args.speed > 0:
@@ -95,7 +95,14 @@ def cmd_replay(args) -> None:
             sys.stdout.flush()
 
 
+def _utf8_console() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 def main(argv: list[str] | None = None) -> None:
+    _utf8_console()
     ap = argparse.ArgumentParser(prog="secondscreen.simulator")
     sub = ap.add_subparsers(dest="cmd", required=True)
 

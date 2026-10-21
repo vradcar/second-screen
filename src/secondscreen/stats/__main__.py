@@ -7,12 +7,20 @@ from __future__ import annotations
 
 import argparse
 import json
+import sys
 from pathlib import Path
 
 from secondscreen.stats.engine import StatsEngine
 
 
+def _utf8_console() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 def main() -> None:
+    _utf8_console()
     ap = argparse.ArgumentParser(prog="secondscreen.stats")
     ap.add_argument("path")
     ap.add_argument("--out", help="directory for <match>.signals.jsonl and <match>.snapshot.json")
@@ -20,7 +28,7 @@ def main() -> None:
     args = ap.parse_args()
 
     eng = StatsEngine()
-    for line in Path(args.path).open():
+    for line in Path(args.path).open(encoding="utf-8"):
         for sig in eng.ingest(json.loads(line)):
             if sig.importance >= args.min_importance:
                 facts = {k: v for k, v in sig.facts.items() if not isinstance(v, dict)}
@@ -29,10 +37,10 @@ def main() -> None:
     if args.out:
         out = Path(args.out)
         out.mkdir(parents=True, exist_ok=True)
-        with (out / f"match_{eng.match_id}.signals.jsonl").open("w") as f:
+        with (out / f"match_{eng.match_id}.signals.jsonl").open("w", encoding="utf-8") as f:
             for sig in eng.signals:
                 f.write(json.dumps(sig.to_dict(), separators=(",", ":")) + "\n")
-        (out / f"match_{eng.match_id}.snapshot.json").write_text(json.dumps(eng.snapshot(), indent=1))
+        (out / f"match_{eng.match_id}.snapshot.json").write_text(json.dumps(eng.snapshot(), indent=1), encoding="utf-8")
         print(f"\n{len(eng.signals)} signals -> {out}")
 
 

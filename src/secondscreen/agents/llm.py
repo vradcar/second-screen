@@ -75,7 +75,7 @@ class CachingChatClient(BaseChatClient):
         self.cache: dict[str, str] = {}
         self.hits = self.misses = 0
         if self.path.exists():
-            for line in self.path.open():
+            for line in self.path.open(encoding="utf-8"):
                 row = json.loads(line)
                 self.cache[row["key"]] = row["text"]
 
@@ -98,7 +98,7 @@ class CachingChatClient(BaseChatClient):
         text = resp.text
         self.cache[k] = text
         self.path.parent.mkdir(parents=True, exist_ok=True)
-        with self.path.open("a") as f:
+        with self.path.open("a", encoding="utf-8") as f:
             f.write(json.dumps({"key": k, "text": text}) + "\n")
         return ChatResponse(messages=[Message(role="assistant", contents=[text])], response_id=f"rec-{k}")
 
@@ -125,7 +125,7 @@ def load_dotenv(path: str = ".env") -> None:
     p = Path(path)
     if not p.exists():
         return
-    for line in p.read_text().splitlines():
+    for line in p.read_text(encoding="utf-8").splitlines():
         line = line.strip()
         if line and not line.startswith("#") and "=" in line:
             k, v = line.split("=", 1)

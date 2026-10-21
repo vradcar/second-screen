@@ -9,6 +9,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import sys
 import time
 from pathlib import Path
 
@@ -27,7 +28,7 @@ async def run(args) -> None:
 
     orch.on_moment = show
     t0 = time.perf_counter()
-    for line in Path(args.path).open():
+    for line in Path(args.path).open(encoding="utf-8"):
         await orch.ingest(json.loads(line))
     st = orch.store
     out = Path(args.out)
@@ -35,11 +36,11 @@ async def run(args) -> None:
     mid = st.match_id
     for name, rows in (("moments", st.moments), ("cues", sorted(st.cues, key=lambda c: c["elapsed"])),
                        ("audit", st.audit)):
-        with (out / f"match_{mid}.{name}.jsonl").open("w") as f:
+        with (out / f"match_{mid}.{name}.jsonl").open("w", encoding="utf-8") as f:
             for r in rows:
                 f.write(json.dumps(r, ensure_ascii=False, default=str) + "\n")
     if st.recap:
-        (out / f"match_{mid}.recap.json").write_text(json.dumps(st.recap, indent=1, ensure_ascii=False))
+        (out / f"match_{mid}.recap.json").write_text(json.dumps(st.recap, indent=1, ensure_ascii=False), encoding="utf-8")
         print("\n" + st.recap["recap"]["title"])
         print(st.recap["recap"]["standfirst"])
     summary = orch.summary() | {"wall_seconds": round(time.perf_counter() - t0, 1), "mode": args.mode}
@@ -48,7 +49,14 @@ async def run(args) -> None:
     print("\n" + json.dumps(summary, indent=1))
 
 
+def _utf8_console() -> None:
+    for stream in (sys.stdout, sys.stderr):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(encoding="utf-8", errors="replace")
+
+
 def main() -> None:
+    _utf8_console()
     ap = argparse.ArgumentParser(prog="secondscreen.agents")
     ap.add_argument("path")
     ap.add_argument("--mode", choices=["mock", "live", "record", "replay"], default="mock")
