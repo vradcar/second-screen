@@ -206,3 +206,21 @@ button, select { font: inherit; color: inherit; }
   .duel-bar span { transition: none; }
 }
 .river-marker { cursor: help; }
+
+/* ---------- timeline scrubber ---------- */
+.timeline { display: flex; align-items: center; gap: 12px; margin-top: -6px; }
+.tl-step { border: 0; background: var(--desk-2); border-radius: 6px; padding: 5px 9px; cursor: pointer; font: 700 14px/1 var(--cond); }
+.tl-step:hover { background: var(--paper); }
+.tl-track-wrap { position: relative; flex: 1; height: 26px; }
+.tl-track { position: absolute; left: 0; right: 0; top: 10px; height: 6px; border-radius: 3px; background: var(--desk-2); }
+.tl-fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 3px; background: var(--ink); }
+.tl-half { position: absolute; top: -4px; width: 2px; height: 14px; background: var(--ink-2); opacity: 0.45; }
+.tl-chapter { position: absolute; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; padding: 0;
+              border: 2.5px solid var(--team); background: #fff; cursor: pointer; z-index: 2; }
+.tl-red_card { border-radius: 2px; width: 10px; height: 14px; margin-left: -5px; background: #d1271c; border-color: #fff; }
+.tl-chapter:hover { transform: scale(1.25); }
+.tl-range { position: absolute; inset: 0; width: 100%; margin: 0; opacity: 0; cursor: pointer; z-index: 1; }
+.tl-track-wrap:has(.tl-range:focus-visible) .tl-track { outline: 3px solid var(--gold); outline-offset: 3px; }
+.tl-preview { position: absolute; top: -24px; transform: translateX(-50%); background: var(--ink); color: #fff;
+              font: 700 13px/1 var(--cond); padding: 4px 7px; border-radius: 4px; pointer-events: none; }
+.tl-clock { font: 700 16px/1 var(--cond); font-variant-numeric: tabular-nums; min-width: 48px; text-align: right; }

@@ -5,6 +5,7 @@ import { PERSONAS } from "./personas";
 import { Phone } from "./Phone";
 import { DuelBars, MomentumRiver } from "./Stats";
 import { useMatchStream } from "./stream";
+import { Timeline } from "./Timeline";
 import type { Moment } from "./types";
 
 const SPEEDS = [5, 10, 20, 40];
@@ -15,14 +16,14 @@ function readParams() {
   const q = new URLSearchParams(location.search);
   return {
     match: q.get("match") ?? "SS00076", mode: q.get("mode") ?? "recorded",
-    speed: Number(q.get("speed") ?? 10), start: Number(q.get("start") ?? 0), run: 0,
+    speed: Number(q.get("speed") ?? 10), start: Number(q.get("start") ?? 0), at: Number(q.get("at") ?? -1), run: 0,
     tv: q.get("tv") ?? "halcyon_fan", left: q.get("left") ?? "studio_analyst", right: q.get("right") ?? "halcyon_fan",
   };
 }
 
 export default function App() {
   const init = readParams();
-  const [params, setParams] = useState({ match: init.match, mode: init.mode, speed: init.speed, start: init.start, run: 0 });
+  const [params, setParams] = useState({ match: init.match, mode: init.mode, speed: init.speed, start: init.start, at: init.at, run: 0 });
   const [tv, setTv] = useState(init.tv);
   const [left, setLeft] = useState(init.left);
   const [right, setRight] = useState(init.right);
@@ -58,7 +59,7 @@ export default function App() {
             ))}
           </div>
           <div className="seg" role="group" aria-label="Start from">
-            {STARTS.map(([s, label]) => <button key={s} aria-pressed={params.start === s} onClick={() => restart({ start: s })}>{label}</button>)}
+            {STARTS.map(([s, label]) => <button key={s} aria-pressed={params.at < 0 && params.start === s} onClick={() => restart({ start: s, at: -1 })}>{label}</button>)}
           </div>
           <div className="seg" role="group" aria-label="Speed">
             {SPEEDS.map((s) => <button key={s} aria-pressed={params.speed === s} onClick={() => setSpeed(s)}>{s}×</button>)}
@@ -75,6 +76,7 @@ export default function App() {
           <div className="tv-col">
             <Broadcast meta={meta} events={state.events} clockRef={clockRef} snap={snap}
                        cues={state.cues} moments={state.moments} persona={persona(tv)} />
+            <Timeline meta={meta} clockRef={clockRef} onSeek={(at) => restart({ at })} />
             <div className="tv-caption">
               <label>On-air graphics for
                 <select value={tv} onChange={(e) => setTv(e.target.value)}>

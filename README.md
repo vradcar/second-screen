@@ -188,7 +188,9 @@ python -m secondscreen.server          # open http://localhost:8000
   fact-check trail (rejections, revisions, judge verdicts) and the source event IDs.
 - Below the TV: a momentum river for the whole match and a live stat duel.
 
-Controls: agent source (recorded live run, offline mock, or live Foundry), start point, speed.
+Controls: agent source (recorded live run, offline mock, or live Foundry), start point, speed,
+and a timeline scrubber: drag to any minute (back or forward), or click a goal / red-card marker
+to jump to just before it. Seeking rebuilds the stats engine's state up to that point instantly.
 The server replays the event file on its real timestamps; the stats engine runs on every event
 and agent moments run in a background queue, so the stream never waits on a model.
 

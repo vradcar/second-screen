@@ -3,9 +3,12 @@ export interface Team {
   team_id: string; name: string; short_name: string; colors: [string, string];
   starting_xi: Player[]; bench: Player[];
 }
+export interface Chapter { kind: "goal" | "red_card"; elapsed: number; clock: string; team_id: string | null; label: string }
 export interface Meta {
   match_id: string; home: Team; away: Team; mode: string; speed: number;
   duration: number; start_elapsed: number;
+  periods: { period: number; elapsed: number; clock_seconds: number }[];
+  chapters: Chapter[];
 }
 export interface MatchEvent {
   event_id: string; seq: number; type: string; team_id?: string; player_id?: string; player_name?: string;

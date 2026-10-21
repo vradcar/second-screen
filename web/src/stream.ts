@@ -1,7 +1,7 @@
 import { useEffect, useReducer, useRef } from "react";
 import type { Cue, MatchEvent, Meta, Moment, RecapDoc, Snapshot } from "./types";
 
-export interface StreamParams { match: string; mode: string; speed: number; start: number; run: number }
+export interface StreamParams { match: string; mode: string; speed: number; start: number; at: number; run: number }
 
 export interface ClockRef { elapsed: number; at: number; speed: number; paused: boolean; clock: string; period: number }
 
@@ -33,7 +33,7 @@ const initial: StreamState = { status: "connecting", events: [], moments: [], cu
 
 function reducer(s: StreamState, a: Msg): StreamState {
   switch (a.t) {
-    case "reset": return initial;
+    case "reset": return { ...initial, meta: s.meta, snap: s.snap, clock: s.clock, period: s.period };
     case "meta": return { ...s, meta: a.m, status: "live" };
     case "evs": return { ...s, events: s.events.concat(a.e) };
     case "snap": return { ...s, snap: a.s };
@@ -56,10 +56,10 @@ export function useMatchStream(p: StreamParams) {
   useEffect(() => {
     dispatch({ t: "reset" });
     const proto = location.protocol === "https:" ? "wss" : "ws";
-    const qs = new URLSearchParams({ match: p.match, mode: p.mode, speed: String(p.speed), start: String(p.start) });
+    const qs = new URLSearchParams({ match: p.match, mode: p.mode, speed: String(p.speed), start: String(p.start), at: String(p.at) });
     const ws = new WebSocket(`${proto}://${location.host}/ws?${qs}`);
     wsRef.current = ws;
-    clockRef.current = { elapsed: 0, at: performance.now(), speed: p.speed, paused: false, clock: "00:00", period: 1 };
+    clockRef.current = { elapsed: Math.max(p.at, 0), at: performance.now(), speed: p.speed, paused: false, clock: clockRef.current.clock, period: clockRef.current.period };
     let evBuf: MatchEvent[] = [];
     const flush = window.setInterval(() => {
       if (evBuf.length) { dispatch({ t: "evs", e: evBuf }); evBuf = []; }
@@ -86,7 +86,7 @@ export function useMatchStream(p: StreamParams) {
     };
     ws.onerror = () => dispatch({ t: "status", status: "error", error: "Can't reach the match server. Is it running?" });
     return () => { window.clearInterval(flush); ws.close(); };
-  }, [p.match, p.mode, p.start, p.run]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [p.match, p.mode, p.start, p.at, p.run]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const send = (cmd: Record<string, unknown>) => wsRef.current?.readyState === 1 && wsRef.current.send(JSON.stringify(cmd));
   return { state, clockRef, send };

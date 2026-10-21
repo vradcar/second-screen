@@ -70,13 +70,15 @@ def compact_snapshot(engine) -> dict:
 
 
 class Session:
-    def __init__(self, ws: WebSocket, match: str, mode: str, speed: float, start_min: float):
+    def __init__(self, ws: WebSocket, match: str, mode: str, speed: float, start_min: float, at: float = -1.0):
         self.ws, self.mode, self.speed = ws, mode, max(0.25, min(speed, 60.0))
         self.events = load_jsonl(DATA / f"match_{match}.jsonl")
         if not self.events:
             raise FileNotFoundError(match)
         self.match = match
-        self.start_elapsed = self._elapsed_at_minute(start_min)
+        # `at` (elapsed seconds) is a precise seek from the timeline; `start` is a match minute.
+        duration = self.events[-1]["elapsed_seconds"]
+        self.start_elapsed = min(max(at, 0.0), duration - 1) if at >= 0 else self._elapsed_at_minute(start_min)
         self.paused = False
         self.out: asyncio.Queue = asyncio.Queue()
         self.recorded_moments = load_jsonl(DATA / f"match_{match}.moments.jsonl") if mode == "recorded" else []
@@ -133,9 +135,15 @@ class Session:
     async def run(self) -> None:
         ev = self.events
         start = ev[0]
+        periods = [{"period": e["period"], "elapsed": e["elapsed_seconds"], "clock_seconds": e["clock_seconds"]}
+                   for e in ev if e["type"] == "period_start"]
+        # Timeline chapters: where the goals and red cards are, for jumping straight to them.
+        chapters = [{"kind": "goal" if e["type"] == "goal" else "red_card", "elapsed": e["elapsed_seconds"],
+                     "clock": e["clock"], "team_id": e.get("team_id"), "label": e.get("player_name", "")}
+                    for e in ev if e["type"] == "goal" or (e["type"] == "card" and e.get("card") == "second_yellow")]
         await self.send({"t": "meta", "match_id": start["match_id"], "home": start["home"], "away": start["away"],
                          "mode": self.mode, "speed": self.speed, "duration": ev[-1]["elapsed_seconds"],
-                         "start_elapsed": self.start_elapsed})
+                         "start_elapsed": self.start_elapsed, "periods": periods, "chapters": chapters})
         # Fast-forward to the start point without model calls.
         narrate = self.orch.narrate
         self.orch.narrate = False
@@ -207,12 +215,12 @@ def health():
 
 @app.websocket("/ws")
 async def ws_match(ws: WebSocket, match: str = "SS00076", mode: str = "recorded", speed: float = 10.0,
-                   start: float = 0.0):
+                   start: float = 0.0, at: float = -1.0):
     await ws.accept()
     if mode == "live" and not matches()["live_available"]:
         mode = "mock"
     try:
-        session = Session(ws, match, mode, speed, start)
+        session = Session(ws, match, mode, speed, start, at)
         await session.run()
     except WebSocketDisconnect:
         pass
