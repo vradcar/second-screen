@@ -55,7 +55,7 @@ export default function App() {
             {MODES.map(([m, label]) => (
               <button key={m} aria-pressed={params.mode === m} disabled={m === "live" && !liveOk}
                       title={m === "live" && !liveOk ? "Add Foundry credentials to .env to enable" : undefined}
-                      onClick={() => restart({ mode: m })}>{label}</button>
+                      onClick={() => restart({ mode: m, at: m === "recorded" ? params.at : -1 })}>{label}</button>
             ))}
           </div>
           <div className="seg" role="group" aria-label="Start from">
@@ -76,7 +76,8 @@ export default function App() {
           <div className="tv-col">
             <Broadcast meta={meta} events={state.events} clockRef={clockRef} snap={snap}
                        cues={state.cues} moments={state.moments} persona={persona(tv)} />
-            <Timeline meta={meta} clockRef={clockRef} onSeek={(at) => restart({ at })} />
+            {/* Seeking only makes sense when every moment already exists (a recorded run). */}
+            {meta.mode === "recorded" && <Timeline meta={meta} clockRef={clockRef} onSeek={(at) => restart({ at })} />}
             <div className="tv-caption">
               <label>On-air graphics for
                 <select value={tv} onChange={(e) => setTv(e.target.value)}>

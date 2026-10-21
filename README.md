@@ -189,8 +189,10 @@ python -m secondscreen.server          # open http://localhost:8000
 - Below the TV: a momentum river for the whole match and a live stat duel.
 
 Controls: agent source (recorded live run, offline mock, or live Foundry), start point, speed,
-and a timeline scrubber: drag to any minute (back or forward), or click a goal / red-card marker
-to jump to just before it. Seeking rebuilds the stats engine's state up to that point instantly.
+and, for recorded runs, a timeline scrubber: drag to any minute (back or forward), or click a goal /
+red-card marker to jump to just before it. Seeking rebuilds the stats engine's state up to that
+point instantly. Live and offline-model modes have no scrubber, since agent moments are written as
+the match plays.
 The server replays the event file on its real timestamps; the stats engine runs on every event
 and agent moments run in a background queue, so the stream never waits on a model.
 
