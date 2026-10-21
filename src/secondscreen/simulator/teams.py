@@ -107,7 +107,8 @@ class Club:
 
 
 def build_club(team_id: str, name: str, short_name: str, colors: tuple[str, str], style: dict,
-               quality: int = 0, seed: int | None = None, taken: set[str] | None = None) -> Club:
+               quality: int = 0, seed: int | None = None, taken: set[str] | None = None,
+               unique_full_names: bool = False) -> Club:
     """Build a squad deterministically from the club's own seed, so lineups stay
     the same no matter which match seed is used."""
     rng = random.Random(seed if seed is not None else team_id)
@@ -117,7 +118,11 @@ def build_club(team_id: str, name: str, short_name: str, colors: tuple[str, str]
     for i, pos in enumerate(FORMATION_433 + BENCH):
         while True:
             first, last = rng.choice(FIRST_NAMES), rng.choice(LAST_NAMES)
-            if first not in taken and last not in taken:
+            if unique_full_names and f"{first} {last}" not in taken:
+                taken.add(f"{first} {last}")
+                full = f"{first} {last}"
+                break
+            if not unique_full_names and first not in taken and last not in taken:
                 taken.update((first, last))
                 full = f"{first} {last}"
                 break
