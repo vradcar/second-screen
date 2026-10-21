@@ -15,6 +15,11 @@ All clubs, players, and match data are fictional and synthetically generated.
 | Explain | `secondscreen.agents`: Tactical Analyst → Fact-Checker (revise loop) → Recap, on Microsoft Agent Framework + Foundry | ✅ |
 | Render | Timed, machine-readable overlay cues (lower thirds, player tags, stat pops) | ✅ |
 | Personalize | Persona agent: analyst / casual, favourite club, player cam, EN / ES / FR | ✅ |
+| Any language | Azure AI Translator on every phone (18 languages), numbers checked against the original | ✅ |
+| Voice | Azure AI Speech reads out each big moment's fact-checked strap | ✅ |
+| Highlights | Auto-played reel of every goal, red card and story moment | ✅ |
+| Dataset | 56-match synthetic season with ground-truth labels, Parquet → Microsoft Fabric | ✅ |
+| Operate | Container Apps + Event Hubs + Cosmos DB, managed identity, OpenTelemetry → Foundry tracing, Foundry evaluations | ✅ |
 
 ## The simulator
 
@@ -199,7 +204,103 @@ and agent moments run in a background queue, so the stream never waits on a mode
 The UI is React + TypeScript (`web/`); `npm run build` writes into the Python package so the
 server ships it.
 
-## Tech stack (target)
+More on the phones and TV:
 
-Microsoft Foundry · Microsoft Agent Framework · Azure Event Hubs · Azure Cosmos DB ·
-Azure Container Apps · React · GitHub Copilot
+- **Translate any phone** with the language picker (Azure AI Translator). A translation is only shown
+  if every number in it matches the fact-checked original; otherwise the card stays in its original
+  language and says so. Arabic and other right-to-left languages lay out right-to-left.
+- **Commentary on** reads the TV's strap for each new big moment aloud (Azure AI Speech, one neural
+  voice per language). Goals and red cards cut in; smaller moments wait their turn.
+- **Highlights** (recorded runs) plays every goal and red card plus the best story moments, each from
+  just before it happens. `?reel=1` starts it on load.
+
+## Architecture
+
+```mermaid
+flowchart LR
+  sim[Synthetic match<br/>simulator] -->|events| eh[(Azure Event Hubs)]
+  eh --> stats[Stats engine<br/>xG · PPDA · momentum · regimes]
+  stats -->|evidence-linked signals| analyst
+  subgraph agents [Microsoft Agent Framework workflow · Foundry model]
+    analyst[Tactical Analyst] --> check{Fact-Checker<br/>rules + LLM judge}
+    check -->|revise, up to 3x| analyst
+    check -->|rejected 3x| tmpl[Safe template]
+    check -->|approved| persona[Persona agent<br/>+ persona judge]
+    tmpl --> persona
+  end
+  stats -->|threshold cues, no LLM| ui
+  persona --> cosmos[(Azure Cosmos DB<br/>moments · cues · runs)]
+  cosmos --> ui[TV + phones<br/>WebSocket, Container Apps]
+  ui <--> tr[Azure AI Translator]
+  ui <--> sp[Azure AI Speech]
+  agents -. OpenTelemetry .-> ai[App Insights →<br/>Foundry tracing]
+  cosmos -. recorded runs .-> ev[Foundry evaluations]
+  sim -->|season dataset| fab[(Microsoft Fabric<br/>Lakehouse)]
+```
+
+## Deploy to Azure
+
+GitHub Actions tests every push, builds the image and pushes it to GitHub Container Registry.
+`infra/main.bicep` creates Container Apps, Event Hubs, Cosmos DB (serverless), Log Analytics and
+App Insights, and gives the app a managed identity with roles on each service: no keys anywhere.
+
+```bash
+# Azure Cloud Shell, from the repo root
+FOUNDRY=<your Foundry resource> bash infra/deploy.sh   # prints the URL and a start token
+```
+
+Open the URL and pick **On air**: everyone watching sees the same match, fed through Event Hubs,
+with moments stored in Cosmos DB so late joiners catch up.
+
+## Measure it
+
+```bash
+# Detector recall against the simulator's hidden truth, on held-out matches (runs in CI)
+python -m secondscreen.stats.evaluate --seeds 20 --start 1000
+
+# Foundry evaluations of every published moment: groundedness, relevance, coherence and our
+# deterministic grounding rules; --upload logs the run to the Foundry project
+pip install -e ".[agents,eval]"
+python -m secondscreen.agents.foundry_eval data/match_SS00076.jsonl --upload
+```
+
+Set `APPLICATIONINSIGHTS_CONNECTION_STRING` (the deployed app has it) and every agent run, model
+call and workflow step is traced with OpenTelemetry. Connect the App Insights resource to the
+Foundry project (**Tracing**) to inspect them there.
+
+## A season of data for Microsoft Fabric
+
+```bash
+pip install -e ".[data]"
+python -m secondscreen.dataset                                   # data/season/*.parquet
+python -m secondscreen.dataset --onelake "<workspace>/<lakehouse>"  # + upload to Fabric
+```
+
+Eight invented clubs, a 56-match double round-robin, about 150,000 events. Every match runs through
+the same simulator and stats engine as the demo, and the hidden story arcs come along as labels:
+`clubs`, `players`, `matches`, `standings`, `events`, `signals` (with evidence event ids), `arcs`
+(ground truth, detected or not, and how late) and `player_match`. `fabric/load_season.py` loads them
+into Delta tables in a Fabric notebook and asks the data questions: detector recall by arc type,
+the xG league table, season leaders.
+
+## Make the demo work offline
+
+Translations and voice clips are cached in `data/`, so a recorded demo needs no Azure at view time.
+Fill the caches once from a machine with the Foundry key in `.env`:
+
+```bash
+python -m secondscreen.cloud.translate data/match_SS00076 --to de,pt,hi,ja,ar,sw
+python -m secondscreen.cloud.speech data/match_SS00076
+```
+
+## Tech stack
+
+| | |
+|---|---|
+| Microsoft Foundry | gpt-4.1-mini deployment, tracing, evaluations |
+| Microsoft Agent Framework | analyst → fact-checker → persona workflow, recap agent |
+| Azure AI services | Translator (any-language phones), Speech (spoken commentary) |
+| Azure cloud-native | Container Apps, Event Hubs, Cosmos DB, Managed Identity, App Insights, Bicep |
+| Microsoft Fabric | Lakehouse season dataset (OneLake), Delta tables |
+| GitHub | public repo, Actions CI/CD, Container Registry |
+| App | Python 3.12, FastAPI, React 18 + TypeScript, Canvas |
