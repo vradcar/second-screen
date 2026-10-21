@@ -47,6 +47,15 @@ def build_context(signal: dict, engine: StatsEngine, story: list[dict]) -> dict:
         for k in TEAM_KEYS:
             if s.get(k) is not None:
                 facts[f"stats.{t}.{k}"] = s[k]
+    # Plain-language state, so a model never has to decode team codes to say who leads or who is short.
+    h, a = engine.home, engine.away
+    sh, sa = engine.score.get(h, 0), engine.score.get(a, 0)
+    facts["match.state"] = (f"Level at {sh}-{sa}" if sh == sa else
+                            f"{names[h]} lead {sh}-{sa}" if sh > sa else f"{names[a]} lead {sa}-{sh}")
+    ph, pa = engine.teams[h].players_on_pitch, engine.teams[a].players_on_pitch
+    if ph != pa:
+        short = names[h] if ph < pa else names[a]
+        facts["match.numbers"] = f"{short} are down to {min(ph, pa)} ({names[h]} {ph} v {pa} {names[a]})"
     facts["match.momentum"] = round(engine.momentum, 1)
     facts["match.momentum_favours"] = (names[engine.home] if engine.momentum > 15 else
                                        names[engine.away] if engine.momentum < -15 else "neither side")

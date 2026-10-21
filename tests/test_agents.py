@@ -211,3 +211,12 @@ def test_decimal_commas_in_french_and_spanish():
     ctx = {**CTX, "facts": {**CTX["facts"], "stats.RED.possession_pct": 66.6}}
     r = Rendering(persona_id="x", lang="fr", lower_third="Domination", body="Redmarsh à 66,6 % de possession.", stat_chips=[])
     assert check_rendering(r, draft(), ctx) == []
+
+
+async def test_context_spells_out_who_leads_and_who_is_short(mock_run):
+    from secondscreen.agents.context import build_context
+    orch = mock_run
+    eng = orch.engine
+    ctx = build_context({"kind": "goal", "clock": "90:00", "minute": 90.0, "period": 2, "facts": {}}, eng, [])
+    assert ctx["facts"]["match.state"] == "Halcyon City lead 4-2"
+    assert ctx["facts"]["match.numbers"].startswith("Redmarsh Rovers are down to 10")

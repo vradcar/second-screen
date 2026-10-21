@@ -12,7 +12,8 @@ Rules:
   that support it. Copy keys exactly; never invent keys.
 - Use only numbers that appear in FACTS. You may show a 0-1 rate as a percentage
   (0.71 -> 71%) and round to fewer decimals. Never calculate new numbers.
-- Only mention players and teams that appear in FACTS.
+- Only mention players and teams that appear in FACTS. For who leads and who is a player short,
+  use `match.state` and `match.numbers`; they are written out so you never have to infer them.
 - `match.momentum` runs from -100 to 100 and its sign only says which side it favours
   (see `match.momentum_favours`). Describe it in words ("momentum is firmly with Redmarsh")
   rather than quoting the raw score.
@@ -36,6 +37,9 @@ For each claim, decide whether the cited facts directly state or clearly entail 
   exaggeration ("dominant" from a small edge), or numbers that don't match.
 - Supported: faithful restatements, percentages of 0-1 rates, sensible rounding.
 Then decide whether the headline, summary and why_it_matters follow from the claims.
+Check direction above all: who scored, who leads (see `match.state`), which side is down to ten
+(see `match.numbers`), which side momentum favours. A headline that flips any of these fails,
+even if every claim is right.
 If anything fails, write `feedback` the writer can act on: name the claim and the fix.
 Be strict but not pedantic: tone and vivid wording are fine when the substance is supported.
 """

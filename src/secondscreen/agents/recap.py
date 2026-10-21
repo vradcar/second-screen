@@ -58,6 +58,7 @@ def check_recap(r: Recap, facts: dict, moments: list[dict], roster: set[str]) ->
                 m = by_id[mid]
                 allowed |= allowed_numbers([m["clock"], m["draft"]["headline"], m["draft"]["summary"],
                                             m["draft"]["why_it_matters"]] + [c["text"] for c in m["draft"]["claims"]])
+                allowed |= {float(int(m["minute"]) + 1)}   # 79:46 is "the 80th minute"
         for n in numbers_in(p.text):
             if not number_ok(n, allowed):
                 issues.append(f"Paragraph {i} uses {n:g}, which its cited moments and facts don't contain.")
