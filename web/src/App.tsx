@@ -4,6 +4,7 @@ import { Explain } from "./Explain";
 import { PERSONAS } from "./personas";
 import { Phone } from "./Phone";
 import type { Lang } from "./translate";
+import { Reel, useReel } from "./Reel";
 import { DuelBars, MomentumRiver } from "./Stats";
 import { useMatchStream } from "./stream";
 import { Timeline } from "./Timeline";
@@ -18,7 +19,7 @@ function readParams() {
   return {
     match: q.get("match") ?? "SS00076", mode: q.get("mode") ?? "recorded",
     speed: Number(q.get("speed") ?? 10), start: Number(q.get("start") ?? 0), at: Number(q.get("at") ?? -1), run: 0,
-    tv: q.get("tv") ?? "halcyon_fan", left: q.get("left") ?? "studio_analyst", right: q.get("right") ?? "halcyon_fan",
+    reel: q.get("reel") === "1", tv: q.get("tv") ?? "halcyon_fan", left: q.get("left") ?? "studio_analyst", right: q.get("right") ?? "halcyon_fan",
   };
 }
 
@@ -40,6 +41,7 @@ export default function App() {
   const restart = (patch: Partial<typeof params>) => { setPaused(false); setParams((p) => ({ ...p, ...patch, run: p.run + 1 })); };
   const togglePause = () => { send({ cmd: paused ? "play" : "pause" }); setPaused(!paused); };
   const closeExplain = useCallback(() => setExplain(null), []);
+  const reel = useReel(state.meta, clockRef, params.speed, restart, init.reel);
 
   const { meta, snap } = state;
   const onAir = params.mode === "onair";
@@ -104,7 +106,8 @@ export default function App() {
             <Broadcast meta={meta} events={state.events} clockRef={clockRef} snap={snap}
                        cues={state.cues} moments={state.moments} persona={persona(tv)} />
             {/* Seeking only makes sense when every moment already exists (a recorded run). */}
-            {meta.mode === "recorded" && <Timeline meta={meta} clockRef={clockRef} onSeek={(at) => restart({ at })} />}
+            {meta.mode === "recorded" && <Reel reel={reel} meta={meta} />}
+            {meta.mode === "recorded" && !reel.playing && <Timeline meta={meta} clockRef={clockRef} onSeek={(at) => restart({ at })} />}
             <div className="tv-caption">
               <label>On-air graphics for
                 <select value={tv} onChange={(e) => setTv(e.target.value)}>

@@ -40,6 +40,7 @@ from fastapi import HTTPException  # noqa: E402
 from secondscreen.cloud.feed import make_feed  # noqa: E402
 from secondscreen.cloud.store import make_store  # noqa: E402
 from secondscreen.cloud.translate import Translator  # noqa: E402
+from secondscreen.highlights import pick as pick_highlights  # noqa: E402
 
 BROADCAST_AGENTS = os.environ.get("BROADCAST_AGENTS", "recorded")   # recorded | mock | live
 START_TOKEN = os.environ.get("BROADCAST_START_TOKEN")               # optional: protect start/stop
@@ -168,7 +169,8 @@ class Session:
                     for e in ev if e["type"] == "goal" or (e["type"] == "card" and e.get("card") == "second_yellow")]
         await self.send({"t": "meta", "match_id": start["match_id"], "home": start["home"], "away": start["away"],
                          "mode": self.mode, "speed": self.speed, "duration": ev[-1]["elapsed_seconds"],
-                         "start_elapsed": self.start_elapsed, "periods": periods, "chapters": chapters})
+                         "start_elapsed": self.start_elapsed, "periods": periods, "chapters": chapters,
+                         "highlights": pick_highlights(self.recorded_moments) if self.mode == "recorded" else []})
         # Fast-forward to the start point without model calls.
         narrate = self.orch.narrate
         self.orch.narrate = False

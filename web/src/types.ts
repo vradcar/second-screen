@@ -9,7 +9,9 @@ export interface Meta {
   duration: number; start_elapsed: number;
   periods: { period: number; elapsed: number; clock_seconds: number }[];
   chapters: Chapter[];
+  highlights?: Clip[];
 }
+export interface Clip { moment_id: string; kind: string; clock: string; elapsed: number; start: number; end: number; headline: string }
 export interface MatchEvent {
   event_id: string; seq: number; type: string; team_id?: string; player_id?: string; player_name?: string;
   x?: number; y?: number; end_x?: number; end_y?: number; outcome?: string; recipient_id?: string;
