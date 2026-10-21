@@ -25,7 +25,7 @@ from secondscreen.agents import prompts
 from secondscreen.agents.factcheck import check_draft, check_rendering
 from secondscreen.agents.personas import DEFAULT_PERSONAS, Persona
 from secondscreen.agents.schemas import (AnalystRequest, ApprovedMoment, CheckedDraft, FailedDraft, JudgeVerdict,
-                                         MomentDraft, PersonaBatch, PublishedMoment, Rendering, StatChip)
+                                         MomentDraft, PersonaBatch, PersonaVerdicts, PublishedMoment, Rendering)
 from secondscreen.agents.templates import template_draft
 
 MAX_ATTEMPTS = 3   # first draft + 2 revisions
@@ -125,16 +125,25 @@ class FallbackExecutor(Executor):
         await ctx.send_message(ApprovedMoment(msg.request, draft, "fallback", msg.check_log))
 
 
+def clip(text: str, n: int) -> str:
+    """Shorten at a word boundary."""
+    if len(text) <= n:
+        return text
+    cut = text[: n - 1].rsplit(" ", 1)[0].rstrip(",;:-")
+    return cut + "…"
+
+
 def safe_rendering(p: Persona, draft: MomentDraft) -> Rendering:
-    return Rendering(persona_id=p.persona_id, lang="en", lower_third=draft.headline[:60],
-                     body=(draft.summary if p.mode == "casual" else f"{draft.summary} {draft.why_it_matters}")[:240],
+    return Rendering(persona_id=p.persona_id, lang="en", lower_third=clip(draft.headline, 60),
+                     body=clip(draft.summary if p.mode == "casual" else f"{draft.summary} {draft.why_it_matters}", 240),
                      stat_chips=[])
 
 
 class PersonaExecutor(Executor):
-    def __init__(self, agent: Agent, personas: list[Persona], match_id_ref: dict):
+    def __init__(self, agent: Agent, personas: list[Persona], match_id_ref: dict, judge: Agent | None = None):
         super().__init__(id="persona")
         self.agent = agent
+        self.judge = judge
         self.personas = personas
         self.match = match_id_ref   # {"match_id": ..., "count": n}
 
@@ -156,6 +165,8 @@ class PersonaExecutor(Executor):
                     renderings[r.persona_id] = r
         except Exception as e:  # noqa: BLE001
             log.append({"step": "persona", "error": repr(e)[:300]})
+        if renderings and self.judge is not None:
+            await _judge_renderings(self.judge, renderings, draft, req.context, log)
         for p in self.personas:
             if p.persona_id not in renderings:
                 renderings[p.persona_id] = safe_rendering(p, draft)
@@ -172,12 +183,32 @@ class PersonaExecutor(Executor):
             "text": {"strap": r.lower_third, "card": r.body},
             "stats": [c.model_dump() for c in r.stat_chips], "evidence": sig.get("evidence", []),
         } for pid, r in renderings.items()]
+        from secondscreen.agents.factcheck import resolve_keys
+        cited, _ = resolve_keys({k for c in draft.claims for k in c.facts}, req.context["facts"],
+                                req.context.get("story_so_far"))
+        cited_facts = {k: req.context["facts"][k] for k in cited if k in req.context["facts"]}
         await ctx.yield_output(PublishedMoment(
             moment_id=moment_id, signal_id=sig["signal_id"], kind=sig["kind"], clock=sig["clock"],
             minute=sig["minute"], elapsed=sig["elapsed"], team_id=sig.get("team_id"), player_id=sig.get("player_id"),
             importance=sig["importance"], source=msg.source, attempts=req.attempt, draft=draft.model_dump(),
             renderings=[r.model_dump() for r in renderings.values()], cues=cues,
-            evidence=sig.get("evidence", []), check_log=log))
+            evidence=sig.get("evidence", []), check_log=log, facts=cited_facts))
+
+
+async def _judge_renderings(judge: Agent, renderings: dict, draft: MomentDraft, context: dict, log: list) -> None:
+    prompt = "Check these renderings.\n" + payload_block({
+        "approved_moment": draft.model_dump(), "facts": context["facts"],
+        "renderings": [r.model_dump() for r in renderings.values()]})
+    try:
+        resp = await judge.run(prompt, options={"response_format": PersonaVerdicts, "temperature": 0.0})
+        verdicts = _value(resp, PersonaVerdicts).verdicts
+    except Exception as e:  # noqa: BLE001 - judge outage: rules already passed, keep renderings
+        log.append({"step": "persona_judge", "error": repr(e)[:300]})
+        return
+    for v in verdicts:
+        if not v.supported and v.persona_id in renderings:
+            del renderings[v.persona_id]
+            log.append({"step": "persona_check", "persona": v.persona_id, "rejected": [f"judge: {v.reason}"]})
 
 
 def build_moment_workflow(client, personas: list[Persona] | None = None, match_ref: dict | None = None,
@@ -193,7 +224,10 @@ def build_moment_workflow(client, personas: list[Persona] | None = None, match_r
     a = AnalystExecutor(analyst)
     fc = FactCheckExecutor(judge)
     fb = FallbackExecutor()
-    pe = PersonaExecutor(persona, personas or DEFAULT_PERSONAS, match_ref if match_ref is not None else {"match_id": "M", "count": 0})
+    persona_judge = Agent(client, prompts.PERSONA_JUDGE, name="persona_fact_checker",
+                          description="Checks each viewer's version of a moment against the approved facts.") if use_judge else None
+    pe = PersonaExecutor(persona, personas or DEFAULT_PERSONAS,
+                         match_ref if match_ref is not None else {"match_id": "M", "count": 0}, judge=persona_judge)
 
     return (WorkflowBuilder(name="second_screen_moment", start_executor=a, max_iterations=20)
             .add_edge(a, fc, condition=lambda m: isinstance(m, CheckedDraft))

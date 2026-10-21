@@ -8,6 +8,7 @@ Shared state (story so far, published moments, audit trail) lives in a MatchStor
 """
 from __future__ import annotations
 
+import asyncio
 import time
 from dataclasses import asdict, dataclass, field
 
@@ -42,8 +43,12 @@ class MatchStore:
 
 
 class MatchOrchestrator:
+    """`background=True` queues narrative moments for a worker so a live stream never
+    waits on a model call; stats and instant cues stay real-time. `narrate=False`
+    skips model calls entirely (used when fast-forwarding)."""
+
     def __init__(self, client, personas: list[Persona] | None = None, store: MatchStore | None = None,
-                 use_judge: bool = True, on_moment=None, on_cue=None):
+                 use_judge: bool = True, on_moment=None, on_cue=None, background: bool = False):
         self.client = client
         self.personas = personas or DEFAULT_PERSONAS
         self.store = store or MatchStore()
@@ -52,26 +57,70 @@ class MatchOrchestrator:
         self.workflow = build_moment_workflow(client, self.personas, self.match_ref, use_judge=use_judge)
         self.on_moment, self.on_cue = on_moment, on_cue
         self.timing: list[float] = []
+        self.background = background
+        self.narrate = True
+        self.queue: asyncio.Queue | None = None
+        self._worker: asyncio.Task | None = None
+        self._flagged: list[dict] = []    # narrative signals accepted so far (for de-duplication)
 
     async def ingest(self, event: dict) -> None:
         for sig in self.engine.ingest(event):
             s = sig.to_dict()
             if self.match_ref["match_id"] is None:
                 self.match_ref["match_id"] = self.store.match_id = self.engine.match_id
-            if is_narrative(s, self.store.moments):
-                await self._moment(s)
+            if is_narrative(s, self._flagged):
+                self._flagged.append({"kind": s["kind"], "elapsed": s["elapsed"]})
+                if self.narrate:
+                    ctx = build_context(s, self.engine, self.store.moments)
+                    if self.background:
+                        self._ensure_worker()
+                        self.queue.put_nowait((s, ctx))
+                    else:
+                        await self._moment(s, ctx)
             elif s["kind"] in INSTANT_KINDS:
                 self._instant(s)
-            elif s["kind"] == "full_time":
-                self.store.recap = await write_recap(self.client, self.engine, self.store.moments)
+            elif s["kind"] == "full_time" and self.narrate:
+                if self.background:
+                    self._ensure_worker()
+                    self.queue.put_nowait(("recap", None))
+                else:
+                    self.store.recap = await write_recap(self.client, self.engine, self.store.moments)
 
-    async def _moment(self, s: dict) -> None:
-        ctx = build_context(s, self.engine, self.store.moments)
+    def _ensure_worker(self) -> None:
+        if self.queue is None:
+            self.queue = asyncio.Queue()
+            self._worker = asyncio.create_task(self._work())
+
+    async def _work(self) -> None:
+        while True:
+            s, ctx = await self.queue.get()
+            try:
+                if s == "recap":
+                    self.store.recap = await write_recap(self.client, self.engine, self.store.moments)
+                    if self.on_moment:
+                        await self.on_moment({"recap": self.store.recap})
+                else:
+                    # Refresh the story so later moments build on ones that finished meanwhile.
+                    ctx["story_so_far"] = [f"{m['clock']} {m['draft']['headline']}" for m in self.store.moments[-6:]]
+                    await self._moment(s, ctx)
+            finally:
+                self.queue.task_done()
+
+    async def drain(self) -> None:
+        if self.queue is not None:
+            await self.queue.join()
+
+    async def close(self) -> None:
+        if self._worker:
+            self._worker.cancel()
+
+    async def _moment(self, s: dict, ctx: dict) -> None:
         t0 = time.perf_counter()
         result = await self.workflow.run(AnalystRequest(s, ctx))
         self.timing.append(time.perf_counter() - t0)
         for out in result.get_outputs():
             m = asdict(out)
+            m["latency_s"] = round(time.perf_counter() - t0, 2)
             self.store.add_moment(m)
             if self.on_moment:
                 await self.on_moment(m)
@@ -85,6 +134,7 @@ class MatchOrchestrator:
             if not base:
                 continue
             cue = {"cue_id": f"{s['signal_id']}-{p.persona_id}", "moment_id": None, "match_id": self.engine.match_id,
+                   "kind": s["kind"],
                    "persona_id": p.persona_id, "lang": p.lang, "type": base["type"], "clock": s["clock"],
                    "elapsed": s["elapsed"], "duration_s": 5, "priority": s["importance"],
                    "team_id": s.get("team_id"), "player_id": s.get("player_id"),

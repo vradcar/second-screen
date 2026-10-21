@@ -172,6 +172,29 @@ python -m secondscreen.agents data/match_SS00076.jsonl --mode replay
 Auth: set `AZURE_OPENAI_ENDPOINT` + `AZURE_OPENAI_API_KEY`, or set `AZURE_AI_PROJECT_ENDPOINT`
 and run `az login` (grant yourself access once with `infra/grant-access.sh`).
 
+## Watch it: the broadcast + second screen UI
+
+```bash
+pip install -e ".[agents,server,dev]"
+python -m secondscreen.server          # open http://localhost:8000
+```
+
+- **The TV** plays the synthetic match as a broadcast: ball and 22 players animated from the
+  event feed, scorebug, game-state chip, player tags (speed, shot speed, cards) and on-air
+  lower thirds that wipe in as the agents publish.
+- **Two phones** show the second-screen app for two viewer profiles side by side (analyst,
+  Halcyon fan, Redmarsh fan in Spanish, Lazaro player cam in French). Same moment, different story.
+- **Tap any card** to see why it's on screen: each claim, the exact facts it cites, the
+  fact-check trail (rejections, revisions, judge verdicts) and the source event IDs.
+- Below the TV: a momentum river for the whole match and a live stat duel.
+
+Controls: agent source (recorded live run, offline mock, or live Foundry), start point, speed.
+The server replays the event file on its real timestamps; the stats engine runs on every event
+and agent moments run in a background queue, so the stream never waits on a model.
+
+The UI is React + TypeScript (`web/`); `npm run build` writes into the Python package so the
+server ships it.
+
 ## Tech stack (target)
 
 Microsoft Foundry · Microsoft Agent Framework · Azure Event Hubs · Azure Cosmos DB ·

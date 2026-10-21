@@ -178,3 +178,36 @@ def test_presentation_variants_accepted():
 def test_foreign_words_are_not_players():
     r = Rendering(persona_id="x", lang="es", lower_third="Goles Fontaine", body="Buts Fontaine.", stat_chips=[])
     assert check_rendering(r, draft(), CTX) == []
+
+
+def test_spelled_out_numbers_are_checked():
+    r = Rendering(persona_id="x", lang="en", lower_third="Level", body="Halcyon matched their four goals.", stat_chips=[])
+    assert any("4" in i for i in check_rendering(r, draft(), CTX))
+    r2 = Rendering(persona_id="x", lang="fr", lower_third="Égalité", body="Quatre buts pour Redmarsh.", stat_chips=[])
+    assert check_rendering(r2, draft(), CTX)
+
+
+class JudgeRejectsSpanish(MockChatClient):
+    async def _inner_get_response(self, *, messages, stream, options, **kwargs):
+        resp = await super()._inner_get_response(messages=messages, stream=stream, options=options, **kwargs)
+        data = json.loads(resp.text)
+        if "verdicts" in data and data["verdicts"] and "persona_id" in data["verdicts"][0]:
+            for v in data["verdicts"]:
+                if v["persona_id"] == "redmarsh_fan_es":
+                    v.update(supported=False, reason="says Redmarsh lead when they trail")
+            return ChatResponse(messages=[Message(role="assistant", contents=[json.dumps(data)])])
+        return resp
+
+
+async def test_persona_judge_rejection_falls_back_per_persona():
+    orch = await run_match(JudgeRejectsSpanish(), seed=5)
+    m = orch.store.moments[0]
+    assert any(e.get("step") == "persona_check" and e["persona"] == "redmarsh_fan_es" for e in m["check_log"])
+    assert any(e.get("step") == "persona_fallback" and e["persona"] == "redmarsh_fan_es" for e in m["check_log"])
+    assert not any(e.get("step") == "persona_fallback" and e["persona"] == "studio_analyst" for e in m["check_log"])
+
+
+def test_decimal_commas_in_french_and_spanish():
+    ctx = {**CTX, "facts": {**CTX["facts"], "stats.RED.possession_pct": 66.6}}
+    r = Rendering(persona_id="x", lang="fr", lower_third="Domination", body="Redmarsh à 66,6 % de possession.", stat_chips=[])
+    assert check_rendering(r, draft(), ctx) == []

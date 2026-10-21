@@ -5,6 +5,12 @@ from secondscreen.agents.schemas import MomentDraft
 from secondscreen.agents.templates import template_draft
 
 
+def clip(text: str, n: int) -> str:
+    if len(text) <= n:
+        return text
+    return text[: n - 1].rsplit(" ", 1)[0].rstrip(",;:-") + "…"
+
+
 def respond(role: str, payload: dict, call_no: int, inject_error_every: int) -> dict:
     if role == "analyst":
         sig = payload["signal"]
@@ -19,6 +25,10 @@ def respond(role: str, payload: dict, call_no: int, inject_error_every: int) -> 
         return {"verdicts": [{"index": i, "supported": True, "reason": "matches cited facts"} for i in range(n)],
                 "narrative_supported": True, "feedback": ""}
 
+    if role == "persona_judge":
+        return {"verdicts": [{"persona_id": r["persona_id"], "supported": True, "reason": "consistent"}
+                             for r in payload["renderings"]]}
+
     if role == "persona":
         m = MomentDraft.model_validate(payload["moment"])
         facts = payload["facts"]
@@ -32,7 +42,7 @@ def respond(role: str, payload: dict, call_no: int, inject_error_every: int) -> 
         for p in payload["personas"]:
             body = m.summary if p["mode"] == "casual" else f"{m.summary} {m.why_it_matters}"
             out.append({"persona_id": p["persona_id"], "lang": p.get("lang", "en"),
-                        "lower_third": m.headline[:60], "body": body[:240],
+                        "lower_third": clip(m.headline, 60), "body": clip(body, 240),
                         "stat_chips": chips if p["mode"] == "analyst" else chips[:1]})
         return {"renderings": out}
 

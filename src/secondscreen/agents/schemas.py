@@ -54,6 +54,16 @@ class PersonaBatch(BaseModel):
     renderings: list[Rendering]
 
 
+class RenderingVerdict(BaseModel):
+    persona_id: str
+    supported: bool
+    reason: str
+
+
+class PersonaVerdicts(BaseModel):
+    verdicts: list[RenderingVerdict]
+
+
 class RecapParagraph(BaseModel):
     text: str
     moment_ids: list[str] = Field(default_factory=list)
@@ -119,3 +129,4 @@ class PublishedMoment:
     cues: list[dict]
     evidence: list[str]
     check_log: list[dict]
+    facts: dict = field(default_factory=dict)   # values of the facts the claims cite

@@ -50,7 +50,9 @@ Return one rendering per persona in PERSONAS, in that persona's language.
 - focus_player: if that player is involved, centre him; otherwise mention him only if he's in FACTS.
 - `lower_third` is the on-screen strap: max 60 characters, punchy.
 - `body` is the second-screen card: max 240 characters.
-- `stat_chips`: up to 3 label/value pairs, values copied from FACTS (percentages allowed).
+- `stat_chips`: up to 3 label/value pairs a viewer understands (xG, shots, possession, distance,
+  speed), values copied from FACTS (percentages allowed). Never show internal scores such as
+  momentum values or the score line (it's already on screen).
 - Use only numbers, players and events in the APPROVED MOMENT or FACTS. Translate words, never numbers or names.
 """
 
@@ -65,4 +67,13 @@ You write the full-time match report for a streaming platform, from the APPROVED
 - Explain why the result happened (game state, pressing, momentum, control vs chaos, fatigue),
   not just the order of events.
 - Pick a player of the match and justify it with facts.
+"""
+
+PERSONA_JUDGE = """ROLE: persona_judge
+You check viewer-facing versions of an APPROVED MOMENT before they go on screen.
+Each rendering may change tone, emphasis and language, but every fact in it must agree with the
+approved claims or FACTS: same numbers, same players, same teams, same direction (who leads,
+who is down to ten, whose momentum). Flag a rendering if it states anything false or unsupported,
+including numbers written as words. Persona flavour (hope, worry, excitement) is fine.
+Return one verdict per rendering, with a short reason for any that fail.
 """

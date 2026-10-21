@@ -18,6 +18,7 @@ from secondscreen.simulator.teams import FIRST_NAMES, LAST_NAMES
 
 NUM = re.compile(r"(?<![\w.])\d+(?:\.\d+)?")
 THOUSANDS = re.compile(r"(?<=\d),(?=\d{3}\b)")
+DECIMAL_COMMA = re.compile(r"(?<=\d),(?=\d{1,2}\b)")   # 66,6 % in French and Spanish
 NAME = re.compile(r"\b([A-Z][a-z]+)\s+([A-Z][a-z]+)\b")
 FIRST, LAST = set(FIRST_NAMES), set(LAST_NAMES)
 STORY_KEY = "story_so_far"
@@ -26,8 +27,32 @@ STORY_KEY = "story_so_far"
 FREE_NUMBERS = {0.0, 1.0}
 
 
+NUMBER_WORDS = {
+    # en
+    "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9, "ten": 10,
+    "eleven": 11, "twelve": 12, "fifteen": 15, "twenty": 20,
+    # es
+    "dos": 2, "tres": 3, "cuatro": 4, "cinco": 5, "seis": 6, "siete": 7, "ocho": 8, "nueve": 9, "diez": 10,
+    "once": 11, "doce": 12, "quince": 15, "veinte": 20,
+    # fr
+    "deux": 2, "trois": 3, "quatre": 4, "cinq": 5, "sept": 7, "huit": 8, "neuf": 9, "dix": 10,
+    "onze": 11, "douze": 12, "quinze": 15, "vingt": 20,
+}
+WORD_RE = re.compile(r"\b(" + "|".join(sorted(NUMBER_WORDS, key=len, reverse=True)) + r")\b", re.I)
+
+
+# The stats engine's own rolling windows. "In the last five minutes" describes the window, not a stat.
+WINDOW_MINUTES = {5, 6, 8, 10, 12}
+WINDOW_RE = re.compile(r"\b(\d+)\s*(?:minutes?|mins?|minutos?|min)\b", re.I)
+
+
 def _clean(text: str) -> str:
-    return THOUSANDS.sub("", str(text))   # 8,460 -> 8460
+    """8,460 -> 8460, spelled-out numbers -> digits ("four goals" -> "4 goals"), and the
+    engine's window phrases removed."""
+    text = THOUSANDS.sub("", str(text))
+    text = DECIMAL_COMMA.sub(".", text)
+    text = WORD_RE.sub(lambda m: str(NUMBER_WORDS[m.group(1).lower()]), text)
+    return WINDOW_RE.sub(lambda m: "" if int(m.group(1)) in WINDOW_MINUTES else m.group(0), text)
 
 
 def numbers_in(value: Any) -> set[float]:
