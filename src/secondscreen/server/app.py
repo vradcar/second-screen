@@ -223,10 +223,18 @@ class Session:
             await self.orch.close()
 
 
+def _model_configured() -> bool:
+    return bool(os.environ.get("AZURE_OPENAI_API_KEY") or os.environ.get("AZURE_AI_PROJECT_ENDPOINT")
+                or os.environ.get("AZURE_USE_IDENTITY"))
+
+
+# On a public deployment, live model calls cost money per viewer; keep them opt-in.
+PUBLIC_LIVE = os.environ.get("ALLOW_PUBLIC_LIVE", "1" if not os.environ.get("CONTAINER_APP_NAME") else "0") == "1"
+
+
 @app.get("/api/matches")
 def matches():
-    return {"matches": match_files(), "live_available": bool(os.environ.get("AZURE_OPENAI_API_KEY")
-                                                             or os.environ.get("AZURE_AI_PROJECT_ENDPOINT")),
+    return {"matches": match_files(), "live_available": _model_configured() and PUBLIC_LIVE,
             "start_protected": bool(START_TOKEN)}
 
 
@@ -254,7 +262,8 @@ async def broadcast_start(match: str = "SS00076", speed: float = 5.0, agents: st
     if not (DATA / f"match_{match}.jsonl").exists():
         raise HTTPException(status_code=404, detail=f"no match {match}")
     agents = agents or BROADCAST_AGENTS
-    if agents == "live" and not matches()["live_available"]:
+    # Live agents on a broadcast need the model configured, and the start token if one is set.
+    if agents == "live" and not (_model_configured() and (PUBLIC_LIVE or (START_TOKEN and token == START_TOKEN))):
         agents = "recorded"
     return await app.state.broadcast.start(match, speed, agents, publish=publish)
 

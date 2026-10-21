@@ -113,6 +113,8 @@ def describe_backend() -> str:
     dep = _env("AZURE_OPENAI_DEPLOYMENT") or "gpt-4.1-mini"
     if _env("AZURE_OPENAI_API_KEY") and _env("AZURE_OPENAI_ENDPOINT"):
         return f"Azure OpenAI (API key) {_env('AZURE_OPENAI_ENDPOINT')} deployment={dep}"
+    if _env("AZURE_OPENAI_ENDPOINT") and _env("AZURE_USE_IDENTITY"):
+        return f"Azure OpenAI (managed identity) {_env('AZURE_OPENAI_ENDPOINT')} deployment={dep}"
     if _env("AZURE_AI_PROJECT_ENDPOINT"):
         return f"Foundry project (Entra ID) {_env('AZURE_AI_PROJECT_ENDPOINT')} deployment={dep}"
     return "not configured"
@@ -126,6 +128,13 @@ def live_client():
         return OpenAIChatCompletionClient(
             model=deployment, api_key=_env("AZURE_OPENAI_API_KEY"),
             azure_endpoint=_env("AZURE_OPENAI_ENDPOINT"),
+            api_version=_env("AZURE_OPENAI_API_VERSION") or "2024-10-21")
+    if _env("AZURE_OPENAI_ENDPOINT") and _env("AZURE_USE_IDENTITY"):
+        # In Azure Container Apps: the app's managed identity, no keys anywhere.
+        from agent_framework.openai import OpenAIChatCompletionClient
+        from azure.identity.aio import DefaultAzureCredential
+        return OpenAIChatCompletionClient(
+            model=deployment, credential=DefaultAzureCredential(), azure_endpoint=_env("AZURE_OPENAI_ENDPOINT"),
             api_version=_env("AZURE_OPENAI_API_VERSION") or "2024-10-21")
     if _env("AZURE_AI_PROJECT_ENDPOINT"):
         from agent_framework.foundry import FoundryChatClient
