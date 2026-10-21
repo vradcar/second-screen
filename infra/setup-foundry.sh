@@ -6,7 +6,7 @@ set -euo pipefail
 
 LOCATION="${LOCATION:-eastus2}"
 RG="${RG:-rg-second-screen}"
-SUFFIX="${SUFFIX:-$(tr -dc 'a-z0-9' </dev/urandom | head -c 5)}"
+SUFFIX="${SUFFIX:-$(cut -c1-5 /proc/sys/kernel/random/uuid)}"  # no pipe: pipefail + SIGPIPE would exit silently
 RESOURCE="${RESOURCE:-secondscreen-ai-$SUFFIX}"
 PROJECT="${PROJECT:-second-screen}"
 MODEL="${MODEL:-gpt-4.1-mini}"
