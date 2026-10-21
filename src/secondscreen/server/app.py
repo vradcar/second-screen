@@ -57,7 +57,12 @@ def anim_event(e: dict) -> dict:
 def compact_snapshot(engine) -> dict:
     snap = engine.snapshot()
     top = sorted(snap["players"], key=lambda p: -(p["goals"] * 3 + p["assists"] * 2 + p["xg"] + p["key_passes"] * 0.5))
+    # Key moments from the engine's full history, so a mid-match start still shows earlier goals.
+    markers = [{"kind": sg.kind, "elapsed": sg.elapsed, "clock": sg.clock, "team_id": sg.team_id,
+                "label": sg.facts.get("scorer") or sg.facts.get("player") or ""}
+               for sg in engine.signals if sg.kind in ("goal", "red_card")]
     return {"clock": snap["clock"], "period": snap["period"], "score": snap["score"], "teams": snap["teams"],
+            "markers": markers,
             "momentum": snap["momentum"], "regime": snap["regime"], "pressing": snap["pressing"],
             "series": snap["series"][-120:],
             "players": [{k: p[k] for k in ("player_id", "name", "team_id", "goals", "assists", "xg", "shots",

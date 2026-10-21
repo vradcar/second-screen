@@ -8,7 +8,7 @@ export function MomentumRiver({ snap, meta, events, duration }: { snap?: Snapsho
   const Y = (m: number) => mid - (m / 100) * (mid - 6);
   const pts = series.map((p) => `${X(p.elapsed).toFixed(1)},${Y(p.momentum).toFixed(1)}`);
   const area = pts.length ? `M${X(series[0].elapsed)},${mid} L${pts.join(" L")} L${X(series[series.length - 1].elapsed)},${mid} Z` : "";
-  const goals = events.filter((e) => e.type === "goal");
+  const markers = snap?.markers ?? [];
   const now = series.length ? series[series.length - 1].elapsed : 0;
   // Half-time from the stats series (complete history), not the streamed events (which start mid-match).
   const half = series.find((p) => p.period === 2)?.elapsed ?? events.find((e) => e.period === 2)?.elapsed_seconds ?? duration / 2;
@@ -29,11 +29,16 @@ export function MomentumRiver({ snap, meta, events, duration }: { snap?: Snapsho
         <path d={area} fill={meta.away.colors[0]} clipPath="url(#below)" opacity="0.85" />
         <line x1="0" x2={W} y1={mid} y2={mid} className="river-axis" />
         <line x1={X(now)} x2={X(now)} y1="0" y2={H} className="river-now" />
-        {goals.map((g) => {
-          const home = g.team_id === meta.home.team_id;
+        {markers.map((mk) => {
+          const home = mk.team_id === meta.home.team_id;
+          const color = home ? meta.home.colors[0] : meta.away.colors[0];
+          const y = home ? 10 : H - 10;
           return (
-            <g key={g.event_id} transform={`translate(${X(g.elapsed_seconds)},${home ? 10 : H - 10})`}>
-              <circle r="7" fill="#fff" stroke={home ? meta.home.colors[0] : meta.away.colors[0]} strokeWidth="2.5" />
+            <g key={`${mk.kind}-${mk.elapsed}`} transform={`translate(${X(mk.elapsed)},${y})`} className="river-marker">
+              <title>{`${mk.clock} ${mk.kind === "goal" ? "Goal" : "Red card"}: ${mk.label}`}</title>
+              {mk.kind === "goal"
+                ? <circle r="7" fill="#fff" stroke={color} strokeWidth="2.5" />
+                : <rect x="-4" y="-6" width="8" height="12" rx="1.5" fill="#d1271c" stroke="#fff" strokeWidth="1.5" />}
             </g>
           );
         })}

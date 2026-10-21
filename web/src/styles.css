@@ -205,3 +205,4 @@ button, select { font: inherit; color: inherit; }
   .lower-third, .banner, .explain { animation: none; }
   .duel-bar span { transition: none; }
 }
+.river-marker { cursor: help; }

@@ -41,6 +41,7 @@ export interface Snapshot {
   clock: string; period: number; score: Record<string, number>; teams: Record<string, TeamSummary>;
   momentum: number; regime: string; pressing: Record<string, { active: boolean; rate: number }>;
   series: SeriesPoint[];
+  markers: { kind: "goal" | "red_card"; elapsed: number; clock: string; team_id: string | null; label: string }[];
   players: { player_id: string; name: string; team_id: string; goals: number; assists: number; xg: number;
              shots: number; touches: number; distance_m: number; top_speed_kmh: number; on_pitch: boolean }[];
 }
