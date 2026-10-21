@@ -127,6 +127,9 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'AZURE_OPENAI_DEPLOYMENT', value: modelDeployment }
             { name: 'AZURE_USE_IDENTITY', value: '1' }
             { name: 'AZURE_TRANSLATOR_ENDPOINT', value: 'https://${foundryName}.cognitiveservices.azure.com' }
+            { name: 'AZURE_TRANSLATOR_REGION', value: foundry.location }
+            { name: 'AZURE_SPEECH_REGION', value: foundry.location }
+            { name: 'AZURE_SPEECH_RESOURCE_ID', value: foundry.id }
             { name: 'COSMOS_ENDPOINT', value: cosmos.properties.documentEndpoint }
             { name: 'EVENTHUB_NAMESPACE', value: '${eventHubs.name}.servicebus.windows.net' }
             { name: 'EVENTHUB_NAME', value: matchEvents.name }

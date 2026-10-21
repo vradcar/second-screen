@@ -5,6 +5,7 @@ import { PERSONAS } from "./personas";
 import { Phone } from "./Phone";
 import type { Lang } from "./translate";
 import { Reel, useReel } from "./Reel";
+import { useCommentary } from "./Commentary";
 import { DuelBars, MomentumRiver } from "./Stats";
 import { useMatchStream } from "./stream";
 import { Timeline } from "./Timeline";
@@ -33,14 +34,17 @@ export default function App() {
   const [paused, setPaused] = useState(false);
   const [liveOk, setLiveOk] = useState(false);
   const [langs, setLangs] = useState<Lang[]>([]);
+  const [speechOk, setSpeechOk] = useState(false);
+  const [voice, setVoice] = useState(false);
   const { state, clockRef, send } = useMatchStream(params);
 
-  useEffect(() => { fetch("/api/matches").then((r) => r.json()).then((d) => { setLiveOk(!!d.live_available); setLangs(d.translate?.langs ?? []); }).catch(() => {}); }, []);
+  useEffect(() => { fetch("/api/matches").then((r) => r.json()).then((d) => { setLiveOk(!!d.live_available); setLangs(d.translate?.langs ?? []); setSpeechOk(!!d.speech?.available); }).catch(() => {}); }, []);
   const persona = (id: string) => PERSONAS.find((p) => p.id === id) ?? PERSONAS[0];
   const setSpeed = (v: number) => { setParams((p) => ({ ...p, speed: v })); send({ cmd: "speed", value: v }); };
   const restart = (patch: Partial<typeof params>) => { setPaused(false); setParams((p) => ({ ...p, ...patch, run: p.run + 1 })); };
   const togglePause = () => { send({ cmd: paused ? "play" : "pause" }); setPaused(!paused); };
   const closeExplain = useCallback(() => setExplain(null), []);
+  useCommentary(voice, state.moments, persona(tv));
   const reel = useReel(state.meta, clockRef, params.speed, restart, init.reel);
 
   const { meta, snap } = state;
@@ -114,6 +118,14 @@ export default function App() {
                   {PERSONAS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
                 </select>
               </label>
+              {speechOk && (
+                <button className={`voice ${voice ? "voice-on" : ""}`} aria-pressed={voice} onClick={() => setVoice(!voice)}
+                        title="Read out each big moment with Azure AI Speech">
+                  <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M2 6h3l4-3v10l-4-3H2z" fill="currentColor" />
+                    {voice && <path d="M11 5.5a3.5 3.5 0 010 5M12.8 3.8a6 6 0 010 8.4" fill="none" stroke="currentColor" strokeWidth="1.3" />}</svg>
+                  Commentary {voice ? "on" : "off"}
+                </button>
+              )}
               <span className="pass-key" aria-label="Pass colours">
                 <span><i style={{ background: "#3FBF6E" }} />Completed pass</span>
                 <span><i style={{ background: "#E0453A" }} />Lost pass</span>

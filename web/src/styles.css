@@ -255,3 +255,8 @@ button, select { font: inherit; color: inherit; }
 .reel-dots i.now { background: #FFD34E; }
 .reel .linkish { color: #fff; }
 @media (max-width: 720px) { .reel-dots, .reel-sub { display: none; } }
+
+/* Spoken commentary */
+.voice { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line, #d8dde4); border-radius: 999px;
+  background: transparent; padding: 4px 11px; font: 600 12px/1 inherit; color: var(--ink-2); cursor: pointer; }
+.voice-on { background: var(--ink, #16202E); border-color: var(--ink, #16202E); color: #fff; }

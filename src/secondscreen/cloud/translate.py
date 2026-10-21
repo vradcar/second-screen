@@ -67,7 +67,7 @@ class Translator:
     def __init__(self, cache_file: Path | None = CACHE_FILE, daily_chars: int | None = None):
         self.endpoint = _env("AZURE_TRANSLATOR_ENDPOINT") or _derive_endpoint(_env("AZURE_OPENAI_ENDPOINT"))
         self.key = _env("AZURE_TRANSLATOR_KEY") or _env("AZURE_OPENAI_API_KEY")
-        self.region = _env("AZURE_TRANSLATOR_REGION") or "eastus2"
+        self.region = _env("AZURE_TRANSLATOR_REGION") or "eastus"
         self.mock = _env("SECONDSCREEN_TRANSLATOR") == "mock"
         self.live = self.mock or bool(self.endpoint and (self.key or _env("AZURE_USE_IDENTITY") or _env("AZURE_TRANSLATOR_IDENTITY")))
         self.budget = daily_chars if daily_chars is not None else int(os.environ.get("TRANSLATE_DAILY_CHARS", "300000"))
@@ -207,7 +207,7 @@ async def prefill(prefix: Path, langs: list[str]) -> None:
     tr = Translator()
     if not tr.live:
         raise SystemExit("Translator not configured: set AZURE_OPENAI_ENDPOINT and AZURE_OPENAI_API_KEY "
-                         "(plus AZURE_TRANSLATOR_REGION if your resource is not in eastus2).")
+                         "(plus AZURE_TRANSLATOR_REGION if your resource is not in eastus).")
     tr.budget = 10**9
     groups = card_texts(prefix)
     for to in langs:

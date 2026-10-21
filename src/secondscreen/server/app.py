@@ -39,6 +39,7 @@ from fastapi import HTTPException  # noqa: E402
 
 from secondscreen.cloud.feed import make_feed  # noqa: E402
 from secondscreen.cloud.store import make_store  # noqa: E402
+from secondscreen.cloud.speech import Speech  # noqa: E402
 from secondscreen.cloud.translate import Translator  # noqa: E402
 from secondscreen.highlights import pick as pick_highlights  # noqa: E402
 
@@ -241,13 +242,30 @@ PUBLIC_LIVE = os.environ.get("ALLOW_PUBLIC_LIVE", "1" if not os.environ.get("CON
 @app.get("/api/matches")
 def matches():
     return {"matches": match_files(), "live_available": _model_configured() and PUBLIC_LIVE,
-            "start_protected": bool(START_TOKEN), "translate": _translator().status()}
+            "start_protected": bool(START_TOKEN), "translate": _translator().status(),
+            "speech": _speech().status()}
 
 
 def _translator() -> Translator:
     if not hasattr(app.state, "translator"):
         app.state.translator = Translator()
     return app.state.translator
+
+
+def _speech() -> Speech:
+    if not hasattr(app.state, "speech"):
+        app.state.speech = Speech()
+    return app.state.speech
+
+
+@app.get("/api/speak")
+async def speak(text: str, lang: str = "en"):
+    """MP3 commentary for a strap, from Azure AI Speech (cached)."""
+    from fastapi.responses import Response
+    audio = await _speech().speak(text, lang)
+    if audio is None:
+        raise HTTPException(status_code=404, detail="no audio for that line")
+    return Response(audio, media_type="audio/mpeg", headers={"Cache-Control": "public, max-age=86400"})
 
 
 @app.post("/api/translate")
