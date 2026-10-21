@@ -10,7 +10,14 @@ requires-python = ">=3.11"
 dependencies = []
 
 [project.optional-dependencies]
-dev = ["pytest>=8"]
+agents = [
+    "agent-framework-core==1.22.0",
+    "agent-framework-foundry==1.15.0",
+    "agent-framework-openai==1.17.0",
+    "azure-identity>=1.26",
+    "pydantic>=2.10",
+]
+dev = ["pytest>=8", "pytest-asyncio>=0.24"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -18,3 +25,4 @@ where = ["src"]
 [tool.pytest.ini_options]
 pythonpath = ["src"]
 testpaths = ["tests"]
+asyncio_mode = "auto"

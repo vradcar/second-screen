@@ -1,0 +1,64 @@
+"""Run the full agent pipeline over a match.
+
+    python -m secondscreen.agents data/match_SS00076.jsonl --mode mock
+    python -m secondscreen.agents data/match_SS00076.jsonl --mode record   # live Foundry, saves cache
+    python -m secondscreen.agents data/match_SS00076.jsonl --mode replay   # from cache, no network
+"""
+from __future__ import annotations
+
+import argparse
+import asyncio
+import json
+import time
+from pathlib import Path
+
+from secondscreen.agents.llm import load_dotenv, make_client
+from secondscreen.agents.orchestrator import MatchOrchestrator
+
+
+async def run(args) -> None:
+    load_dotenv()
+    client = make_client(args.mode, args.cache, inject_error_every=args.inject_errors)
+    orch = MatchOrchestrator(client, use_judge=not args.no_judge)
+
+    async def show(m):
+        flag = {"agent": "  ", "fallback": "FB"}[m["source"]]
+        print(f"{m['clock']:>7} {flag} x{m['attempts']} {m['kind']:<18} {m['draft']['headline']}", flush=True)
+
+    orch.on_moment = show
+    t0 = time.perf_counter()
+    for line in Path(args.path).open():
+        await orch.ingest(json.loads(line))
+    st = orch.store
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+    mid = st.match_id
+    for name, rows in (("moments", st.moments), ("cues", sorted(st.cues, key=lambda c: c["elapsed"])),
+                       ("audit", st.audit)):
+        with (out / f"match_{mid}.{name}.jsonl").open("w") as f:
+            for r in rows:
+                f.write(json.dumps(r, ensure_ascii=False, default=str) + "\n")
+    if st.recap:
+        (out / f"match_{mid}.recap.json").write_text(json.dumps(st.recap, indent=1, ensure_ascii=False))
+        print("\n" + st.recap["recap"]["title"])
+        print(st.recap["recap"]["standfirst"])
+    summary = orch.summary() | {"wall_seconds": round(time.perf_counter() - t0, 1), "mode": args.mode}
+    if hasattr(client, "hits"):
+        summary |= {"cache_hits": client.hits, "cache_misses": client.misses}
+    print("\n" + json.dumps(summary, indent=1))
+
+
+def main() -> None:
+    ap = argparse.ArgumentParser(prog="secondscreen.agents")
+    ap.add_argument("path")
+    ap.add_argument("--mode", choices=["mock", "live", "record", "replay"], default="mock")
+    ap.add_argument("--cache", default="data/llm_cache.jsonl")
+    ap.add_argument("--out", default="data")
+    ap.add_argument("--no-judge", action="store_true", help="skip the LLM judge (rules-only fact check)")
+    ap.add_argument("--inject-errors", type=int, default=0,
+                    help="mock only: every Nth analyst draft invents a number, to demo the revise loop")
+    asyncio.run(run(ap.parse_args()))
+
+
+if __name__ == "__main__":
+    main()

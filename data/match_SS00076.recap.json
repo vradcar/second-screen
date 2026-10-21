@@ -1,0 +1,101 @@
+{
+ "recap": {
+  "title": "Halcyon City 4-2 Redmarsh Rovers",
+  "standfirst": "Ezra Lazaro scores for Halcyon City. It's 4-2.",
+  "paragraphs": [
+   {
+    "text": "11:55: GOAL: Bastian Fontaine opens the scoring. 14:25: GOAL: Isak Quarry equalises. 51:59: GOAL: Luca Rask puts them ahead.",
+    "moment_ids": [
+     "SS00076-M003",
+     "SS00076-M006",
+     "SS00076-M018"
+    ],
+    "facts": []
+   },
+   {
+    "text": "Redmarsh Rovers have 1 shots and 0 box entries in the last five minutes. Redmarsh Rovers have 3 shots and 3 box entries in the last five minutes. Redmarsh Rovers have 1 shots and 3 box entries in the last five minutes.",
+    "moment_ids": [
+     "SS00076-M001",
+     "SS00076-M007",
+     "SS00076-M011"
+    ],
+    "facts": []
+   },
+   {
+    "text": "79:46: GOAL: Ezra Lazaro equalises. 86:06: GOAL: Lenny Amsel puts them ahead. 90+3': GOAL: Ezra Lazaro extends the lead.",
+    "moment_ids": [
+     "SS00076-M025",
+     "SS00076-M030",
+     "SS00076-M031"
+    ],
+    "facts": []
+   }
+  ],
+  "player_of_the_match": "Ezra Lazaro",
+  "player_of_the_match_reason": "Ezra Lazaro was involved in 3 goals.",
+  "player_of_the_match_facts": [
+   "potm.0.name",
+   "potm.0.goal_involvements"
+  ]
+ },
+ "source": "agent",
+ "facts": {
+  "team.home.name": "Halcyon City",
+  "match.score.home": 4,
+  "team.away.name": "Redmarsh Rovers",
+  "match.score.away": 2,
+  "stats.Halcyon City.goals": 4,
+  "stats.Halcyon City.xg": 2.36,
+  "stats.Halcyon City.shots": 15,
+  "stats.Halcyon City.shots_on_target": 7,
+  "stats.Halcyon City.possession_pct": 50.3,
+  "stats.Halcyon City.pass_completion": 0.791,
+  "stats.Halcyon City.ppda": 6.36,
+  "stats.Halcyon City.high_turnovers": 23,
+  "stats.Halcyon City.box_entries": 33,
+  "stats.Halcyon City.players_on_pitch": 11,
+  "stats.Redmarsh Rovers.goals": 2,
+  "stats.Redmarsh Rovers.xg": 5.02,
+  "stats.Redmarsh Rovers.shots": 20,
+  "stats.Redmarsh Rovers.shots_on_target": 7,
+  "stats.Redmarsh Rovers.possession_pct": 49.7,
+  "stats.Redmarsh Rovers.pass_completion": 0.784,
+  "stats.Redmarsh Rovers.ppda": 7.1,
+  "stats.Redmarsh Rovers.high_turnovers": 24,
+  "stats.Redmarsh Rovers.box_entries": 34,
+  "stats.Redmarsh Rovers.players_on_pitch": 10,
+  "potm.0.name": "Ezra Lazaro",
+  "potm.0.team": "Halcyon City",
+  "potm.0.goals": 2,
+  "potm.0.assists": 1,
+  "potm.0.xg": 0.81,
+  "potm.0.shots": 3,
+  "potm.0.key_passes": 1,
+  "potm.0.goal_involvements": 3,
+  "potm.0.distance_km": 13.9,
+  "potm.1.name": "Luca Rask",
+  "potm.1.team": "Redmarsh Rovers",
+  "potm.1.goals": 1,
+  "potm.1.assists": 0,
+  "potm.1.xg": 2.13,
+  "potm.1.shots": 7,
+  "potm.1.key_passes": 1,
+  "potm.1.goal_involvements": 1,
+  "potm.1.distance_km": 11.9,
+  "potm.2.name": "Emil Ilunga",
+  "potm.2.team": "Halcyon City",
+  "potm.2.goals": 0,
+  "potm.2.assists": 2,
+  "potm.2.xg": 0.3,
+  "potm.2.shots": 2,
+  "potm.2.key_passes": 2,
+  "potm.2.goal_involvements": 2,
+  "potm.2.distance_km": 3.3
+ },
+ "log": [
+  {
+   "attempt": 1,
+   "issues": []
+  }
+ ]
+}

@@ -12,9 +12,9 @@ All clubs, players, and match data are fictional and synthetically generated.
 |---|---|---|
 | Ingest | `secondscreen.simulator`: synthetic match engine → event stream | ✅ |
 | Interpret | `secondscreen.stats`: possession, PPDA, pressing intensity, xG, pass difficulty, momentum, control/chaos, evidence-linked signals | ✅ |
-| Explain | Agents: Moment Detector, Tactical Explainer, Fact-Checker, Recap | 🚧 |
-| Render | Overlay cues: timed JSON synced to the match clock | 🚧 |
-| Personalize | Persona agent: analyst / casual, favourite club & player, language | 🚧 |
+| Explain | `secondscreen.agents`: Tactical Analyst → Fact-Checker (revise loop) → Recap, on Microsoft Agent Framework + Foundry | ✅ |
+| Render | Timed, machine-readable overlay cues (lower thirds, player tags, stat pops) | ✅ |
+| Personalize | Persona agent: analyst / casual, favourite club, player cam, EN / ES / FR | ✅ |
 
 ## The simulator
 
@@ -37,7 +37,7 @@ Calibrated across 150 simulated matches: ~2.9 goals, ~27 shots, ~81% pass comple
 ### Usage
 
 ```bash
-pip install -e ".[dev]"
+pip install -e ".[agents,dev]"
 
 # Simulate one match → data/match_SS00076.jsonl + data/match_SS00076.truth.json
 python -m secondscreen.simulator generate --seed 76
@@ -114,6 +114,63 @@ chasing the game) as correct. Hot streaks deliberately favour precision: a false
 python -m secondscreen.stats data/match_SS00076.jsonl --out data   # signals + snapshot
 python -m secondscreen.stats.evaluate --seeds 60 --start 1000       # detector scorecard
 ```
+
+## The agents
+
+Built on **Microsoft Agent Framework** (`Agent`, `WorkflowBuilder`) with models served from
+**Microsoft Foundry**.
+
+```
+signal ──► Tactical Analyst ──draft──► Fact-Checker ──approved──► Persona ──► moment + overlay cues
+               ▲                          │    │
+               └──── revise (feedback) ───┘    └── rejected 3× / model outage ──► Fallback template
+```
+
+| Agent | Job | Output |
+|---|---|---|
+| Tactical Analyst | Explains *why* a flagged moment matters (game state, pressing, momentum, control vs chaos) | `MomentDraft`: headline, summary, why it matters, claims citing fact keys |
+| Fact-Checker | Deterministic grounding rules (every number, name and fact key must trace to the stats engine), then an LLM judge for causal and semantic support | approve, or send back specific feedback |
+| Persona | Renders the approved moment for each viewer: analyst or casual, favourite club, player cam, language | one rendering per persona, re-checked; any that adds a number or person is replaced |
+| Recap | Full-time report from approved moments and final stats only | `Recap`, checked with the same rules |
+
+Design choices:
+- **Numbers come from code, words come from models.** Agents only ever see a flat table of
+  `key = value` facts and must cite keys for every claim, which makes fact-checking mechanical.
+- **Models only where language adds value.** Speed tags, cards, substitutions and pass-difficulty
+  pops are deterministic overlay cues and render instantly.
+- **Failure is a path, not a crash.** A rejected draft gets specific feedback; after two revisions,
+  or if the model times out or returns bad JSON, a fact-safe template goes to air instead.
+- **Record / replay.** Live runs cache every model response, so the demo replays exactly with no
+  network and no cost.
+
+Overlay cue (what a rendering partner consumes):
+
+```json
+{"cue_id": "SS00076-M028-halcyon_fan", "persona_id": "halcyon_fan", "lang": "en",
+ "type": "lower_third", "clock": "79:46", "elapsed": 4910.2, "duration_s": 10, "priority": 1.0,
+ "team_id": "HAL", "player_id": "HAL-08",
+ "text": {"strap": "…", "card": "…"}, "stats": [{"label": "xG", "value": "0.31"}],
+ "evidence": ["SS00076-02281", "…"]}
+```
+
+### Running the agents
+
+```bash
+pip install -e ".[agents,dev]"
+
+# Offline: deterministic mock model (CI uses this)
+python -m secondscreen.agents data/match_SS00076.jsonl --mode mock --inject-errors 4
+
+# Live against Foundry, recording every response to data/llm_cache.jsonl
+cp .env.example .env    # fill in your endpoint; key or `az login`
+python -m secondscreen.agents data/match_SS00076.jsonl --mode record
+
+# Replay the recorded run: no network, identical output
+python -m secondscreen.agents data/match_SS00076.jsonl --mode replay
+```
+
+Auth: set `AZURE_OPENAI_ENDPOINT` + `AZURE_OPENAI_API_KEY`, or set `AZURE_AI_PROJECT_ENDPOINT`
+and run `az login` (grant yourself access once with `infra/grant-access.sh`).
 
 ## Tech stack (target)
 
