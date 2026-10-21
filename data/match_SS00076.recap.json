@@ -1,77 +1,44 @@
 {
  "recap": {
-  "title": "Halcyon City Stages Dramatic Comeback to Defeat Redmarsh Rovers 4-2",
-  "standfirst": "Despite Redmarsh Rovers' early dominance and a man down in the second half, Halcyon City's relentless pressing and late goals secured a thrilling 4-2 victory.",
+  "title": "Halcyon City 4-2 Redmarsh Rovers",
+  "standfirst": "Ezra Lazaro scored his second goal of the match in the 90+3' minute, assisted by Emil Ilunga, extending Halcyon City's lead to 4-2 over Redmarsh Rovers in open play from close range.",
   "paragraphs": [
    {
-    "text": "The match began with Redmarsh Rovers asserting early dominance, controlling possession and creating high-quality chances. Luca Rask had a close-range shot blocked at 08:05, reflecting Redmarsh's pressure and superior field tilt in the opening minutes. However, Halcyon City's Bastian Fontaine broke the deadlock at 11:55, sparking a shift in momentum. Although Redmarsh quickly equalized through Isak Quarry's header at 14:25, Halcyon City seized control of the game's rhythm following their opening goal, stabilizing play despite Redmarsh's initial possession advantage.",
+    "text": "11:55: Fontaine nets counter goal to open scoring at 12 minutes. 14:25: Isak Quarry heads Redmarsh level at 14 minutes. 51:59: Rask's counter goal completes Redmarsh comeback at 52 minutes.",
     "moment_ids": [
-     "SS00076-M002",
      "SS00076-M003",
-     "SS00076-M005",
-     "SS00076-M006"
+     "SS00076-M006",
+     "SS00076-M018"
     ],
-    "facts": [
-     "stats.Redmarsh Rovers.possession_pct",
-     "stats.Redmarsh Rovers.shots",
-     "stats.Halcyon City.goals"
-    ]
+    "facts": []
    },
    {
-    "text": "Redmarsh Rovers responded with a strong attacking surge, dominating shots and field tilt around the 19th minute mark, and maintaining high possession and pass completion rates. Yet, Halcyon City launched intense pressing spells around the 24th minute, nearly doubling their press actions and forcing turnovers that disrupted Redmarsh's control. This pressing intensity created opportunities for Halcyon City despite Redmarsh's statistical superiority in possession and expected goals, highlighting the tactical battle between control and chaos.",
+    "text": "By the 7th minute, Redmarsh Rovers have surged ahead in momentum, holding 63% possession and creating 3 box entries with a shot on target. Halcyon City trails with just 37% possession and no shots so far. Redmarsh Rovers have swung momentum firmly in their favor at 19 minutes, registering 3 shots and 3 box entries in the last 5 minutes while Halcyon City has not managed any shots in that period. The score remains tied at 1-1. At 30 minutes, momentum swung sharply in favor of Redmarsh Rovers, moving from 30.4 to -38.9. In the last five minutes, Redmarsh recorded 1 shot and 3 box entries, while Halcyon City had no shots during this period.",
     "moment_ids": [
+     "SS00076-M001",
      "SS00076-M007",
-     "SS00076-M008",
-     "SS00076-M009",
-     "SS00076-M010"
+     "SS00076-M011"
     ],
-    "facts": [
-     "stats.Redmarsh Rovers.shots",
-     "stats.Redmarsh Rovers.possession_pct",
-     "stats.Halcyon City.ppda"
-    ]
+    "facts": []
    },
    {
-    "text": "The second half entered a chaotic phase with frequent possession changes, where both teams battled intensely. Redmarsh took the lead at 51:59 through Luca Rask's counterattack goal but soon suffered a setback as Kian Steen received a second yellow card, reducing them to ten men. Halcyon City capitalized on this numerical advantage by intensifying their pressing and mounting a fierce late surge, marked by multiple box entries and shots, shifting momentum firmly in their favor during the final stages of the match.",
-    "moment_ids": [
-     "SS00076-M016",
-     "SS00076-M018",
-     "SS00076-M019",
-     "SS00076-M026",
-     "SS00076-M027",
-     "SS00076-M028"
-    ],
-    "facts": [
-     "stats.Redmarsh Rovers.players_on_pitch",
-     "stats.Halcyon City.box_entries",
-     "stats.Halcyon City.shots"
-    ]
-   },
-   {
-    "text": "Halcyon City's resilience was rewarded with Ezra Lazaro scoring a crucial equalizer at 79:46, followed by Lenny Amsel's late header at 86:06 to take the lead. Lazaro sealed the victory with a second goal in stoppage time, cementing Halcyon's comeback. The statistics reflect Halcyon City's efficient finishing, netting four goals from an expected 2.36 xG and maintaining solid possession and pass completion, while Redmarsh Rovers, despite a higher xG of 5.02, were less clinical and hampered by fatigue and the red card.",
+    "text": "79:46: Ezra Lazaro heads Halcyon City level at 2-2 with 10 men down. 86:06: Lenny Amsel's header puts Halcyon City ahead with 4 minutes left. 90+3': Lazaro nets second to extend Halcyon City's lead to 4-2.",
     "moment_ids": [
      "SS00076-M025",
      "SS00076-M030",
      "SS00076-M031"
     ],
-    "facts": [
-     "stats.Halcyon City.goals",
-     "stats.Halcyon City.xg",
-     "stats.Redmarsh Rovers.xg",
-     "stats.Halcyon City.pass_completion"
-    ]
+    "facts": []
    }
   ],
   "player_of_the_match": "Ezra Lazaro",
-  "player_of_the_match_reason": "Ezra Lazaro was instrumental in Halcyon City's comeback, contributing two goals and one assist, leading the team in goal involvements and covering the most distance, showcasing his work rate and finishing under pressure.",
+  "player_of_the_match_reason": "Ezra Lazaro was involved in 3 goals.",
   "player_of_the_match_facts": [
-   "potm.0.goals",
-   "potm.0.assists",
-   "potm.0.goal_involvements",
-   "potm.0.distance_km"
+   "potm.0.name",
+   "potm.0.goal_involvements"
   ]
  },
- "source": "agent",
+ "source": "fallback",
  "facts": {
   "team.home.name": "Halcyon City",
   "match.score.home": 4,
@@ -129,17 +96,14 @@
   {
    "attempt": 1,
    "issues": [
-    "Paragraph 0 uses 14, which its cited moments and facts don't contain.",
-    "Paragraph 0 uses 66.6, which its cited moments and facts don't contain.",
-    "Paragraph 0 uses 8, which its cited moments and facts don't contain.",
-    "Paragraph 0 uses 97.3, which its cited moments and facts don't contain.",
-    "Paragraph 1 uses 51, which its cited moments and facts don't contain.",
-    "Paragraph 1 uses 59, which its cited moments and facts don't contain."
+    "Paragraph 3 uses 80, which its cited moments and facts don't contain."
    ]
   },
   {
    "attempt": 2,
-   "issues": []
+   "issues": [
+    "Paragraph 3 uses 80, which its cited moments and facts don't contain."
+   ]
   }
  ]
 }
