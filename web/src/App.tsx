@@ -50,17 +50,23 @@ export default function App() {
   const [line, setLine] = useState<Seg | null>(null);
   useEffect(() => { booth.onLine = (s) => { setLine(s); crowd.duck(!!s); }; }, [booth, crowd]);
   const reel = useReel(state.meta, clockRef, params.speed, restart, init.reel, { on: voice, booth, persona: persona(tv) });
-  useCommentary(voice, reel.playing, state.moments, persona(tv), booth);
+  useCommentary(voice, reel.playing, state.moments, state.calls, persona(tv), booth, clockRef);
   useCrowd(voice, state.events, crowd);
 
   const { meta, snap } = state;
   const onAir = params.mode === "onair";
   const [starting, setStarting] = useState(false);
   const [startError, setStartError] = useState<string | null>(null);
-  const startBroadcast = async () => {
+  // ?token=... on the URL unlocks starting broadcasts (and live agents) on a protected deployment.
+  const token = new URLSearchParams(location.search).get("token");
+  const startBroadcast = async (fresh = false) => {
     setStarting(true); setStartError(null);
     try {
-      const r = await fetch(`/api/broadcast/start?match=${params.match}&speed=${params.speed}`, { method: "POST" });
+      const q = new URLSearchParams({ speed: String(params.speed) });
+      if (fresh) { q.set("seed", "-1"); q.set("agents", "live"); } else q.set("match", params.match);
+      if (token) q.set("token", token);
+      const r = await fetch(`/api/broadcast/start?${q}`, { method: "POST" });
+      if (r.status === 403) throw new Error("This deployment is protected: open the page with ?token=<start token> to start broadcasts.");
       if (!r.ok) throw new Error((await r.json()).detail ?? r.statusText);
       if (state.status === "ended") restart({});
     } catch (e) { setStartError(String((e as Error).message)); }
@@ -116,7 +122,13 @@ export default function App() {
           <h2>Nothing is on air</h2>
           <p>Start the broadcast and everyone who opens this page watches the same match, live. Events flow through the
              live feed into one shared pipeline, and moments are saved so late joiners catch up.</p>
-          <button className="play" onClick={startBroadcast} disabled={starting}>{starting ? "Starting…" : `Start the broadcast at ${params.speed}×`}</button>
+          <div className="onair-actions">
+            <button className="play" onClick={() => startBroadcast(true)} disabled={starting}>
+              {starting ? "Starting…" : `Kick off a brand-new match at ${params.speed}×`}</button>
+            <button className="linkish" onClick={() => startBroadcast(false)} disabled={starting}>or replay {params.match}</button>
+          </div>
+          <p className="onair-note">A new match is simulated on the spot: every moment, fact-check, translation and line of
+             commentary is made live by the agents as it streams. Turn Commentary on to hear the box.</p>
           {startError && <p className="notice">{startError}</p>}
         </section>
       )}
@@ -158,7 +170,7 @@ export default function App() {
               <span className="pipeline">
                 {state.events.length.toLocaleString()} events streamed, {state.moments.length} moments published
                 {state.status === "ended" ? ", full time" : ""}
-                {onAir && state.status === "ended" && <button className="linkish" onClick={startBroadcast}>Start a new broadcast</button>}
+                {onAir && state.status === "ended" && <button className="linkish" onClick={() => startBroadcast(true)}>Kick off another match</button>}
               </span>
             </div>
             <MomentumRiver snap={snap} meta={meta} events={state.events} duration={meta.duration} />

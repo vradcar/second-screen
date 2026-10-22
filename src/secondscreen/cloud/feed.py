@@ -126,9 +126,32 @@ def make_feed():
     return EventHubFeed(ns, hub) if ns else MemoryFeed()
 
 
+def runtime_dir() -> Path:
+    """Where matches simulated on demand are written (the image's data folder may be read-only)."""
+    import tempfile
+    return Path(os.environ.get("SECONDSCREEN_RUNTIME", Path(tempfile.gettempdir()) / "secondscreen"))
+
+
+def match_path(match: str, data_dir: str | Path = "data") -> Path | None:
+    for d in (Path(data_dir), runtime_dir()):
+        if (p := d / f"match_{match}.jsonl").exists():
+            return p
+    return None
+
+
 def load_events(match: str, data_dir: str | Path = "data") -> list[dict]:
-    path = Path(data_dir) / f"match_{match}.jsonl"
+    path = match_path(match, data_dir) or Path(data_dir) / f"match_{match}.jsonl"
     return [json.loads(line) for line in path.open(encoding="utf-8")]
+
+
+def simulate_match(seed: int, data_dir: str | Path = "data") -> str:
+    """Simulate a new match on demand and return its id (reuses it if it already exists)."""
+    match = f"SS{seed:05d}"
+    if match_path(match, data_dir) is None:
+        from secondscreen.simulator.cli import write_match
+        runtime_dir().mkdir(parents=True, exist_ok=True)
+        write_match(seed, runtime_dir())
+    return match
 
 
 async def _main(args) -> None:

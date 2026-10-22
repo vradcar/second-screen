@@ -19,6 +19,8 @@ import os
 import time
 from pathlib import Path
 
+from secondscreen.agents.spotter import Spotter, call_lead
+
 LEAD = 6.0
 TICK = 0.1
 SNAP_EVERY = 4.0
@@ -95,6 +97,7 @@ class Broadcast:
         self.state, self.match, self.speed, self.agents = "on_air", match, max(1.0, min(speed, max_speed)), agents
         self.run_id = f"{match}-{int(time.time())}"
         self.orch = self._build_orchestrator()
+        self.spotter = Spotter(["en", "es", "fr"])
         await self.store.save_run(self.run_id, {"match": match, "speed": self.speed, "agents": agents,
                                                 "state": "on_air", "started": time.time()})
         self.tasks = [asyncio.create_task(self._consume()), asyncio.create_task(self._air())]
@@ -142,6 +145,8 @@ class Broadcast:
                 self.feed_done = True
                 return
             self.events.append(e)
+            for c in self.spotter.feed(e):          # the feed is ahead of air: call it on time
+                self._fan_out({"t": "call", "c": c})
             if e["type"] == "match_start":
                 self.meta = {"t": "meta", "match_id": e["match_id"], "home": e["home"], "away": e["away"],
                              "mode": "onair", "speed": self.speed, "duration": NOMINAL_DURATION,
@@ -162,7 +167,7 @@ class Broadcast:
             if self.started_wall is None:
                 continue
             now = time.perf_counter()
-            self.air_clock = self.first_elapsed + (now - self.started_wall) * self.speed - LEAD
+            self.air_clock = self.first_elapsed + (now - self.started_wall) * self.speed - call_lead(self.speed, LEAD)
             while i < len(self.events) and self.events[i]["elapsed_seconds"] <= self.air_clock:
                 await self.orch.ingest(self.events[i])
                 i += 1

@@ -1,8 +1,11 @@
-import { useEffect, useRef } from "react";
-import type { CommentaryLine, MatchEvent, Moment, Persona } from "./types";
+import { useEffect, useRef, type MutableRefObject } from "react";
+import { matchTime, type ClockRef } from "./stream";
+import type { Call, CommentaryLine, MatchEvent, Moment, Persona } from "./types";
 
 const SPOKEN = new Set(["goal", "red_card", "penalty_awarded", "big_save", "big_chance_missed", "late_surge",
                         "hot_streak", "fatigue_fade", "pressing_spell"]);
+
+const BIG = new Set(["goal", "red_card", "penalty_awarded"]);
 
 export type Seg = { text: string; lang: string; role: "commentator" | "pundit"; tone: "build" | "peak" | "after" | "calm"; gap: number };
 
@@ -32,6 +35,8 @@ const url = (s: Seg) =>
  */
 export class Booth {
   private audios: HTMLAudioElement[] = [];
+  private pending: Seg[] = [];
+  private queue: Seg[][] = [];
   private timer = 0;
   private token = 0;
   busy = false;
@@ -39,7 +44,7 @@ export class Booth {
 
   /** Preload a script; resolves with the build segment's length in seconds (0 if none). */
   prepare(segs: Seg[]): Promise<number> {
-    this.stop();
+    this.halt();
     this.audios = segs.map((s) => { const a = new Audio(url(s)); a.preload = "auto"; return a; });
     this.pending = segs;
     const build = segs[0]?.tone === "build" ? this.audios[0] : null;
@@ -51,16 +56,20 @@ export class Booth {
       setTimeout(() => res(2), 2500);
     });
   }
-  private pending: Seg[] = [];
 
-  /** Play what was prepared (or a new script). */
+  /** Play what was prepared, or a new script (cutting in on whatever is playing). */
   play(segs?: Seg[]) {
-    if (segs) { this.stop(); this.audios = segs.map((s) => new Audio(url(s))); this.pending = segs; }
+    if (segs) { this.halt(); this.audios = segs.map((s) => new Audio(url(s))); this.pending = segs; }
     const my = ++this.token, list = this.pending, audios = this.audios;
     this.busy = true;
     const step = (k: number) => {
       if (my !== this.token) return;
-      if (k >= audios.length) { this.busy = false; this.onLine(null); return; }
+      if (k >= audios.length) {
+        this.busy = false; this.onLine(null);
+        const next = this.queue.shift();
+        if (next) this.timer = window.setTimeout(() => this.play(next), 500);
+        return;
+      }
       this.timer = window.setTimeout(() => {
         if (my !== this.token) return;
         const a = audios[k];
@@ -73,31 +82,86 @@ export class Booth {
     step(0);
   }
 
-  stop() {
+  /** Play after whatever is on now (the pundit waits for the call to finish). */
+  enqueue(segs: Seg[]) {
+    if (!segs.length) return;
+    if (this.busy) this.queue.push(segs); else this.play(segs);
+  }
+
+  private halt() {
     this.token++;
     clearTimeout(this.timer);
     this.audios.forEach((a) => { a.onended = a.onerror = null; a.pause(); });
     this.busy = false;
     this.onLine(null);
   }
+
+  stop() { this.queue = []; this.halt(); }
 }
 
-/** Read out each new big moment as it arrives (not the backlog). Suppressed while the reel drives the booth. */
-export function useCommentary(on: boolean, suppress: boolean, moments: Moment[], persona: Persona, booth: Booth) {
+/**
+ * Live commentary. Calls from the spotter arrive a few seconds before the action reaches the
+ * screen; the build-up is timed so the call lands as it happens. When the agents' moment for the
+ * same signal arrives, only the co-commentator speaks. Other big moments (pressing, a late surge)
+ * are read out in full as they arrive. Suppressed while the highlights reel drives the booth.
+ */
+export function useCommentary(on: boolean, suppress: boolean, moments: Moment[], calls: Call[], persona: Persona,
+                              booth: Booth, clockRef: MutableRefObject<ClockRef>) {
   const seen = useRef<Set<string>>(new Set());
-  useEffect(() => { seen.current = new Set(moments.map((m) => m.moment_id)); if (!on) booth.stop(); },
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  [on, persona.id, suppress]);
+  const seenCalls = useRef<Set<string>>(new Set());
+  const called = useRef<Set<string>>(new Set());
+  const pending = useRef<{ c: Call; build: number; started: boolean } | null>(null);
 
+  useEffect(() => {
+    seen.current = new Set(moments.map((m) => m.moment_id));
+    seenCalls.current = new Set(calls.map((c) => c.signal_id));
+    pending.current = null;
+    if (!on) booth.stop();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [on, persona.id, suppress]);
+
+  // New calls: preload, and let the clock decide when to start.
+  useEffect(() => {
+    const fresh = calls.filter((c) => !seenCalls.current.has(c.signal_id));
+    fresh.forEach((c) => seenCalls.current.add(c.signal_id));
+    if (!on || suppress) return;
+    for (const c of fresh) {
+      const cur = pending.current;
+      if (cur && !cur.started && !BIG.has(c.kind) && BIG.has(cur.c.kind)) continue;   // don't bump a goal
+      const p = { c, build: -1, started: false };
+      pending.current = p;
+      booth.prepare(segments(c, persona)).then((d) => { p.build = d; });
+    }
+  }, [on, suppress, calls, persona, booth]);
+
+  useEffect(() => {
+    if (!on || suppress) return;
+    const id = setInterval(() => {
+      const p = pending.current;
+      if (!p || p.started) return;
+      const t = matchTime(clockRef.current), speed = clockRef.current.speed || 1;
+      if ((p.build >= 0 && t >= p.c.at - p.build * speed - 0.3) || t >= p.c.at) {
+        p.started = true;
+        called.current.add(p.c.signal_id);
+        booth.play();
+      }
+      if (t > p.c.at + 30) pending.current = null;     // stale (a seek, say)
+    }, 100);
+    return () => clearInterval(id);
+  }, [on, suppress, booth, clockRef]);
+
+  // Agent moments: the pundit follows a call; other big moments are read in full.
   useEffect(() => {
     const fresh = moments.filter((m) => !seen.current.has(m.moment_id));
     fresh.forEach((m) => seen.current.add(m.moment_id));
     if (!on || suppress) return;
-    const next = fresh.filter((m) => SPOKEN.has(m.kind)).sort((a, b) => b.importance - a.importance)[0];
-    if (!next) return;
-    const big = next.kind === "goal" || next.kind === "red_card";
-    if (booth.busy && !big) return;
-    booth.play(segments(next, persona));
+    for (const m of fresh.filter((x) => SPOKEN.has(x.kind)).sort((a, b) => a.elapsed - b.elapsed)) {
+      if (called.current.has(m.signal_id) || pending.current?.c.signal_id === m.signal_id) {
+        booth.enqueue(segments(m, persona).filter((s) => s.role === "pundit"));
+      } else if (!booth.busy || BIG.has(m.kind)) {
+        booth.play(segments(m, persona));
+      }
+    }
   }, [on, suppress, moments, persona, booth]);
 
   useEffect(() => () => booth.stop(), [booth]);

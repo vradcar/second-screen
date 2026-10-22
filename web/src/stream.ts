@@ -1,5 +1,5 @@
 import { useEffect, useReducer, useRef } from "react";
-import type { Cue, MatchEvent, Meta, Moment, RecapDoc, Snapshot } from "./types";
+import type { Call, Cue, MatchEvent, Meta, Moment, RecapDoc, Snapshot } from "./types";
 
 export interface StreamParams { match: string; mode: string; speed: number; start: number; at: number; run: number }
 
@@ -13,6 +13,7 @@ export interface StreamState {
   snap?: Snapshot;
   moments: Moment[];
   cues: Cue[];
+  calls: Call[];
   recap?: RecapDoc;
   clock: string;
   period: number;
@@ -25,11 +26,12 @@ type Msg =
   | { t: "snap"; s: Snapshot }
   | { t: "moment"; m: Moment }
   | { t: "cue"; c: Cue }
+  | { t: "call"; c: Call }
   | { t: "recap"; r: RecapDoc }
   | { t: "clock"; clock: string; period: number }
   | { t: "status"; status: StreamState["status"]; error?: string };
 
-const initial: StreamState = { status: "connecting", events: [], moments: [], cues: [], clock: "00:00", period: 1 };
+const initial: StreamState = { status: "connecting", events: [], moments: [], cues: [], calls: [], clock: "00:00", period: 1 };
 
 function reducer(s: StreamState, a: Msg): StreamState {
   switch (a.t) {
@@ -41,6 +43,7 @@ function reducer(s: StreamState, a: Msg): StreamState {
       if (s.moments.some((m) => m.moment_id === a.m.moment_id)) return s;
       return { ...s, moments: [...s.moments, a.m], cues: s.cues.concat(a.m.cues) };
     case "cue": return { ...s, cues: [...s.cues, a.c] };
+    case "call": return { ...s, calls: [...s.calls, a.c] };
     case "recap": return { ...s, recap: a.r };
     case "clock": return s.clock === a.clock ? s : { ...s, clock: a.clock, period: a.period };
     case "status": return { ...s, status: a.status, error: a.error };
@@ -71,6 +74,7 @@ export function useMatchStream(p: StreamParams) {
       switch (msg.t) {
         case "meta":
           clockRef.current.elapsed = msg.start_elapsed; clockRef.current.at = performance.now();
+          if (msg.speed) clockRef.current.speed = msg.speed;
           dispatch({ t: "meta", m: msg }); break;
         case "ev": evBuf.push(msg.e); break;
         case "clock":
@@ -80,6 +84,7 @@ export function useMatchStream(p: StreamParams) {
         case "snap": dispatch({ t: "snap", s: msg.s }); break;
         case "moment": dispatch({ t: "moment", m: msg.m }); break;
         case "cue": dispatch({ t: "cue", c: msg.c }); break;
+        case "call": dispatch({ t: "call", c: msg.c }); break;
         case "recap": dispatch({ t: "recap", r: msg.r }); break;
         case "state": clockRef.current.speed = msg.speed; clockRef.current.paused = msg.paused; break;
         case "end": dispatch({ t: "status", status: "ended" }); break;

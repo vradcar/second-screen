@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Deploy Second Screen to Azure. Run in Azure Cloud Shell (Bash) from the repo root:
 #   git clone https://github.com/vradcar/second-screen && cd second-screen
-#   FOUNDRY=secondscreen-ai-ae9ze bash infra/deploy.sh
+#   FOUNDRY=secondscreen-ai-ae9ze AGENTS=live bash infra/deploy.sh
+# AGENTS=live: every broadcast runs the agents (and commentator) live on Foundry.
 set -euo pipefail
 
 RG="${RG:-rg-second-screen}"
@@ -29,8 +30,8 @@ Deployed.
   App:          $URL
   Start token:  $TOKEN   (keep this; needed to start/stop broadcasts and for live agents)
 
-Try it:
-  curl $URL/api/health
-  curl -X POST "$URL/api/broadcast/start?speed=10&token=$TOKEN"
-Then open $URL and pick "On air".
+Go live (agents: $AGENTS):
+  $URL/?mode=onair&speed=5&token=$TOKEN
+  -> "Kick off a brand-new match", then turn Commentary on.
+Share $URL/?mode=onair with viewers (no token: they can watch, not start).
 DONE

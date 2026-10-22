@@ -261,7 +261,15 @@ FOUNDRY=<your Foundry resource> bash infra/deploy.sh   # prints the URL and a st
 ```
 
 Open the URL and pick **On air**: everyone watching sees the same match, fed through Event Hubs,
-with moments stored in Cosmos DB so late joiners catch up.
+with moments stored in Cosmos DB so late joiners catch up. **Kick off a brand-new match** simulates
+one on the spot and everything about it is made live: moments, fact-checks, persona cards,
+translations and commentary.
+
+Live commentary works the way TV does. The stream runs a few seconds behind the feed (the broadcast
+delay). A spotter runs the stats engine on the feed ahead of air and, the moment it flags a goal,
+red card or big chance, sends the commentator's call; each viewer's commentary box times the
+build-up so the call lands as the ball goes in on screen. The agents take a few seconds longer, and
+when their moment for the same signal arrives the co-commentator follows with the analysis.
 
 ## Measure it
 

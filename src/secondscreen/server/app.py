@@ -42,6 +42,7 @@ from secondscreen.cloud.store import make_store  # noqa: E402
 from secondscreen.cloud.speech import Speech  # noqa: E402
 from secondscreen.cloud.translate import Translator  # noqa: E402
 from secondscreen.highlights import pick as pick_highlights  # noqa: E402
+from secondscreen.agents.spotter import Spotter, call_lead  # noqa: E402
 
 BROADCAST_AGENTS = os.environ.get("BROADCAST_AGENTS", "recorded")   # recorded | mock | live
 START_TOKEN = os.environ.get("BROADCAST_START_TOKEN")               # optional: protect start/stop
@@ -61,6 +62,9 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Second Screen", lifespan=lifespan)
+
+
+SPOT_LANGS = ["en", "es", "fr"]
 
 
 def with_commentary(moments: list[dict], path: Path) -> list[dict]:
@@ -187,9 +191,12 @@ class Session:
         narrate = self.orch.narrate
         self.orch.narrate = False
         i_proc = 0
+        spotter, i_spot = Spotter(SPOT_LANGS), 0
         while i_proc < len(ev) and ev[i_proc]["elapsed_seconds"] < self.start_elapsed:
             await self.orch.ingest(ev[i_proc])
+            spotter.feed(ev[i_proc])
             i_proc += 1
+        i_spot = i_proc
         self.orch.narrate = narrate
         clock = self.start_elapsed
         backlog = [m for m in self.recorded_moments if m["elapsed"] < clock]
@@ -209,6 +216,10 @@ class Session:
                 if not self.paused:
                     clock += (now - last) * self.speed
                 last = now
+                while i_spot < len(ev) and ev[i_spot]["elapsed_seconds"] <= clock + call_lead(self.speed, LEAD):
+                    for c in spotter.feed(ev[i_spot]):
+                        await self.send({"t": "call", "c": c})
+                    i_spot += 1
                 while i_anim < len(ev) and ev[i_anim]["elapsed_seconds"] <= clock + LEAD:
                     await self.send({"t": "ev", "e": anim_event(ev[i_anim])})
                     i_anim += 1
@@ -313,16 +324,26 @@ def broadcast_status():
 
 @app.post("/api/broadcast/start")
 async def broadcast_start(match: str = "SS00076", speed: float = 5.0, agents: str | None = None,
-                          publish: bool = True, token: str | None = None):
+                          publish: bool = True, token: str | None = None, seed: int | None = None):
     """Start the shared live broadcast. With publish=false, an external publisher
-    (python -m secondscreen.cloud.feed) supplies the events."""
+    (python -m secondscreen.cloud.feed) supplies the events. With seed=<n> (or seed=-1 for a
+    random one), a brand-new match is simulated and streamed: nothing about it exists in advance,
+    so every moment, translation and line of commentary is made live."""
     _check_token(token)
-    if not (DATA / f"match_{match}.jsonl").exists():
+    if seed is not None:
+        import random
+        from secondscreen.cloud.feed import simulate_match
+        match = simulate_match(seed if seed >= 0 else random.randint(1000, 99999), DATA)
+    from secondscreen.cloud.feed import match_path
+    if match_path(match, DATA) is None:
         raise HTTPException(status_code=404, detail=f"no match {match}")
     agents = agents or BROADCAST_AGENTS
     # Live agents on a broadcast need the model configured, and the start token if one is set.
-    if agents == "live" and not (_model_configured() and (PUBLIC_LIVE or (START_TOKEN and token == START_TOKEN))):
+    live_ok = _model_configured() and (PUBLIC_LIVE or bool(START_TOKEN and token == START_TOKEN))
+    if agents == "live" and not live_ok:
         agents = "recorded"
+    if agents == "recorded" and not (DATA / f"match_{match}.moments.jsonl").exists():
+        agents = "live" if live_ok else "mock"     # a new match has no recorded run: make it live
     return await app.state.broadcast.start(match, speed, agents, publish=publish)
 
 
