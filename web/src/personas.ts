@@ -1,10 +1,10 @@
 import type { Persona } from "./types";
 
 export const PERSONAS: Persona[] = [
-  { id: "studio_analyst", label: "Studio analyst", short: "Analyst", lang: "en", accent: "#16202E" },
-  { id: "halcyon_fan", label: "Halcyon City fan", short: "Halcyon fan", lang: "en", accent: "#1F4E8C", club: "HAL" },
-  { id: "redmarsh_fan_es", label: "Aficionado del Redmarsh", short: "Redmarsh (ES)", lang: "es", accent: "#B3261E", club: "RED" },
-  { id: "lazaro_cam_fr", label: "Caméra Ezra Lazaro", short: "Lazaro cam (FR)", lang: "fr", accent: "#9A7414", focus: "Ezra Lazaro" },
+  { id: "studio_analyst", label: "Studio analyst · English", short: "Analyst", lang: "en", accent: "#16202E" },
+  { id: "halcyon_fan", label: "Halcyon City fan · English", short: "Halcyon fan", lang: "en", accent: "#1F4E8C", club: "HAL" },
+  { id: "redmarsh_fan_es", label: "Redmarsh Rovers fan · Spanish", short: "Redmarsh (ES)", lang: "es", accent: "#B3261E", club: "RED" },
+  { id: "lazaro_cam_fr", label: "Player cam: Ezra Lazaro · French", short: "Lazaro cam (FR)", lang: "fr", accent: "#9A7414", focus: "Ezra Lazaro" },
 ];
 
 const KIND: Record<string, Record<string, string>> = {

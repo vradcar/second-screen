@@ -149,7 +149,7 @@ export default function App() {
             )}
             {meta.mode === "recorded" && !reel.playing && <Timeline meta={meta} clockRef={clockRef} onSeek={(at) => restart({ at })} />}
             <div className="tv-caption">
-              <label>On-air graphics for
+              <label title="Whose version of each moment the TV shows, and the commentary language">On-air graphics and commentary for
                 <select value={tv} onChange={(e) => setTv(e.target.value)}>
                   {PERSONAS.map((p) => <option key={p.id} value={p.id}>{p.label}</option>)}
                 </select>
