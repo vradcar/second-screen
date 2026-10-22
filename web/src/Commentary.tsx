@@ -7,7 +7,10 @@ const SPOKEN = new Set(["goal", "red_card", "penalty_awarded", "big_save", "big_
 
 const BIG = new Set(["goal", "red_card", "penalty_awarded"]);
 
-export type Seg = { text: string; lang: string; role: "commentator" | "pundit"; tone: "build" | "peak" | "after" | "calm"; gap: number };
+export type Seg = { text: string; lang: string; role: "commentator" | "pundit"; tone: "call" | "after" | "calm"; gap: number };
+
+/** The call's last ~second is the shout: line that up with the action. */
+export const PEAK_TAIL = 0.9;
 
 /** The commentary script for a moment in this viewer's language: build, peak, after, pundit. */
 export function segments(m: { commentary?: Record<string, CommentaryLine>; headline?: string } & Partial<Moment>,
@@ -18,9 +21,10 @@ export function segments(m: { commentary?: Record<string, CommentaryLine>; headl
     if (r) return [{ text: r.lower_third, lang: r.lang, role: "commentator", tone: "after", gap: 0 }];
     return m.headline ? [{ text: m.headline, lang: "en", role: "commentator", tone: "after", gap: 0 }] : [];
   }
+  // The build-up and the call are one take, so they flow like one breath.
   const out: Seg[] = [];
-  if (c.build) out.push({ text: c.build, lang: c.lang, role: "commentator", tone: "build", gap: 0 });
-  if (c.peak) out.push({ text: c.peak, lang: c.lang, role: "commentator", tone: "peak", gap: 60 });
+  const call = [c.build, c.peak].filter(Boolean).join(" ");
+  if (call) out.push({ text: call, lang: c.lang, role: "commentator", tone: "call", gap: 0 });
   if (c.after) out.push({ text: c.after, lang: c.lang, role: "commentator", tone: "after", gap: 120 });
   if (c.pundit) out.push({ text: c.pundit, lang: c.lang, role: "pundit", tone: "calm", gap: 650 });
   return out;
@@ -47,7 +51,7 @@ export class Booth {
     this.halt();
     this.audios = segs.map((s) => { const a = new Audio(url(s)); a.preload = "auto"; return a; });
     this.pending = segs;
-    const build = segs[0]?.tone === "build" ? this.audios[0] : null;
+    const build = segs[0]?.tone === "call" ? this.audios[0] : null;
     if (!build) return Promise.resolve(0);
     return new Promise((res) => {
       const done = () => res(Number.isFinite(build.duration) ? build.duration : 2);
@@ -140,7 +144,7 @@ export function useCommentary(on: boolean, suppress: boolean, moments: Moment[],
       const p = pending.current;
       if (!p || p.started) return;
       const t = matchTime(clockRef.current), speed = clockRef.current.speed || 1;
-      if ((p.build >= 0 && t >= p.c.at - p.build * speed - 0.3) || t >= p.c.at) {
+      if ((p.build >= 0 && t >= p.c.at - Math.max(p.build - PEAK_TAIL, 0) * speed) || t >= p.c.at) {
         p.started = true;
         called.current.add(p.c.signal_id);
         booth.play();

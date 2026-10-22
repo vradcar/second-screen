@@ -7,7 +7,7 @@ DATA = Path(__file__).resolve().parents[1] / "data"
 
 
 async def test_cache_then_mock_then_budget(tmp_path, monkeypatch):
-    for k in ("AZURE_SPEECH_KEY", "AZURE_OPENAI_API_KEY", "SECONDSCREEN_SPEECH"):
+    for k in ("AZURE_SPEECH_KEY", "AZURE_OPENAI_API_KEY", "SECONDSCREEN_SPEECH", "AZURE_TTS_DEPLOYMENT"):
         monkeypatch.delenv(k, raising=False)
     sp = Speech(cache_dir=tmp_path)
     assert await sp.speak("And it's in!", "en", "commentator", "peak") is None      # nothing configured or cached
@@ -20,17 +20,27 @@ async def test_cache_then_mock_then_budget(tmp_path, monkeypatch):
     assert await sp.speak("A much longer line over budget", "fr") is None
 
 
-def test_ssml_is_valid_and_shaped():
+def test_ssml_is_valid_and_natural():
     for voice in ("en-GB-RyanNeural", "en-us-Andrew:DragonHDLatestNeural"):
-        for tone in ("build", "peak", "after", "calm"):
+        for tone in ("call", "after", "calm"):
             ssml = build_ssml("Fallow & Quarry... rises... <b>", voice, tone)
             xml.dom.minidom.parseString(ssml)
             assert "<break" in ssml and "&amp;" in ssml
-    assert "pitch" not in build_ssml("x", "en-us-Andrew:DragonHDLatestNeural", "peak")  # HD: style, not pitch
-    assert "shouting" in build_ssml("x", "en-us-Andrew:DragonHDLatestNeural", "peak")
+            assert "pitch" not in ssml                      # pitch shifting is what sounds synthetic
+    assert "excited" in build_ssml("x", "en-us-Andrew:DragonHDLatestNeural", "call")
+
+
+def test_engine_choice_and_direction(monkeypatch):
+    from secondscreen.cloud.speech import direction, engine, voice_for
+    monkeypatch.delenv("AZURE_TTS_DEPLOYMENT", raising=False)
+    assert engine() == "speech" and voice_for("commentator", "en") == "en-GB-RyanNeural"
+    monkeypatch.setenv("AZURE_TTS_DEPLOYMENT", "gpt-4o-mini-tts")
+    assert engine() == "openai" and voice_for("pundit", "en") == "ballad"
+    assert "British" in direction("commentator", "call", "en") and "Spanish" in direction("commentator", "call", "es")
 
 
 def test_commentary_clips_cover_every_part():
     line = {"lang": "en", "build": "a... b", "peak": "In!", "after": "Lead 1-0.", "pundit": "Calm words."}
-    assert [c[2:] for c in clips_for({"en": line})] == [("commentator", "build"), ("commentator", "peak"),
-                                                        ("commentator", "after"), ("pundit", "calm")]
+    clips = clips_for({"en": line})
+    assert clips[0] == ("a... b In!", "en", "commentator", "call")      # build-up and call in one take
+    assert [c[2:] for c in clips[1:]] == [("commentator", "after"), ("pundit", "calm")]

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type MutableRefObject } from "react";
-import { segments, type Booth } from "./Commentary";
+import { PEAK_TAIL, segments, type Booth } from "./Commentary";
 import { kindLabel } from "./personas";
 import { matchTime, type ClockRef } from "./stream";
 import type { Clip, Meta, Persona } from "./types";
@@ -43,7 +43,7 @@ export function useReel(meta: Meta | null | undefined, clockRef: MutableRefObjec
     const id = setInterval(() => {
       const t = matchTime(clockRef.current), q = cue.current;
       if (voice.on && !q.started && t >= c.start && (
-          (q.build >= 0 && t >= c.elapsed - q.build * REEL_SPEED - 0.4) || t >= c.elapsed)) {
+          (q.build >= 0 && t >= c.elapsed - Math.max(q.build - PEAK_TAIL, 0) * REEL_SPEED) || t >= c.elapsed)) {
         q.started = true;
         voice.booth.play();
       }

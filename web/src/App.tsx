@@ -144,7 +144,7 @@ export default function App() {
             {voice && (
               <p className={`booth-line ${line ? "booth-live" : ""}`} aria-live="polite">
                 <span className="booth-who">{line ? (line.role === "pundit" ? "Co-commentator" : "Commentator") : "Commentary box"}</span>
-                <span className={`booth-text ${line?.tone === "peak" ? "booth-peak" : ""}`}>{line ? line.text : "Listening for the next big moment…"}</span>
+                <span className={`booth-text ${line?.tone === "call" ? "booth-peak" : ""}`}>{line ? line.text : "Listening for the next big moment…"}</span>
               </p>
             )}
             {meta.mode === "recorded" && !reel.playing && <Timeline meta={meta} clockRef={clockRef} onSeek={(at) => restart({ at })} />}

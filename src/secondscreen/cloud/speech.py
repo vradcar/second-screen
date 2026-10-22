@@ -1,25 +1,24 @@
-"""Spoken commentary with Azure AI Speech: a two-voice commentary box.
+"""Spoken commentary: a two-voice commentary box.
 
-A play-by-play commentator and a co-commentator, each a neural voice per language, read
-the Commentator agent's fact-checked script. Each part of a call gets its own delivery:
+A play-by-play commentator and a co-commentator read the Commentator agent's fact-checked
+script. Two engines:
 
-    build   quicker, rising, with short pauses at "..."       commentator
-    peak    the call: loud, fast, high (or an excited / shouting style where the voice has one)
-    after   still up, landing it                               commentator
-    calm    conversational                                     co-commentator
+  gpt-4o-mini-tts (Azure OpenAI)   set AZURE_TTS_DEPLOYMENT. Steered with plain-English direction
+                                   ("British TV football commentator... explode on the call"), so it
+                                   sounds like a person calling a match. Preferred.
+  Azure AI Speech neural voices    the fallback. Natural delivery, no pitch shifting.
 
-Audio is cached as MP3 under data/tts/, so a recorded demo replays without Azure.
+Each moment is voiced as three takes: the build-up and the call in one breath, the landing
+line, and the co-commentator. Audio is cached as MP3 under data/tts/, so a recorded demo
+replays without Azure.
 
-Auth, in order:
-  AZURE_SPEECH_KEY (or AZURE_OPENAI_API_KEY) + AZURE_SPEECH_REGION     key
-  AZURE_SPEECH_RESOURCE_ID + managed identity / Azure login            Entra ID ("aad#<id>#<token>")
+    python -m secondscreen.cloud.speech --samples                # voice every option, listen, pick
+    python -m secondscreen.cloud.speech --voices                 # classic voices in your region
+    python -m secondscreen.cloud.speech data/match_SS00076       # prefill a match's commentary audio
 
-Voices are configurable: COMMENTATOR_VOICE_EN, PUNDIT_VOICE_EN (and _ES, _FR, ...), plus
-COMMENTATOR_STYLE (e.g. "excited" or "shouting") for voices that support speaking styles.
-HD voices (names containing ":DragonHD") read emotion from the text and take styles too.
-
-    python -m secondscreen.cloud.speech --voices                 # which voices your region offers
-    python -m secondscreen.cloud.speech data/match_SS00076       # prefill the commentary audio
+Settings: AZURE_TTS_DEPLOYMENT, TTS_VOICE_COMMENTATOR, TTS_VOICE_PUNDIT (gpt-4o-mini-tts);
+COMMENTATOR_VOICE_EN, PUNDIT_VOICE_EN, COMMENTATOR_STYLE, AZURE_SPEECH_REGION (classic voices).
+Keys: AZURE_OPENAI_API_KEY / AZURE_SPEECH_KEY, or the app's managed identity.
 """
 from __future__ import annotations
 
@@ -37,7 +36,7 @@ from datetime import date
 from pathlib import Path
 from xml.sax.saxutils import escape
 
-# Default voice per language (also the fallback if a configured voice is rejected).
+# Default classic voice per language (also the fallback if a configured voice is rejected).
 VOICES = {
     "en": "en-GB-RyanNeural", "es": "es-ES-AlvaroNeural", "fr": "fr-FR-HenriNeural", "de": "de-DE-ConradNeural",
     "pt": "pt-BR-AntonioNeural", "it": "it-IT-DiegoNeural", "nl": "nl-NL-MaartenNeural", "pl": "pl-PL-MarekNeural",
@@ -47,14 +46,29 @@ VOICES = {
 }
 PUNDITS = {"en": "en-GB-ThomasNeural", "es": "es-ES-ElviraNeural", "fr": "fr-FR-DeniseNeural",
            "de": "de-DE-KatjaNeural", "pt": "pt-BR-FranciscaNeural", "it": "it-IT-ElsaNeural"}
-ROLES, TONES = ("commentator", "pundit"), ("build", "peak", "after", "calm")
+# gpt-4o-mini-tts voices (one for each seat in the box); the accent and delivery come from the direction below.
+OPENAI_VOICES = {"commentator": "ash", "pundit": "ballad"}
+ROLES = ("commentator", "pundit")
+TONES = ("call", "after", "calm", "build", "peak")      # build/peak kept for older scripts
 MAX_CHARS = 300
 FORMAT = "audio-24khz-96kbitrate-mono-mp3"
-PROSODY = {   # tone -> (rate, pitch, volume); pitch is skipped on HD voices
-    "build": ("+10%", "+5%", "loud"),
-    "peak": ("+16%", "+16%", "x-loud"),
-    "after": ("+8%", "+8%", "loud"),
-    "calm": ("-2%", "+0%", "medium"),
+LANG_NAMES = {"en": "English", "es": "Spanish", "fr": "French", "de": "German", "pt": "Portuguese", "it": "Italian"}
+
+# Direction for gpt-4o-mini-tts: how a real commentary box sounds.
+DIRECTION = {
+    ("commentator", "call"): (
+        "You are a play-by-play commentator on live English top-flight football on TV, with a British accent. "
+        "Read this as live action happening in front of you. Start quick and engaged on the build-up, each "
+        "fragment rising in urgency, short natural breaths at the pauses, and then explode on the final "
+        "exclamation: a full-throated, joyful, drawn-out call with the crowd behind you. Genuine, human, "
+        "spontaneous. Never flat, never robotic, never sing-song."),
+    ("commentator", "after"): (
+        "You are a British TV football commentator a second after a huge moment: still buzzing, slightly out "
+        "of breath, voice raised but coming down, emphatic on the name and the score. Warm and natural."),
+    ("pundit", "calm"): (
+        "You are the co-commentator on English top-flight football on TV: a former professional player with a "
+        "British accent. Relaxed, conversational and knowing, like talking to a friend at the match. Natural "
+        "pace, a little smile in the voice, emphasise the one key point. Not a newsreader."),
 }
 
 
@@ -63,8 +77,26 @@ def _env(name: str) -> str | None:
     return v if v and not v.startswith("<") else None
 
 
-def voice_for(role: str, lang: str) -> str:
+def engine() -> str:
+    """'openai' (gpt-4o-mini-tts, steerable and far more human) when a deployment is configured,
+    else 'speech' (Azure AI Speech neural voices)."""
+    return "openai" if _env("AZURE_TTS_DEPLOYMENT") else "speech"
+
+
+def direction(role: str, tone: str, lang: str) -> str:
+    tone = {"build": "call", "peak": "call"}.get(tone, tone)
+    text = DIRECTION.get((role, tone)) or DIRECTION[("pundit", "calm") if role == "pundit" else ("commentator", "after")]
+    if lang != "en":
+        name = LANG_NAMES.get(lang, lang)
+        text += (f" Speak in {name}, as a native {name}-language football commentator would, with that "
+                 f"country's commentary style and accent (ignore the British accent above).")
+    return text
+
+
+def voice_for(role: str, lang: str, eng: str | None = None) -> str:
     suffix = lang.split("-")[0].upper()
+    if (eng or engine()) == "openai":
+        return _env(f"TTS_VOICE_{role.upper()}") or OPENAI_VOICES[role]
     if role == "pundit":
         return _env(f"PUNDIT_VOICE_{suffix}") or PUNDITS.get(lang) or VOICES.get(lang, VOICES["en"])
     return _env(f"COMMENTATOR_VOICE_{suffix}") or VOICES.get(lang, VOICES["en"])
@@ -75,43 +107,52 @@ def locale_of(voice: str) -> str:
 
 
 def build_ssml(text: str, voice: str, tone: str) -> str:
-    """One commentary segment as SSML: '...' becomes a beat, the tone sets the delivery."""
+    """Classic voices: let the voice speak naturally. Light touches only: a short beat at '...',
+    a little more energy on calls, and a speaking style where the voice has one. (Pitch shifting
+    is what makes neural voices sound synthetic, so it is never used.)"""
     hd = ":DragonHD" in voice
-    body = re.sub(r"\s*(?:\.\.\.|…)\s*", " <break time='260ms'/> ", escape(text)).strip()
-    rate, pitch, volume = PROSODY[tone]
-    attrs = f"rate='{rate}' volume='{volume}'" + ("" if hd else f" pitch='{pitch}'")
-    inner = f"<prosody {attrs}>{body}</prosody>"
-    style = _env("COMMENTATOR_STYLE") or ("excited" if hd else None)
-    if style and tone in ("build", "peak", "after"):
-        style = "shouting" if (hd and tone == "peak" and not _env("COMMENTATOR_STYLE")) else style
-        inner = f"<mstts:express-as style='{style}' styledegree='2'>{inner}</mstts:express-as>"
-    loc = locale_of(voice)
+    body = re.sub(r"\s*(?:\.\.\.|…)\s*", " <break time='180ms'/> ", escape(text)).strip()
+    if tone in ("call", "build", "peak", "after"):
+        inner = f"<prosody rate='+4%' volume='+15%'>{body}</prosody>"
+        style = _env("COMMENTATOR_STYLE") or ("excited" if hd else None)
+        if style:
+            inner = f"<mstts:express-as style='{style}'>{inner}</mstts:express-as>"
+    else:
+        inner = body
     return (f"<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' "
-            f"xmlns:mstts='https://www.w3.org/2001/mstts' xml:lang='{loc}'><voice name='{voice}'>{inner}</voice></speak>")
+            f"xmlns:mstts='https://www.w3.org/2001/mstts' xml:lang='{locale_of(voice)}'>"
+            f"<voice name='{voice}'>{inner}</voice></speak>")
 
 
 class Speech:
     def __init__(self, cache_dir: Path | None = None, daily_chars: int | None = None):
         self.cache_dir = cache_dir or Path(os.environ.get("SECONDSCREEN_DATA", "data")) / "tts"
+        self.engine = engine()
         self.key = _env("AZURE_SPEECH_KEY") or _env("AZURE_OPENAI_API_KEY")
         self.region = _env("AZURE_SPEECH_REGION") or "eastus"
         self.resource_id = _env("AZURE_SPEECH_RESOURCE_ID")
         self.mock = _env("SECONDSCREEN_SPEECH") == "mock"
-        self.live = self.mock or bool(self.key or (self.resource_id and _env("AZURE_USE_IDENTITY")))
+        if self.engine == "openai":
+            self.live = self.mock or bool(_env("AZURE_TTS_ENDPOINT") or _env("AZURE_OPENAI_ENDPOINT"))
+        else:
+            self.live = self.mock or bool(self.key or (self.resource_id and _env("AZURE_USE_IDENTITY")))
         self.budget = daily_chars if daily_chars is not None else int(os.environ.get("SPEECH_DAILY_CHARS", "60000"))
         self.used, self.day = 0, date.today()
         self._lock = threading.Lock()
         self._cred, self._token, self._token_exp = None, None, 0.0
         self._rejected: set[str] = set()
+        self._oai = None
 
     def status(self) -> dict:
         cached = self.cache_dir.exists() and any(self.cache_dir.glob("*.mp3"))
-        return {"available": self.live or cached, "live": self.live, "langs": list(VOICES)}
+        return {"available": self.live or cached, "live": self.live, "engine": self.engine, "langs": list(VOICES)}
 
     @staticmethod
     def cache_key(text: str, lang: str, role: str = "commentator", tone: str = "after") -> str:
-        voice = voice_for(role, lang if lang in VOICES else "en")
-        return hashlib.sha1(f"{voice}|{tone}|{text}".encode()).hexdigest()[:20]
+        eng = engine()
+        voice = voice_for(role, lang if lang in VOICES else "en", eng)
+        extra = direction(role, tone, lang) if eng == "openai" else ""
+        return hashlib.sha1(f"{eng}|{voice}|{tone}|{extra}|{text}".encode()).hexdigest()[:20]
 
     async def speak(self, text: str, lang: str = "en", role: str = "commentator", tone: str = "after") -> bytes | None:
         """MP3 bytes, from the cache or Azure. None when unavailable or over budget."""
@@ -142,15 +183,18 @@ class Speech:
             self.used += n
             return True
 
-    def _auth(self) -> dict:
-        if self.key:
-            return {"Ocp-Apim-Subscription-Key": self.key}
+    def _token_value(self) -> str:
         if time.time() > self._token_exp - 120:
             from azure.identity import DefaultAzureCredential
             self._cred = self._cred or DefaultAzureCredential()
             tok = self._cred.get_token("https://cognitiveservices.azure.com/.default")
             self._token, self._token_exp = tok.token, tok.expires_on
-        return {"Authorization": f"Bearer aad#{self.resource_id}#{self._token}"}
+        return self._token
+
+    def _auth(self) -> dict:
+        if self.key:
+            return {"Ocp-Apim-Subscription-Key": self.key}
+        return {"Authorization": f"Bearer aad#{self.resource_id}#{self._token_value()}"}
 
     def _post(self, ssml: str) -> bytes:
         req = urllib.request.Request(
@@ -160,9 +204,23 @@ class Speech:
         with urllib.request.urlopen(req, timeout=20) as r:
             return r.read()
 
+    def _openai(self, text: str, lang: str, role: str, tone: str, voice: str | None = None) -> bytes:
+        if self._oai is None:
+            from openai import AzureOpenAI
+            kw = {"azure_endpoint": _env("AZURE_TTS_ENDPOINT") or _env("AZURE_OPENAI_ENDPOINT"),
+                  "api_version": _env("AZURE_TTS_API_VERSION") or "2025-03-01-preview"}
+            key = _env("AZURE_TTS_API_KEY") or _env("AZURE_OPENAI_API_KEY")
+            self._oai = AzureOpenAI(api_key=key, **kw) if key else AzureOpenAI(
+                azure_ad_token_provider=self._token_value, **kw)
+        r = self._oai.audio.speech.create(model=_env("AZURE_TTS_DEPLOYMENT"), voice=voice or voice_for(role, lang),
+                                          input=text, instructions=direction(role, tone, lang), response_format="mp3")
+        return r.read()
+
     def _call(self, text: str, lang: str, role: str, tone: str) -> bytes:
         if self.mock:      # silent WAV, about as long as the line would take to say
             return _silent_wav(max(0.6, 0.33 * len(text.split())))
+        if self.engine == "openai":
+            return self._openai(text, lang, role, tone)
         voice = voice_for(role, lang)
         if voice in self._rejected:
             voice = VOICES[lang]
@@ -171,7 +229,7 @@ class Speech:
         except urllib.error.HTTPError as e:
             if e.code != 400:
                 raise
-            # A voice or style this region doesn't have: plain default voice, prosody only.
+            # A voice or style this region doesn't have: the default voice, no style.
             self._rejected.add(voice)
             os.environ.pop("COMMENTATOR_STYLE", None)
             return self._post(build_ssml(text, VOICES[lang], tone))
@@ -192,15 +250,17 @@ def _silent_wav(seconds: float, rate: int = 8000) -> bytes:
 
 # ------------------------------------------------------------------ prefill
 def clips_for(commentary: dict, langs: list[str] | None = None) -> list[tuple[str, str, str, str]]:
-    """(text, lang, role, tone) for every segment of a moment's commentary."""
+    """(text, lang, role, tone) for a moment's commentary: the build-up and the call as one take
+    (so it flows like one breath), the landing line, and the co-commentator."""
     out = []
     for lang, line in commentary.items():
         if langs and lang not in langs:
             continue
-        for part, role, tone in (("build", "commentator", "build"), ("peak", "commentator", "peak"),
-                                 ("after", "commentator", "after"), ("pundit", "pundit", "calm")):
-            if line.get(part):
-                out.append((line[part], lang, role, tone))
+        call = " ".join(x for x in (line.get("build", ""), line.get("peak", "")) if x).strip()
+        for text, role, tone in ((call, "commentator", "call"), (line.get("after", ""), "commentator", "after"),
+                                 (line.get("pundit", ""), "pundit", "calm")):
+            if text:
+                out.append((text, lang, role, tone))
     return out
 
 
@@ -233,7 +293,59 @@ async def prefill(prefix: Path, langs: list[str]) -> None:
     for text, lang, role, tone in sorted(clips):
         if await sp.speak(text, lang, role, tone):
             n += 1
-    print(f"{n}/{len(clips)} clips in {sp.cache_dir} (voices: {voice_for('commentator', 'en')} + {voice_for('pundit', 'en')})")
+    print(f"{n}/{len(clips)} clips in {sp.cache_dir} ({sp.engine}: {voice_for('commentator', 'en')} + "
+          f"{voice_for('pundit', 'en')})")
+
+
+SAMPLE = {"call": "Fallow whips it in... Quarry rises... And he's headed it in!",
+          "after": "Isak Quarry! Level at 1-1, and the ten men are back in it!",
+          "calm": "Only 0.11 xG on that, so there really wasn't much on. But that's a finish of real quality."}
+
+
+def samples(out: Path) -> None:
+    """Voice the same goal call and pundit line with every option, so you can listen and choose."""
+    from secondscreen.agents.llm import load_dotenv
+    load_dotenv()
+    out.mkdir(parents=True, exist_ok=True)
+    made, failed = [], []
+
+    def save(name: str, fn) -> None:
+        try:
+            (out / f"{name}.mp3").write_bytes(fn())
+            made.append(name)
+        except Exception as e:  # noqa: BLE001 - report and carry on with the next option
+            failed.append(f"{name}: {type(e).__name__}: {str(e)[:160]}")
+
+    sp = Speech(daily_chars=10**9)
+    if _env("AZURE_TTS_DEPLOYMENT"):
+        for v in ("ash", "verse", "ballad", "onyx", "echo", "cedar"):
+            save(f"gpt4o-tts_commentator_{v}", lambda v=v: sp._openai(f"{SAMPLE['call']} {SAMPLE['after']}", "en",
+                                                                         "commentator", "call", v))
+        for v in ("ballad", "sage", "ash", "cedar"):
+            save(f"gpt4o-tts_pundit_{v}", lambda v=v: sp._openai(SAMPLE["calm"], "en", "pundit", "calm", v))
+    else:
+        failed.append("gpt-4o-mini-tts: skipped, AZURE_TTS_DEPLOYMENT isn't set (deploy gpt-4o-mini-tts in Foundry)")
+    if sp.key:
+        voices = ["en-GB-RyanNeural", "en-GB-ThomasNeural"]
+        try:
+            listed = sp.list_voices()
+            pick = lambda f, n: [v["ShortName"] for v in listed if f(v["ShortName"]) and v.get("Gender") == "Male"  # noqa: E731
+                                 and v["Locale"] in ("en-GB", "en-US")][:n]
+            voices += pick(lambda n: "Multilingual" in n, 4) + pick(lambda n: "DragonHD" in n, 4)
+        except Exception as e:  # noqa: BLE001
+            failed.append(f"voice list: {e}")
+        for v in voices:
+            tag = v.replace(":", "_")
+            save(f"speech_call_{tag}", lambda v=v: sp._post(build_ssml(f"{SAMPLE['call']} {SAMPLE['after']}", v, "call")))
+            save(f"speech_pundit_{tag}", lambda v=v: sp._post(build_ssml(SAMPLE["calm"], v, "calm")))
+    print(f"{len(made)} samples in {out}:")
+    for m in made:
+        print("  " + m)
+    for f in failed:
+        print("  not made: " + f)
+    print("\nPick the ones you like, then in .env:\n"
+          "  gpt-4o-mini-tts: AZURE_TTS_DEPLOYMENT=<name>, TTS_VOICE_COMMENTATOR=<voice>, TTS_VOICE_PUNDIT=<voice>\n"
+          "  classic voices:  COMMENTATOR_VOICE_EN=<voice>, PUNDIT_VOICE_EN=<voice>")
 
 
 def show_voices() -> None:
@@ -255,13 +367,16 @@ def main() -> None:
     ap.add_argument("match", nargs="?", help="data/match_<id> (no extension)")
     ap.add_argument("--langs", default="en,es,fr")
     ap.add_argument("--voices", action="store_true", help="list the voices your Speech region offers")
+    ap.add_argument("--samples", action="store_true", help="voice a sample call with every option, to listen and pick")
     args = ap.parse_args()
-    if args.voices:
+    if args.samples:
+        samples(Path("data") / "tts_samples")
+    elif args.voices:
         show_voices()
     elif args.match:
         asyncio.run(prefill(Path(args.match.removesuffix(".jsonl")), [x for x in args.langs.split(",") if x]))
     else:
-        ap.error("give a match, or --voices")
+        ap.error("give a match, --samples or --voices")
 
 
 if __name__ == "__main__":

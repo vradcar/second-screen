@@ -310,7 +310,7 @@ Fill the caches once from a machine with the Foundry key in `.env`:
 ```bash
 python -m secondscreen.cloud.translate data/match_SS00076 --to de,pt,hi,ja,ar,sw
 python -m secondscreen.agents.commentary data/match_SS00076 --mode record   # commentary script (Foundry)
-python -m secondscreen.cloud.speech --voices                                 # pick voices for your region
+python -m secondscreen.cloud.speech --samples                                # hear every voice option, pick one
 python -m secondscreen.cloud.speech data/match_SS00076                       # voice it
 ```
 
