@@ -52,6 +52,7 @@ export default function App() {
   const [matches, setMatches] = useState<string[]>([]);
   const [voice, setVoice] = useState(true);          // commentary on from kick-off
   const [audioBlocked, setAudioBlocked] = useState(false);
+  const [voiceError, setVoiceError] = useState<string | null>(null);
   const { state, clockRef, send } = useMatchStream(params);
 
   useEffect(() => { fetch("/api/matches").then((r) => r.json()).then((d) => { setLiveOk(!!d.live_available); setLangs(d.translate?.langs ?? []); setSpeechOk(!!d.speech?.available); setMatches(d.recorded ?? []); }).catch(() => {}); }, []);
@@ -66,6 +67,7 @@ export default function App() {
   useEffect(() => {
     booth.onLine = (s) => { setLine(s); crowd.duck(!!s); };
     booth.onBlocked = setAudioBlocked;
+    booth.onVoiceError = setVoiceError;
   }, [booth, crowd]);
   const unlockAudio = () => { booth.unlock(); crowd.resume(); };
   // Browsers only allow sound after the viewer interacts: the first click anywhere turns it on.
@@ -183,6 +185,7 @@ export default function App() {
             </div>
             {/* Seeking only makes sense when every moment already exists (a recorded run). */}
             {meta.mode === "recorded" && <Reel reel={reel} meta={meta} lang={lang} canTranslate={canTranslate} />}
+            {voice && voiceError && <p className="booth-error" role="alert">Voice unavailable: {voiceError} (captions keep running)</p>}
             {voice && (
               <p className={`booth-line ${line ? "booth-live" : ""}`} aria-live="polite">
                 <span className="booth-who">{ui(line ? (line.role === "pundit" ? "Co-commentator" : "Commentator") : "Commentary box")}</span>

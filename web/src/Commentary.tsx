@@ -66,6 +66,19 @@ export class Booth {
   private retry: Seg[] | null = null;
   onLine: (s: Seg | null) => void = () => {};
   onBlocked: (blocked: boolean) => void = () => {};
+  /** Why a line couldn't be voiced (from the server), so the page can say so. */
+  onVoiceError: (reason: string | null) => void = () => {};
+  private reported = false;
+
+  private failed(s: Seg) {
+    if (this.reported) return;
+    this.reported = true;
+    fetch(url(s)).then(async (r) => {
+      if (r.ok) { this.reported = false; return; }
+      const d = await r.json().catch(() => ({}));
+      this.onVoiceError((d as { detail?: string }).detail ?? `voice request failed (${r.status})`);
+    }).catch(() => this.onVoiceError("can't reach the server for the voice"));
+  }
 
   get talking() { return this.busy || this.side !== null; }
 
@@ -93,7 +106,8 @@ export class Booth {
     this.side = a;
     this.onLine(s);
     const done = () => { if (this.side === a) { this.side = null; this.onLine(null); } };
-    a.onended = done; a.onerror = done;
+    a.onended = () => { this.reported = false; this.onVoiceError(null); done(); };
+    a.onerror = () => { this.failed(s); done(); };
     a.play().catch((e) => { this.refused(e, [s]); done(); });
     return true;
   }
@@ -134,7 +148,7 @@ export class Booth {
         const a = audios[k];
         this.onLine(list[k]);
         a.onended = () => step(k + 1);
-        a.onerror = () => step(k + 1);
+        a.onerror = () => { this.failed(list[k]); step(k + 1); };
         a.play().catch((e) => {
           if (this.refused(e, list.slice(k))) { this.busy = false; this.onLine(null); this.token++; return; }
           step(k + 1);

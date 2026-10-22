@@ -250,6 +250,52 @@ class Speech:
             return json.load(r)
 
 
+def explain_error(e: Exception) -> str:
+    """A voice failure in plain words, with the fix."""
+    eng = engine()
+    body = ""
+    if isinstance(e, urllib.error.HTTPError):
+        try:
+            body = e.read().decode(errors="replace")[:200]
+        except Exception:  # noqa: BLE001
+            pass
+        code = e.code
+    else:
+        code = getattr(e, "status_code", None)
+    msg = f"{type(e).__name__}{f' {code}' if code else ''}: {str(e)[:160]} {body}".strip()
+    if eng == "openai":
+        return (f"gpt-4o-mini-tts failed ({msg}). AZURE_TTS_DEPLOYMENT is set in .env but that model isn't "
+                "deployed here: remove the line to use Azure Speech voices.")
+    if code == 401:
+        return (f"Azure Speech refused the key ({msg}). Set AZURE_SPEECH_REGION to your Foundry resource's region "
+                f"(now '{_env('AZURE_SPEECH_REGION') or 'eastus'}'), or AZURE_SPEECH_KEY to its key.")
+    if code == 400:
+        return f"Azure Speech rejected the request ({msg}). A voice name in .env may not exist in your region."
+    if code == 429:
+        return f"Azure Speech rate limit ({msg}). Try again in a moment."
+    return f"Voice failed: {msg}"
+
+
+def doctor() -> None:
+    """One test line through the configured voice, with what's set and what to fix."""
+    from secondscreen.agents.llm import load_dotenv
+    load_dotenv()
+    sp = Speech(daily_chars=10**9)
+    print(f"engine:      {sp.engine}" + ("  (AZURE_TTS_DEPLOYMENT is set)" if sp.engine == "openai" else ""))
+    print(f"key:         {'set' if sp.key else 'MISSING (AZURE_OPENAI_API_KEY or AZURE_SPEECH_KEY)'}")
+    print(f"region:      {sp.region}")
+    print(f"voices:      {voice_for('commentator', 'en')} (commentator), {voice_for('pundit', 'en')} (pundit)")
+    try:
+        audio = sp._call("And it's in! What a goal!", "en", "commentator", "call")
+    except Exception as e:  # noqa: BLE001
+        print("\nFAILED: " + explain_error(e))
+        raise SystemExit(1)
+    out = Path("data") / "tts_samples" / "voice_check.mp3"
+    out.parent.mkdir(parents=True, exist_ok=True)
+    out.write_bytes(audio)
+    print(f"\nOK: {len(audio):,} bytes of audio -> {out} (open it to listen)")
+
+
 def _silent_wav(seconds: float, rate: int = 8000) -> bytes:
     import struct
     n = int(seconds * rate)
@@ -394,8 +440,11 @@ def main() -> None:
     ap.add_argument("--pbp-langs", default="en", help="languages to voice the running play-by-play in ('' for none)")
     ap.add_argument("--voices", action="store_true", help="list the voices your Speech region offers")
     ap.add_argument("--samples", action="store_true", help="voice a sample call with every option, to listen and pick")
+    ap.add_argument("--check", action="store_true", help="test the voice setup and say what to fix")
     args = ap.parse_args()
-    if args.samples:
+    if args.check:
+        doctor()
+    elif args.samples:
         samples(Path("data") / "tts_samples")
     elif args.voices:
         show_voices()

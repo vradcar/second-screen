@@ -304,7 +304,11 @@ async def speak(text: str, lang: str = "en", role: str = "commentator", tone: st
     """MP3 for one commentary segment, from Azure AI Speech (cached). role: commentator | pundit;
     tone: build | peak | after | calm."""
     from fastapi.responses import Response
-    audio = await _speech().speak(text, lang, role, tone)
+    from secondscreen.cloud.speech import explain_error
+    try:
+        audio = await _speech().speak(text, lang, role, tone)
+    except Exception as e:  # noqa: BLE001 - say why, so the page can show it
+        raise HTTPException(status_code=502, detail=explain_error(e)) from e
     if audio is None:
         raise HTTPException(status_code=404, detail="no audio for that line")
     kind = "audio/wav" if audio[:4] == b"RIFF" else "audio/mpeg"

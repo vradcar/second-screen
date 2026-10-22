@@ -283,3 +283,6 @@ button, select { font: inherit; color: inherit; }
   backdrop-filter: blur(4px); animation: tap-pulse 1.8s ease-in-out infinite; }
 @keyframes tap-pulse { 50% { box-shadow: 0 8px 30px rgba(0,0,0,.35), 0 0 0 10px rgba(255,255,255,.08); } }
 @media (prefers-reduced-motion: reduce) { .tap-audio { animation: none; } }
+
+.booth-error { margin: 8px 0 0; padding: 7px 12px; border-radius: 10px; font-size: 13px;
+  background: #FDECEA; color: #8A1C12; border: 1px solid #F5C2BC; }
