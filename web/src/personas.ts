@@ -1,10 +1,10 @@
-import type { Persona } from "./types";
+import type { Cue, Moment, Persona, Rendering } from "./types";
 
 export const PERSONAS: Persona[] = [
-  { id: "studio_analyst", label: "Studio analyst · English", short: "Analyst", lang: "en", accent: "#16202E" },
-  { id: "halcyon_fan", label: "Halcyon City fan · English", short: "Halcyon fan", lang: "en", accent: "#1F4E8C", club: "HAL" },
-  { id: "redmarsh_fan_es", label: "Redmarsh Rovers fan · Spanish", short: "Redmarsh (ES)", lang: "es", accent: "#B3261E", club: "RED" },
-  { id: "lazaro_cam_fr", label: "Player cam: Ezra Lazaro · French", short: "Lazaro cam (FR)", lang: "fr", accent: "#9A7414", focus: "Ezra Lazaro" },
+  { id: "studio_analyst", label: "Studio analyst", short: "Analyst", lang: "en", accent: "#16202E" },
+  { id: "halcyon_fan", label: "Halcyon City fan", short: "Halcyon fan", lang: "en", accent: "#1F4E8C", club: "HAL" },
+  { id: "redmarsh_fan_es", label: "Redmarsh Rovers fan", short: "Redmarsh fan", lang: "en", accent: "#B3261E", club: "RED" },
+  { id: "lazaro_cam_fr", label: "Player cam: Ezra Lazaro", short: "Lazaro cam", lang: "en", accent: "#9A7414", focus: "Ezra Lazaro" },
 ];
 
 const KIND: Record<string, Record<string, string>> = {
@@ -52,4 +52,26 @@ export function cueKind(cueType: string, strap: string, stats: { label: string }
 /** Hide chips that only make sense inside the engine (momentum scores, the score line). */
 export function usefulChips<T extends { label: string; value: string }>(chips: T[]): T[] {
   return chips.filter((c) => !/momentum|score|marcador|inercia|dynamique|minutes? left|restantes|restantes/i.test(c.label)).slice(0, 3);
+}
+
+/**
+ * The persona's version of a moment, for the viewer's language. If the persona's version is in
+ * another language: translate it when a translator is available, else use a version that is
+ * already in that language (older recorded runs wrote some personas in Spanish or French).
+ */
+export function renderFor(m: Moment, persona: Persona, lang: string, canTranslate: boolean): { r: Rendering; src: string } {
+  const own = m.renderings.find((x) => x.persona_id === persona.id) ?? m.renderings[0];
+  if (own.lang === lang || canTranslate) return { r: own, src: own.lang };
+  const same = m.renderings.find((x) => x.lang === lang);
+  return same ? { r: same, src: same.lang } : { r: own, src: own.lang };
+}
+
+export function cueFor(m: Moment, persona: Persona, lang: string, canTranslate: boolean): Cue | undefined {
+  const own = m.cues.find((c) => c.persona_id === persona.id) ?? m.cues[0];
+  if (!own || own.lang === lang || canTranslate) return own;
+  return m.cues.find((c) => c.lang === lang) ?? own;
+}
+
+export function nativeLabels(lang: string) {
+  return lang in KIND;
 }

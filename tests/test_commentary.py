@@ -55,3 +55,9 @@ async def test_workflow_attaches_commentary_to_goals():
     goal = next(m for m in o.store.moments if m["kind"] == "goal")
     assert set(goal["commentary"]) == {"en", "es", "fr"}
     assert goal["commentary"]["en"]["peak"] and goal["commentary"]["fr"]["pundit"]
+
+
+def test_profiles_are_english_and_language_is_global():
+    from secondscreen.agents.personas import COMMENTARY_LANGS, DEFAULT_PERSONAS
+    assert {p.lang for p in DEFAULT_PERSONAS} == {"en"}          # who you are, not what language
+    assert COMMENTARY_LANGS == ["en", "es", "fr"]                 # the box speaks these natively

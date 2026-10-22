@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import { drawBall, drawPitch, drawPlayer, drawTag, drawTrace, layout, sx, sy, type Trace, type View } from "./draw";
 import { ballAt, ballKeys, lineupSlots, shapePosition, travelTime, type Slot } from "./motion";
-import { usefulChips } from "./personas";
+import { isNative, uiText } from "./i18n";
+import { cueFor, usefulChips } from "./personas";
+import { useLiveTranslate } from "./translate";
 import { matchTime, type ClockRef } from "./stream";
 import type { Cue, MatchEvent, Meta, Moment, Persona, Snapshot } from "./types";
 
@@ -14,7 +16,7 @@ const ACTION: Record<string, string> = {
 
 interface Props {
   meta: Meta; events: MatchEvent[]; clockRef: MutableRefObject<ClockRef>; snap?: Snapshot;
-  cues: Cue[]; moments: Moment[]; persona: Persona;
+  cues: Cue[]; moments: Moment[]; persona: Persona; lang: string; canTranslate: boolean;
 }
 interface Banner { key: string; kind: "goal" | "red"; title: string; sub: string; team: string; line?: string }
 interface Holder { pid: string; team: string; action: string; detail: string[] }
@@ -26,7 +28,11 @@ function freshLive(home: string) {
            chain: 0, chainTeam: "", traces: [] as Trace[] };
 }
 
-export function Broadcast({ meta, events, clockRef, snap, cues, moments, persona }: Props) {
+export function Broadcast({ meta, events, clockRef, snap, cues, moments, persona, lang, canTranslate }: Props) {
+  // Everything on the TV in the viewer's language: native labels for en/es/fr, Translator otherwise.
+  const tr = useLiveTranslate(canTranslate ? lang : null);
+  const ui = (template: string, vars: Record<string, string | number> = {}) =>
+    isNative(lang) ? uiText(template, lang, vars) : tr(uiText(template, "en", vars), "en").text;
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const keys = useMemo(() => ballKeys(events), [events]);
   const slots = useMemo(() => ({ home: lineupSlots(meta.home), away: lineupSlots(meta.away) }), [meta]);
@@ -110,7 +116,7 @@ export function Broadcast({ meta, events, clockRef, snap, cues, moments, persona
               line: `${meta.home.short_name} ${sc[meta.home.team_id] ?? 0}–${sc[meta.away.team_id] ?? 0} ${meta.away.short_name}` });
           }
           if (e.type === "card" && e.card === "second_yellow" && t - e.elapsed_seconds < 20) {
-            setBanner({ key: e.event_id, kind: "red", title: "Red card", team: e.team_id ?? "", sub: `${e.player_name ?? ""} is sent off` });
+            setBanner({ key: e.event_id, kind: "red", title: "Red card", team: e.team_id ?? "", sub: e.player_name ?? "" });
           }
         }
       }
@@ -211,14 +217,14 @@ export function Broadcast({ meta, events, clockRef, snap, cues, moments, persona
   }, [moments]);
   const now = performance.now();
   const strap = [...moments].reverse().filter((m) => m.elapsed >= meta.start_elapsed)
-    .map((m) => ({ m, cue: m.cues.find((c) => c.persona_id === persona.id) }))
+    .map((m) => ({ m, cue: cueFor(m, persona, lang, canTranslate) }))
     .find(({ m, cue }) => cue && now - (arrivals.current.get(m.moment_id) ?? 0) < cue.duration_s * 1000);
 
   const score = snap?.score ?? {};
   const regime = snap?.regime ?? "balanced";
-  const regimeText = regime === "chaos" ? "Open, chaotic phase"
-    : regime.startsWith("control:") ? `${regime.endsWith(meta.home.team_id) ? meta.home.short_name : meta.away.short_name} in control`
-    : "Even contest";
+  const regimeText = regime === "chaos" ? ui("Open, chaotic phase")
+    : regime.startsWith("control:") ? ui("{team} in control", { team: regime.endsWith(meta.home.team_id) ? meta.home.short_name : meta.away.short_name })
+    : ui("Even contest");
   const strapTeam = strap?.m.team_id === meta.away.team_id ? meta.away : meta.home;
   const followed = follow ? snap?.players.find((p) => p.player_id === follow) : undefined;
   const boxId = follow ?? carrier?.pid;
@@ -242,7 +248,7 @@ export function Broadcast({ meta, events, clockRef, snap, cues, moments, persona
           <div className={`carrier ${follow ? "carrier-follow" : ""}`} style={{ ["--team" as string]: boxPerson.colors[0], ["--team2" as string]: boxPerson.colors[1] }}>
             <span className="carrier-num">{boxPerson.number}</span>
             <span className="carrier-main">
-              <span className="carrier-label">{follow ? "Following" : carrier?.action}</span>
+              <span className="carrier-label">{follow ? ui("Following") : carrier ? ui(carrier.action) : ""}</span>
               <b className="carrier-name">{boxPerson.name}</b>
               <span className="carrier-detail">
                 {follow && followed ? (
@@ -253,8 +259,8 @@ export function Broadcast({ meta, events, clockRef, snap, cues, moments, persona
                   </>
                 ) : (
                   <>
-                    {carrier?.detail.map((d) => <span key={d}>{d}</span>)}
-                    {carrier && carrier.chain >= 3 && <span className="carrier-chain">{carrier.chain}-pass move</span>}
+                    {carrier?.detail.map((d) => <span key={d}>{/[0-9]/.test(d) ? d : ui(d)}</span>)}
+                    {carrier && carrier.chain >= 3 && <span className="carrier-chain">{ui("{n}-pass move", { n: carrier.chain })}</span>}
                   </>
                 )}
               </span>
@@ -266,8 +272,8 @@ export function Broadcast({ meta, events, clockRef, snap, cues, moments, persona
         {banner && (
           <div key={banner.key} className={`banner banner-${banner.kind}`}
                style={{ ["--team" as string]: (banner.team === meta.away.team_id ? meta.away : meta.home).colors[0] }}>
-            <span className="banner-title">{banner.title}</span>
-            <span className="banner-sub">{banner.sub}</span>
+            <span className="banner-title">{ui(banner.title)}</span>
+            <span className="banner-sub">{banner.kind === "red" ? ui("{name} is sent off", { name: banner.sub }) : banner.sub}</span>
             {banner.line && <span className="banner-line">{banner.line}</span>}
           </div>
         )}
@@ -275,9 +281,9 @@ export function Broadcast({ meta, events, clockRef, snap, cues, moments, persona
           <div key={strap.m.moment_id} className="lower-third" style={{ ["--team" as string]: strapTeam.colors[0], ["--team2" as string]: strapTeam.colors[1] }}>
             <div className="lt-clock">{strap.m.clock}</div>
             <div className="lt-body">
-              <div className="lt-strap">{strap.cue.text.strap}</div>
+              <div className="lt-strap">{tr(strap.cue.text.strap, strap.cue.lang).text}</div>
               {usefulChips(strap.cue.stats).length > 0 && (
-                <div className="lt-stats">{usefulChips(strap.cue.stats).map((s) => <span key={s.label}><b>{s.value}</b> {s.label}</span>)}</div>
+                <div className="lt-stats">{usefulChips(strap.cue.stats).map((s) => <span key={s.label}><b>{s.value}</b> {tr(s.label, strap.cue!.lang).text}</span>)}</div>
               )}
             </div>
           </div>

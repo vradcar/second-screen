@@ -1,4 +1,6 @@
-"""Viewer profiles. The same moment is rendered once per persona."""
+"""Viewer profiles: who is watching. The same moment is rendered once per persona, in English;
+the viewer's language is a separate, global choice (native commentary in en/es/fr, Azure AI
+Translator for everything else). The ids are kept stable for recorded runs."""
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
@@ -20,6 +22,10 @@ class Persona:
 DEFAULT_PERSONAS = [
     Persona("studio_analyst", "Studio analyst", "analyst", "en"),
     Persona("halcyon_fan", "Halcyon City fan", "casual", "en", favourite_club="Halcyon City"),
-    Persona("redmarsh_fan_es", "Redmarsh fan (Spanish)", "casual", "es", favourite_club="Redmarsh Rovers"),
-    Persona("lazaro_cam_fr", "Player cam: Ezra Lazaro (French)", "casual", "fr", focus_player="Ezra Lazaro"),
+    Persona("redmarsh_fan_es", "Redmarsh Rovers fan", "casual", "en", favourite_club="Redmarsh Rovers"),
+    Persona("lazaro_cam_fr", "Player cam: Ezra Lazaro", "casual", "en", focus_player="Ezra Lazaro"),
 ]
+
+
+# Languages the commentary box is written in natively (the Commentator agent and the spotter).
+COMMENTARY_LANGS = ["en", "es", "fr"]

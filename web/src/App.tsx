@@ -3,7 +3,8 @@ import { Broadcast } from "./Broadcast";
 import { Explain } from "./Explain";
 import { PERSONAS } from "./personas";
 import { Phone } from "./Phone";
-import type { Lang } from "./translate";
+import { NATIVE, useLiveTranslate, type Lang } from "./translate";
+import { isNative, uiText } from "./i18n";
 import { Reel, useReel } from "./Reel";
 import { Booth, Crowd, useCommentary, useCrowd, type Seg } from "./Commentary";
 import { DuelBars, MomentumRiver } from "./Stats";
@@ -20,7 +21,7 @@ function readParams() {
   return {
     match: q.get("match") ?? "SS00076", mode: q.get("mode") ?? "recorded",
     speed: Number(q.get("speed") ?? 10), start: Number(q.get("start") ?? 0), at: Number(q.get("at") ?? -1), run: 0,
-    reel: q.get("reel") === "1", tv: q.get("tv") ?? "halcyon_fan", left: q.get("left") ?? "studio_analyst", right: q.get("right") ?? "halcyon_fan",
+    reel: q.get("reel") === "1", lang: q.get("lang") ?? (() => { try { return localStorage.getItem("ss-lang"); } catch { return null; } })() ?? "en", tv: q.get("tv") ?? "halcyon_fan", left: q.get("left") ?? "studio_analyst", right: q.get("right") ?? "halcyon_fan",
   };
 }
 
@@ -34,6 +35,19 @@ export default function App() {
   const [paused, setPaused] = useState(false);
   const [liveOk, setLiveOk] = useState(false);
   const [langs, setLangs] = useState<Lang[]>([]);
+  // One language for everything: TV graphics, phones, commentary and the report.
+  const [lang, setLangState] = useState<string>(init.lang);
+  const setLang = (l: string) => {
+    setLangState(l);
+    try { localStorage.setItem("ss-lang", l); } catch { /* private mode */ }
+    const q = new URLSearchParams(location.search); q.set("lang", l); history.replaceState(null, "", `?${q}`);
+  };
+  const canTranslate = langs.length > 0;
+  const allLangs: Lang[] = [...NATIVE, ...langs.filter((l) => !NATIVE.some((n) => n.code === l.code))];
+  const rtl = !!allLangs.find((l) => l.code === lang)?.rtl;
+  const tr = useLiveTranslate(canTranslate ? lang : null);
+  const ui = (t: string, vars: Record<string, string | number> = {}) =>
+    isNative(lang) ? uiText(t, lang, vars) : tr(uiText(t, "en", vars), "en").text;
   const [speechOk, setSpeechOk] = useState(false);
   const [matches, setMatches] = useState<string[]>([]);
   const [voice, setVoice] = useState(false);
@@ -49,8 +63,8 @@ export default function App() {
   const crowd = useMemo(() => new Crowd(), []);
   const [line, setLine] = useState<Seg | null>(null);
   useEffect(() => { booth.onLine = (s) => { setLine(s); crowd.duck(!!s); }; }, [booth, crowd]);
-  const reel = useReel(state.meta, clockRef, params.speed, restart, init.reel, { on: voice, booth, persona: persona(tv) });
-  useCommentary(voice, reel.playing, state.moments, state.calls, state.lines, persona(tv), booth, clockRef);
+  const reel = useReel(state.meta, clockRef, params.speed, restart, init.reel, { on: voice, booth, lang });
+  useCommentary(voice, reel.playing, state.moments, state.calls, state.lines, lang, booth, clockRef);
   useCrowd(voice, state.events, crowd);
 
   const { meta, snap } = state;
@@ -83,6 +97,12 @@ export default function App() {
         </div>
         {meta && <h1 className="fixture">{meta.home.name} <span>v</span> {meta.away.name}</h1>}
         <nav className="controls" aria-label="Playback">
+          <label className="match-pick lang-global" title="Language for everything: TV graphics, phones, commentary and the report">
+            <span className="sr-only">Language</span>
+            <select value={lang} onChange={(e) => setLang(e.target.value)}>
+              {allLangs.map((l) => <option key={l.code} value={l.code}>{l.name}</option>)}
+            </select>
+          </label>
           {matches.length > 1 && !onAir && (
             <label className="match-pick">
               <span className="sr-only">Match</span>
@@ -138,13 +158,13 @@ export default function App() {
         <main className="stage">
           <div className="tv-col">
             <Broadcast meta={meta} events={state.events} clockRef={clockRef} snap={snap}
-                       cues={state.cues} moments={state.moments} persona={persona(tv)} />
+                       cues={state.cues} moments={state.moments} persona={persona(tv)} lang={lang} canTranslate={canTranslate} />
             {/* Seeking only makes sense when every moment already exists (a recorded run). */}
-            {meta.mode === "recorded" && <Reel reel={reel} meta={meta} />}
+            {meta.mode === "recorded" && <Reel reel={reel} meta={meta} lang={lang} canTranslate={canTranslate} />}
             {voice && (
               <p className={`booth-line ${line ? "booth-live" : ""}`} aria-live="polite">
-                <span className="booth-who">{line ? (line.role === "pundit" ? "Co-commentator" : "Commentator") : "Commentary box"}</span>
-                <span className={`booth-text ${line?.tone === "call" ? "booth-peak" : ""}`}>{line ? line.text : "Listening for the next big moment…"}</span>
+                <span className="booth-who">{ui(line ? (line.role === "pundit" ? "Co-commentator" : "Commentator") : "Commentary box")}</span>
+                <span className={`booth-text ${line?.tone === "call" ? "booth-peak" : ""}`} dir={rtl ? "rtl" : undefined}>{line ? line.text : ui("Listening for the next big moment…")}</span>
               </p>
             )}
             {meta.mode === "recorded" && !reel.playing && <Timeline meta={meta} clockRef={clockRef} onSeek={(at) => restart({ at })} />}
@@ -178,16 +198,16 @@ export default function App() {
           </div>
           <div className="phones">
             <Phone persona={persona(left)} onPersona={setLeft} moments={state.moments} cues={state.cues} meta={meta}
-                   score={score} clock={state.clock} onExplain={setExplain} langs={langs} />
+                   score={score} clock={state.clock} onExplain={setExplain} lang={lang} rtl={rtl} canTranslate={canTranslate} />
             <Phone persona={persona(right)} onPersona={setRight} moments={state.moments} cues={state.cues} meta={meta}
-                   score={score} clock={state.clock} onExplain={setExplain} langs={langs} />
+                   score={score} clock={state.clock} onExplain={setExplain} lang={lang} rtl={rtl} canTranslate={canTranslate} />
           </div>
           {state.recap && (
-            <section className="recap" aria-label="Full-time report">
-              <h2>{state.recap.recap.title}</h2>
-              <p className="recap-stand">{state.recap.recap.standfirst}</p>
-              {state.recap.recap.paragraphs.map((p, i) => <p key={i}>{p.text}</p>)}
-              <p className="recap-potm"><b>Player of the match: {state.recap.recap.player_of_the_match}.</b> {state.recap.recap.player_of_the_match_reason}</p>
+            <section className="recap" aria-label={ui("Full-time report")} lang={lang} dir={rtl ? "rtl" : undefined}>
+              <h2>{tr(state.recap.recap.title, "en").text}</h2>
+              <p className="recap-stand">{tr(state.recap.recap.standfirst, "en").text}</p>
+              {state.recap.recap.paragraphs.map((p, i) => <p key={i}>{tr(p.text, "en").text}</p>)}
+              <p className="recap-potm"><b>{ui("Player of the match")}: {state.recap.recap.player_of_the_match}.</b> {tr(state.recap.recap.player_of_the_match_reason, "en").text}</p>
             </section>
           )}
         </main>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, type MutableRefObject } from "react";
 import { matchTime, type ClockRef } from "./stream";
-import type { Call, CommentaryLine, MatchEvent, Moment, PbpLine, Persona } from "./types";
+import { translateNow } from "./translate";
+import type { Call, CommentaryLine, MatchEvent, Moment, PbpLine } from "./types";
 
 const SPOKEN = new Set(["goal", "red_card", "penalty_awarded", "big_save", "big_chance_missed", "late_surge",
                         "hot_streak", "fatigue_fade", "pressing_spell"]);
@@ -12,12 +13,13 @@ export type Seg = { text: string; lang: string; role: "commentator" | "pundit"; 
 /** The call's last ~second is the shout: line that up with the action. */
 export const PEAK_TAIL = 0.9;
 
-/** The commentary script for a moment in this viewer's language: build, peak, after, pundit. */
+/** The commentary script for a moment in the viewer's language: native if it was written in it
+ * (en/es/fr), else English (translated by localize() before it is voiced). */
 export function segments(m: { commentary?: Record<string, CommentaryLine>; headline?: string } & Partial<Moment>,
-                         persona: Persona): Seg[] {
-  const c = m.commentary?.[persona.lang] ?? m.commentary?.en;
+                         lang: string): Seg[] {
+  const c = m.commentary?.[lang] ?? m.commentary?.en;
   if (!c) {
-    const r = m.renderings?.find((x) => x.persona_id === persona.id) ?? m.renderings?.[0];
+    const r = m.renderings?.find((x) => x.lang === lang) ?? m.renderings?.[0];
     if (r) return [{ text: r.lower_third, lang: r.lang, role: "commentator", tone: "after", gap: 0 }];
     return m.headline ? [{ text: m.headline, lang: "en", role: "commentator", tone: "after", gap: 0 }] : [];
   }
@@ -28,6 +30,20 @@ export function segments(m: { commentary?: Record<string, CommentaryLine>; headl
   if (c.after) out.push({ text: c.after, lang: c.lang, role: "commentator", tone: "after", gap: 120 });
   if (c.pundit) out.push({ text: c.pundit, lang: c.lang, role: "pundit", tone: "calm", gap: 650 });
   return out;
+}
+
+/** Put a script into the viewer's language (Azure AI Translator, number-checked). A line that
+ * can't be translated is spoken in its own language rather than mispronounced. */
+export async function localize(segs: Seg[], to: string): Promise<Seg[]> {
+  const todo = segs.filter((s) => s.lang !== to);
+  if (!todo.length) return segs;
+  const out = await translateNow(todo.map((s) => s.text), todo[0].lang, to);
+  let k = 0;
+  return segs.map((s) => {
+    if (s.lang === to) return s;
+    const r = out[k++];
+    return r.ok ? { ...s, text: r.text, lang: to } : s;
+  });
 }
 
 const url = (s: Seg) =>
@@ -128,7 +144,7 @@ export class Booth {
  * are read out in full as they arrive. Suppressed while the highlights reel drives the booth.
  */
 export function useCommentary(on: boolean, suppress: boolean, moments: Moment[], calls: Call[], lines: PbpLine[],
-                              persona: Persona, booth: Booth, clockRef: MutableRefObject<ClockRef>) {
+                              lang: string, booth: Booth, clockRef: MutableRefObject<ClockRef>) {
   const running = useRef<PbpLine[]>([]);
   const lastLineAt = useRef(-1);
   const seen = useRef<Set<string>>(new Set());
@@ -144,7 +160,7 @@ export function useCommentary(on: boolean, suppress: boolean, moments: Moment[],
     lastLineAt.current = lines.length ? lines[lines.length - 1].at : -1;
     if (!on) booth.stop();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [on, persona.id, suppress]);
+  }, [on, lang, suppress]);
 
   // New calls: preload, and let the clock decide when to start.
   useEffect(() => {
@@ -156,9 +172,11 @@ export function useCommentary(on: boolean, suppress: boolean, moments: Moment[],
       if (cur && !cur.started && !BIG.has(c.kind) && BIG.has(cur.c.kind)) continue;   // don't bump a goal
       const p = { c, build: -1, started: false };
       pending.current = p;
-      booth.prepare(segments(c, persona)).then((d) => { p.build = d; });
+      localize(segments(c, lang), lang).then((segs) => {
+        if (pending.current === p) booth.prepare(segs).then((d) => { p.build = d; });
+      });
     }
-  }, [on, suppress, calls, persona, booth]);
+  }, [on, suppress, calls, lang, booth]);
 
   // Running play-by-play: queue new lines (the stream keeps only the last 30).
   useEffect(() => {
@@ -166,8 +184,13 @@ export function useCommentary(on: boolean, suppress: boolean, moments: Moment[],
     if (last < lastLineAt.current) lastLineAt.current = -1;          // a seek restarted the feed
     const fresh = lines.filter((l) => l.at > lastLineAt.current);
     lastLineAt.current = Math.max(lastLineAt.current, last);
-    if (on && !suppress) running.current = [...running.current, ...fresh].slice(-8);
-  }, [on, suppress, lines]);
+    if (!on || suppress) return;
+    running.current = [...running.current, ...fresh].slice(-8);
+    // Lines arrive a few seconds early: translate them now if this language isn't native.
+    for (const l of fresh) {
+      if (!l.text[lang]) translateNow([l.text.en], "en", lang).then(([r]) => { if (r.ok) l.text[lang] = r.text; });
+    }
+  }, [on, suppress, lines, lang]);
 
   useEffect(() => {
     if (!on || suppress) return;
@@ -180,8 +203,8 @@ export function useCommentary(on: boolean, suppress: boolean, moments: Moment[],
         const l = due[due.length - 1];
         const callSoon = pending.current && !pending.current.started && pending.current.c.at - t < 3 * speed;
         if (t - l.at <= 2.5 * speed && !booth.talking && !callSoon) {
-          const lang = l.text[persona.lang] ? persona.lang : "en";
-          booth.say({ text: l.text[lang], lang, role: l.role, tone: l.role === "pundit" ? "calm" : "pbp", gap: 0 });
+          const say = l.text[lang] ? lang : "en";
+          booth.say({ text: l.text[say], lang: say, role: l.role, tone: l.role === "pundit" ? "calm" : "pbp", gap: 0 });
         }
       }
       const p = pending.current;
@@ -194,7 +217,7 @@ export function useCommentary(on: boolean, suppress: boolean, moments: Moment[],
       if (t > p.c.at + 30) pending.current = null;     // stale (a seek, say)
     }, 100);
     return () => clearInterval(id);
-  }, [on, suppress, booth, clockRef, persona]);
+  }, [on, suppress, booth, clockRef, lang]);
 
   // Agent moments: the pundit follows a call; other big moments are read in full.
   useEffect(() => {
@@ -203,12 +226,12 @@ export function useCommentary(on: boolean, suppress: boolean, moments: Moment[],
     if (!on || suppress) return;
     for (const m of fresh.filter((x) => SPOKEN.has(x.kind)).sort((a, b) => a.elapsed - b.elapsed)) {
       if (called.current.has(m.signal_id) || pending.current?.c.signal_id === m.signal_id) {
-        booth.enqueue(segments(m, persona).filter((s) => s.role === "pundit"));
+        localize(segments(m, lang).filter((s) => s.role === "pundit"), lang).then((segs) => booth.enqueue(segs));
       } else if (!booth.busy || BIG.has(m.kind)) {
-        booth.play(segments(m, persona));
+        localize(segments(m, lang), lang).then((segs) => booth.play(segs));
       }
     }
-  }, [on, suppress, moments, persona, booth]);
+  }, [on, suppress, moments, lang, booth]);
 
   useEffect(() => () => booth.stop(), [booth]);
 }

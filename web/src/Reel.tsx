@@ -1,8 +1,9 @@
 import { useEffect, useRef, useState, type MutableRefObject } from "react";
-import { PEAK_TAIL, segments, type Booth } from "./Commentary";
+import { localize, PEAK_TAIL, segments, type Booth } from "./Commentary";
 import { kindLabel } from "./personas";
+import { useLiveTranslate } from "./translate";
 import { matchTime, type ClockRef } from "./stream";
-import type { Clip, Meta, Persona } from "./types";
+import type { Clip, Meta } from "./types";
 
 const REEL_SPEED = 3;
 
@@ -14,7 +15,7 @@ export interface ReelState { playing: boolean; i: number; clips: Clip[]; play: (
  */
 export function useReel(meta: Meta | null | undefined, clockRef: MutableRefObject<ClockRef>, speed: number,
                         restart: (p: { at?: number; speed?: number }) => void, auto: boolean,
-                        voice: { on: boolean; booth: Booth; persona: Persona }): ReelState {
+                        voice: { on: boolean; booth: Booth; lang: string }): ReelState {
   const [i, setI] = useState(-1);
   const saved = useRef(speed);
   const autoDone = useRef(false);
@@ -26,7 +27,12 @@ export function useReel(meta: Meta | null | undefined, clockRef: MutableRefObjec
     voice.booth.stop();
     if (k >= clips.length) { stop(); return; }
     cue.current = { build: -1, started: false };
-    if (voice.on) voice.booth.prepare(segments(clips[k], voice.persona)).then((d) => { cue.current.build = d; });
+    if (voice.on) {
+      const q = cue.current;
+      localize(segments(clips[k], voice.lang), voice.lang)
+        .then((segs) => (cue.current === q ? voice.booth.prepare(segs) : -1))
+        .then((d) => { if (cue.current === q && d >= 0) q.build = d; });
+    }
     setI(k);
     restart({ at: clips[k].start, speed: REEL_SPEED });
   };
@@ -62,7 +68,8 @@ export function useReel(meta: Meta | null | undefined, clockRef: MutableRefObjec
   return { playing: i >= 0, i, clips, play, next: () => go(i + 1), stop };
 }
 
-export function Reel({ reel, meta }: { reel: ReelState; meta: Meta }) {
+export function Reel({ reel, meta, lang, canTranslate }: { reel: ReelState; meta: Meta; lang: string; canTranslate: boolean }) {
+  const tr = useLiveTranslate(canTranslate ? lang : null);
   if (!reel.clips.length) return null;
   if (!reel.playing) {
     return (
@@ -79,7 +86,7 @@ export function Reel({ reel, meta }: { reel: ReelState; meta: Meta }) {
   return (
     <div className="reel" role="status" aria-live="polite">
       <span className="reel-tag">Highlights {reel.i + 1}/{reel.clips.length}</span>
-      <span className="reel-now"><b>{c.clock}</b> {kindLabel(c.kind, "en")} · {c.headline}</span>
+      <span className="reel-now"><b>{c.clock}</b> {kindLabel(c.kind, lang)} · {tr(c.headline, "en").text}</span>
       <span className="reel-dots" aria-hidden="true">{reel.clips.map((x, k) => <i key={x.moment_id} className={k < reel.i ? "done" : k === reel.i ? "now" : ""} />)}</span>
       <button className="linkish" onClick={reel.next}>{reel.i + 1 < reel.clips.length ? "Next" : "Finish"}</button>
       <button className="linkish" onClick={reel.stop}>Stop</button>

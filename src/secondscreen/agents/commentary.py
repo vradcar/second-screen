@@ -314,7 +314,7 @@ class CommentaryExecutor(Executor):
 async def batch(prefix: Path, mode: str) -> None:
     from secondscreen.agents.foundry_eval import build_dataset
     from secondscreen.agents.llm import describe_backend, load_dotenv, make_client
-    from secondscreen.agents.personas import DEFAULT_PERSONAS
+    from secondscreen.agents.personas import COMMENTARY_LANGS
     from agent_framework import Agent
     from secondscreen.agents import prompts
     load_dotenv()
@@ -326,7 +326,7 @@ async def batch(prefix: Path, mode: str) -> None:
             print("Backend:", describe_backend())
         agent = Agent(client, prompts.COMMENTARY, name="commentator",
                       description="Writes play-by-play and co-commentator lines for big moments.")
-    langs = langs_for(DEFAULT_PERSONAS)
+    langs = COMMENTARY_LANGS
     by_id = {m["moment_id"]: m for m in map(json.loads, moments.open(encoding="utf-8"))}
     out = prefix.with_suffix(".commentary.jsonl")
     n = agent_lines = 0

@@ -14,8 +14,8 @@ All clubs, players, and match data are fictional and synthetically generated.
 | Interpret | `secondscreen.stats`: possession, PPDA, pressing intensity, xG, pass difficulty, momentum, control/chaos, evidence-linked signals | ✅ |
 | Explain | `secondscreen.agents`: Tactical Analyst → Fact-Checker (revise loop) → Recap, on Microsoft Agent Framework + Foundry | ✅ |
 | Render | Timed, machine-readable overlay cues (lower thirds, player tags, stat pops) | ✅ |
-| Personalize | Persona agent: analyst / casual, favourite club, player cam, EN / ES / FR | ✅ |
-| Any language | Azure AI Translator on every phone (18 languages), numbers checked against the original | ✅ |
+| Personalize | Persona agent: analyst / casual, favourite club, player cam | ✅ |
+| Any language | One global language (18): native commentary in EN / ES / FR, Azure AI Translator for the rest, numbers checked | ✅ |
 | Commentary | Commentator agent writes play-by-play + co-commentator lines (EN / ES / FR), fact-checked; two-voice Azure AI Speech booth with a generated crowd | ✅ |
 | Highlights | Auto-played reel of every goal, red card and story moment | ✅ |
 | Dataset | 56-match synthetic season with ground-truth labels, Parquet → Microsoft Fabric | ✅ |
@@ -217,9 +217,12 @@ server ships it.
 
 More on the phones and TV:
 
-- **Translate any phone** with the language picker (Azure AI Translator). A translation is only shown
-  if every number in it matches the fact-checked original; otherwise the card stays in its original
-  language and says so. Arabic and other right-to-left languages lay out right-to-left.
+- **One language for everything.** The language menu in the header switches the TV graphics, both
+  phones, the commentary (words and voice) and the full-time report together. English, Spanish and
+  French commentary is written natively; every other language goes through Azure AI Translator, and a
+  translation is only shown if every number in it matches the fact-checked original (otherwise the
+  original stays, and says so). Arabic and other right-to-left languages lay out right-to-left.
+  Viewer profiles (analyst, either club's fan, a player cam) are about who you are, not language.
 - **Commentary on** reads the TV's strap for each new big moment aloud (Azure AI Speech, one neural
   voice per language). Goals and red cards cut in; smaller moments wait their turn.
 - **Highlights** (recorded runs) plays every goal and red card plus the best story moments, each from

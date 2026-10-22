@@ -23,11 +23,11 @@ from agent_framework import Agent, Executor, WorkflowBuilder, WorkflowContext, h
 
 from secondscreen.agents import prompts
 from secondscreen.agents.factcheck import check_draft, check_rendering
-from secondscreen.agents.personas import DEFAULT_PERSONAS, Persona
+from secondscreen.agents.personas import COMMENTARY_LANGS, DEFAULT_PERSONAS, Persona
 from secondscreen.agents.schemas import (RenderedMoment, AnalystRequest, ApprovedMoment, CheckedDraft, FailedDraft, JudgeVerdict,
                                          MomentDraft, PersonaBatch, PersonaVerdicts, PublishedMoment, Rendering)
 from secondscreen.agents.templates import template_draft
-from secondscreen.agents.commentary import CommentaryExecutor, langs_for
+from secondscreen.agents.commentary import CommentaryExecutor
 
 MAX_ATTEMPTS = 3   # first draft + 2 revisions
 
@@ -232,7 +232,7 @@ def build_moment_workflow(client, personas: list[Persona] | None = None, match_r
 
     commentator = Agent(client, prompts.COMMENTARY, name="commentator",
                         description="Writes play-by-play and co-commentator lines for big moments.")
-    co = CommentaryExecutor(commentator, langs_for(personas or DEFAULT_PERSONAS))
+    co = CommentaryExecutor(commentator, COMMENTARY_LANGS)
 
     return (WorkflowBuilder(name="second_screen_moment", start_executor=a, max_iterations=20)
             .add_edge(a, fc, condition=lambda m: isinstance(m, CheckedDraft))
