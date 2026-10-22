@@ -23,7 +23,9 @@ def test_commentary_runs_through_the_whole_match():
     gaps = [b["at"] - a["at"] for a, b in zip(lines, lines[1:])]
     assert sorted(gaps)[int(len(gaps) * 0.9)] < 30                 # rarely a long silence
     texts = [ln["text"]["en"] for ln in lines]
-    assert texts[0] == "And we're under way!" and texts[-1].startswith("And there's the final whistle!")
+    intro = [ln for ln in lines if ln["kind"] == "intro"]
+    assert intro[0]["text"]["en"].startswith("Good afternoon, and welcome to Halcyon Park")
+    assert "And we're under way!" in texts and texts[-1].startswith("And there's the final whistle!")
     assert any("half-time" in t for t in texts)
     assert all(set(ln["text"]) == {"en", "es", "fr"} and all(ln["text"].values()) for ln in lines)
 
@@ -43,3 +45,24 @@ def test_running_lines_only_name_real_players():
         assert not unknown_names(ln["text"]["en"], roster)
     said = {w.strip(".,!'s") for ln in lines for w in ln["text"]["en"].split() if w[:1].isupper()}
     assert said & surnames
+
+
+def test_pre_match_uses_the_season_and_the_table():
+    lines, _, _ = _run(("en",))
+    intro = " ".join(ln["text"]["en"] for ln in lines if ln["kind"] == "intro")
+    assert "Second against third" in intro                      # from the season standings
+    assert "goals already this season" in intro and "Here we go!" in intro
+
+
+def test_spoken_lines_use_football_language_not_analytics():
+    import re
+    from secondscreen.agents.commentary import JARGON
+    lines, calls, _ = _run(("en",))
+    for ln in lines:
+        assert not JARGON.search(ln["text"]["en"]), ln["text"]["en"]
+    for c in calls:
+        line = c["commentary"]["en"]
+        assert not JARGON.search(" ".join((line["build"], line["peak"], line["after"], line["pundit"])))
+    players = [ln for ln in lines if ln["kind"] == "colour" and ln["key"].startswith("p_")]
+    assert len(players) >= 8                                    # stories about players, not just teams
+    assert not any(re.search(r"\bxG\b", ln["text"]["en"]) for ln in lines)

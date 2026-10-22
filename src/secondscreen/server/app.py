@@ -65,6 +65,7 @@ app = FastAPI(title="Second Screen", lifespan=lifespan)
 
 
 SPOT_LANGS = ["en", "es", "fr"]
+INTRO_HOLD = float(os.environ.get("SECONDSCREEN_INTRO_HOLD", "20"))   # wall seconds of pre-match build-up
 
 
 def with_commentary(moments: list[dict], path: Path) -> list[dict]:
@@ -120,6 +121,7 @@ class Session:
         # `at` (elapsed seconds) is a precise seek from the timeline; `start` is a match minute.
         duration = self.events[-1]["elapsed_seconds"]
         self.start_elapsed = min(max(at, 0.0), duration - 1) if at >= 0 else self._elapsed_at_minute(start_min)
+        self.from_kickoff = at < 0 and self.start_elapsed == 0      # a seek (the reel, say) skips the build-up
         self.paused = False
         self.out: asyncio.Queue = asyncio.Queue()
         self.recorded_moments = with_commentary(load_jsonl(DATA / f"match_{match}.moments.jsonl"),
@@ -207,6 +209,8 @@ class Session:
         rec_c = [c for c in self.recorded_cues if c["elapsed"] >= clock]
         due_m: list[tuple[float, dict]] = []      # (wall time due, moment)
         i_anim, last_snap = i_proc, -1e9
+        # Watching from kick-off: hold at 00:00 while the commentators do the pre-match build-up.
+        hold_until = time.perf_counter() + (INTRO_HOLD if self.from_kickoff else 0.0)
         pumper = asyncio.create_task(self.pump())
         controller = asyncio.create_task(self.control())
         last = time.perf_counter()
@@ -214,7 +218,7 @@ class Session:
             while i_proc < len(ev):
                 await asyncio.sleep(TICK)
                 now = time.perf_counter()
-                if not self.paused:
+                if not self.paused and now >= hold_until:
                     clock += (now - last) * self.speed
                 last = now
                 while i_spot < len(ev) and ev[i_spot]["elapsed_seconds"] <= clock + call_lead(self.speed, LEAD):

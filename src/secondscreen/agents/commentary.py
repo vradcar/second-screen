@@ -5,7 +5,8 @@ The Commentator agent writes four parts per language:
     build   the climb towards the moment ("Fallow whips it in... Quarry rises...")
     peak    the call ("And he's headed it in!")
     after   who, and what it means ("Quarry! Level at 1-1.")
-    pundit  the co-commentator's calmer read ("Only 0.11 xG, but what a finish.")
+    pundit  the co-commentator's calmer read ("There was nothing on there. What a finish.")
+Everything is said the way people talk about football: no xG figures, decimals or analytics terms.
 Each line goes through the same grounding rules as every other agent output: numbers must
 come from FACTS and names from the roster. A line that fails is replaced by a template
 written in the same style, so commentary never says something the stats engine can't back.
@@ -19,6 +20,7 @@ from __future__ import annotations
 import argparse
 import asyncio
 import json
+import re
 import zlib
 from pathlib import Path
 from typing import Any
@@ -107,14 +109,20 @@ def template_line(kind: str, facts: dict, lang: str, fallback_text: str = "", tu
                        "Iban perdiendo y le han dado la vuelta. Eso es carácter.",
                        "Ils étaient menés et ils ont renversé la situation. Quel caractère.")
         elif xg is not None and xg < 0.15:
-            pundit = L(f"Only {_num(xg, lang)} xG on that, so there wasn't much on. That's a finish of real quality.",
-                       f"Solo {_num(xg, lang)} de xG: había muy poco, pero qué definición.",
-                       f"Seulement {_num(xg, lang)} xG : il n'y avait pas grand-chose, mais quelle finition.")
+            pundit = V(("There was nothing on there! He's made that out of absolutely nothing.",
+                        "¡No había nada ahí! Se ha sacado ese gol de la nada.",
+                        "Il n'y avait rien ! Il a fait ce but à partir de rien."),
+                       ("Look at the angle he's had to find there. That is a top-class finish.",
+                        "Mira el ángulo que ha encontrado. Una definición de primer nivel.",
+                        "Regardez l'angle qu'il a trouvé. Une finition de très haut niveau."))
             used.append("signal.shot.xg")
         elif xg is not None and xg >= 0.4:
-            pundit = L(f"A {_num(xg, lang)} xG chance and he makes no mistake. The build-up did the hard work.",
-                       f"Una ocasión de {_num(xg, lang)} de xG y no perdona.",
-                       f"Une occasion à {_num(xg, lang)} xG, et il ne tremble pas.")
+            pundit = V(("Great chance, and he makes no mistake. The build-up did all the hard work there.",
+                        "Ocasión clarísima y no perdona. La jugada previa hizo todo el trabajo.",
+                        "Grosse occasion, et il ne tremble pas. Toute la construction a fait le travail."),
+                       ("You have to take those, and he does. Composed as you like.",
+                        "Esas hay que meterlas, y la mete. Con una tranquilidad tremenda.",
+                        "Celles-là, il faut les mettre, et il la met. Avec un calme olympien."))
             used.append("signal.shot.xg")
         else:
             pundit = L("Good movement, and a composed finish when it mattered.",
@@ -158,12 +166,18 @@ def template_line(kind: str, facts: dict, lang: str, fallback_text: str = "", tu
                         (f"That's a let-off for the defence, and {player} knows it.", "Se salva la defensa.",
                          "La défense s'en sort bien.")))
         if xg is not None:
-            pundit = (L(f"That's a {_num(xg, lang)} xG chance. You'd expect him to bury those.",
-                        f"Era una ocasión de {_num(xg, lang)} de xG. Tenía que ser gol.",
-                        f"Une occasion à {_num(xg, lang)} xG. Il doit la mettre.") if xg >= 0.5 else
-                      L(f"Decent opening, {_num(xg, lang)} xG. He'll feel he should have done better.",
-                        f"Buena ocasión, {_num(xg, lang)} de xG. Pudo hacer más.",
-                        f"Belle occasion, {_num(xg, lang)} xG. Il pouvait mieux faire."))
+            pundit = (V(("He has to score there. Honestly, that's as good a chance as you'll get all day.",
+                         "Tenía que ser gol. Es la ocasión más clara que vas a ver en todo el partido.",
+                         "Il doit marquer. C'est la plus belle occasion qu'on verra de tout le match."),
+                        ("He'll be seeing that one in his sleep tonight. Wide open.",
+                         "Esa la va a soñar esta noche. Estaba solo.",
+                         "Il va en rêver cette nuit. Il était tout seul.")) if xg >= 0.5 else
+                      V(("Good opening, that. He'll feel he should at least have hit the target.",
+                         "Buena ocasión. Debió al menos tirar a puerta.",
+                         "Belle occasion. Il devait au moins cadrer."),
+                        ("Half a yard more space and that's a goal. So close.",
+                         "Medio metro más de espacio y es gol. Qué cerca.",
+                         "Un demi-mètre de plus et c'est but. Si près.")))
             used.append("signal.xg")
         used += ["signal.player", "signal.outcome"]
 
@@ -188,9 +202,9 @@ def template_line(kind: str, facts: dict, lang: str, fallback_text: str = "", tu
                   (f"{team} won't let them play out from the back.", f"{team} no deja salir jugando al rival.",
                    f"{team} empêche toute relance propre."))
         if n:
-            pundit = L(f"{n} pressing actions in six minutes. They're not giving them a moment on the ball.",
-                       f"{n} acciones de presión en seis minutos. No les dejan respirar.",
-                       f"{n} actions de pressing en six minutes. Ils ne laissent aucun répit.")
+            pundit = L("They're not giving them a second on the ball. Every pass, there's someone right on top of them.",
+                       "No les dejan ni respirar. En cada pase hay alguien encima.",
+                       "Ils ne laissent aucun répit. À chaque passe, quelqu'un est déjà sur le porteur.")
             used.append("signal.press_actions_last_6")
 
     elif kind == "late_surge":
@@ -199,9 +213,9 @@ def template_line(kind: str, facts: dict, lang: str, fallback_text: str = "", tu
         after = L(f"{team} pinning them back in the closing minutes.", f"{team} encierra a su rival en el tramo final.",
                   f"{team} pousse dans les dernières minutes.")
         if n:
-            pundit = L(f"{n} entries into the box in eight minutes. Something has to give.",
-                       f"{n} llegadas al área en ocho minutos. Algo tiene que pasar.",
-                       f"{n} entrées dans la surface en huit minutes. Ça va finir par céder.")
+            pundit = L("They're in the box again and again now. Something has to give.",
+                       "Llegan al área una y otra vez. Algo tiene que pasar.",
+                       "Ils arrivent dans la surface encore et encore. Ça va finir par céder.")
             used.append("signal.box_entries_last_8")
 
     elif kind == "hot_streak":
@@ -210,9 +224,9 @@ def template_line(kind: str, facts: dict, lang: str, fallback_text: str = "", tu
         after = L(f"{player} wants the ball every time.", f"{player} pide el balón en cada jugada.",
                   f"{player} réclame tous les ballons.")
         if n:
-            pundit = L(f"{n} touches in twelve minutes. Everything is going through him.",
-                       f"{n} toques en doce minutos. Todo pasa por él.",
-                       f"{n} touches en douze minutes. Tout passe par lui.")
+            pundit = L("Everything is going through him at the moment. He wants it every single time.",
+                       "Ahora mismo todo pasa por él. La pide en cada jugada.",
+                       "Tout passe par lui en ce moment. Il le demande à chaque fois.")
             used.append("signal.touches_last_12")
 
     elif kind == "fatigue_fade":
@@ -221,9 +235,9 @@ def template_line(kind: str, facts: dict, lang: str, fallback_text: str = "", tu
         after = L(f"{team} are starting to tire.", f"{team} empieza a acusar el cansancio.", f"{team} commence à fatiguer.")
         if pc:
             pct = round(pc * 100)
-            pundit = L(f"Their passing's dropped to {pct}% in the last ten minutes. Tired minds, tired legs.",
-                       f"Su acierto en el pase cae al {pct}% en los últimos diez minutos.",
-                       f"Leur précision de passe tombe à {pct}% sur les dix dernières minutes.")
+            pundit = L("You can see it. Passes that were finding a teammate half an hour ago are going astray now.",
+                       "Se nota. Pases que antes llegaban ahora se pierden.",
+                       "Ça se voit. Les passes qui trouvaient un partenaire il y a une demi-heure se perdent maintenant.")
             used.append("signal.pass_completion_last_10")
     else:
         after = fallback_text
@@ -232,8 +246,16 @@ def template_line(kind: str, facts: dict, lang: str, fallback_text: str = "", tu
 
 
 # ------------------------------------------------------------------ checking
+# Spoken commentary is for viewers, not analysts: no metrics jargon, no decimals.
+JARGON = re.compile(r"\bxG\b|expected goals|goles esperados|buts attendus|\bPPDA\b|momentum score|press(ing)? actions|"
+                    r"\bregime\b|\d+[.,]\d+", re.I)
+
+
 def check_line(line: CommentaryLine, context: dict, lang: str) -> list[str]:
     issues = []
+    spoken = " ".join((line.build, line.peak, line.after, line.pundit))
+    if m := JARGON.search(spoken):
+        issues.append(f"say it in football language, not '{m.group(0)}'")
     if line.lang != lang:
         issues.append(f"expected language {lang}, got {line.lang}")
     for part, limit in LIMITS.items():

@@ -179,6 +179,27 @@ def standings(matches: list[dict]) -> list[dict]:
     return [r | {"position": i + 1} for i, r in enumerate(rows)]
 
 
+def season_summary(tables: dict[str, list[dict]]) -> dict:
+    """The season so far, per player and club, for the commentators ("came into this one with
+    seven goals"). Plain JSON so the live app needs no data libraries."""
+    agg: dict[str, dict] = {}
+    for r in tables["player_match"]:
+        a = agg.setdefault(r["player_id"], {"name": r["player_name"], "team_id": r["team_id"], "apps": 0, "goals": 0,
+                                            "shots": 0, "passes": 0, "passes_completed": 0, "km": 0.0,
+                                            "top_speed_kmh": 0.0, "tackles": 0, "interceptions": 0, "dribbles": 0})
+        a["apps"] += 1
+        for k in ("goals", "shots", "passes", "passes_completed", "tackles", "interceptions", "dribbles"):
+            a[k] += int(r.get(k) or 0)
+        a["km"] += (r.get("distance_m") or 0) / 1000
+        a["top_speed_kmh"] = max(a["top_speed_kmh"], r.get("top_speed_kmh") or 0)
+    for a in agg.values():
+        a["km_per_match"] = round(a.pop("km") / max(a["apps"], 1), 1)
+        a["pass_completion"] = round(a["passes_completed"] / a["passes"], 2) if a["passes"] else None
+    clubs = {c["team_id"]: {"block": c["block"], "directness": c["directness"]} for c in tables["clubs"]}
+    return {"season": SEASON, "matches": len(tables["matches"]), "standings": tables["standings"], "clubs": clubs,
+            "players": agg}
+
+
 def write_parquet(tables: dict[str, list[dict]], out: Path) -> list[Path]:
     import pyarrow as pa
     import pyarrow.parquet as pq
@@ -218,6 +239,7 @@ def main() -> None:
     args = ap.parse_args()
     tables = build(args.matches)
     paths = write_parquet(tables, Path(args.out))
+    (Path(args.out) / "season_summary.json").write_text(json.dumps(season_summary(tables), indent=1), encoding="utf-8")
     for name, rows in tables.items():
         print(f"{name:13s} {len(rows):>8,} rows")
     arcs = tables["arcs"]

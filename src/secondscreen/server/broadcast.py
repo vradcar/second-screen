@@ -22,6 +22,7 @@ from pathlib import Path
 from secondscreen.agents.spotter import Spotter, call_lead
 
 LEAD = 6.0
+INTRO_HOLD = float(os.environ.get("SECONDSCREEN_INTRO_HOLD", "20"))
 TICK = 0.1
 SNAP_EVERY = 4.0
 RECORDED_LATENCY = 3.0
@@ -169,7 +170,9 @@ class Broadcast:
             if self.started_wall is None:
                 continue
             now = time.perf_counter()
-            self.air_clock = self.first_elapsed + (now - self.started_wall) * self.speed - call_lead(self.speed, LEAD)
+            # The first INTRO_HOLD seconds on air are the pre-match build-up; the match clock waits.
+            self.air_clock = self.first_elapsed + max(0.0, now - self.started_wall - INTRO_HOLD) * self.speed \
+                - call_lead(self.speed, LEAD)
             while i < len(self.events) and self.events[i]["elapsed_seconds"] <= self.air_clock:
                 await self.orch.ingest(self.events[i])
                 i += 1

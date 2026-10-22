@@ -61,3 +61,10 @@ def test_profiles_are_english_and_language_is_global():
     from secondscreen.agents.personas import COMMENTARY_LANGS, DEFAULT_PERSONAS
     assert {p.lang for p in DEFAULT_PERSONAS} == {"en"}          # who you are, not what language
     assert COMMENTARY_LANGS == ["en", "es", "fr"]                 # the box speaks these natively
+
+
+def test_jargon_is_rejected_by_the_checker():
+    r, ctx = next(_rows())
+    line = template_line(r["kind"], ctx["facts"], "en")
+    line.pundit = "That was a 0.91 xG chance."
+    assert any("football language" in p for p in check_line(line, ctx, "en"))

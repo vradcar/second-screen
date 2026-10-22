@@ -50,7 +50,8 @@ export default function App() {
     isNative(lang) ? uiText(t, lang, vars) : tr(uiText(t, "en", vars), "en").text;
   const [speechOk, setSpeechOk] = useState(false);
   const [matches, setMatches] = useState<string[]>([]);
-  const [voice, setVoice] = useState(false);
+  const [voice, setVoice] = useState(true);          // commentary on from kick-off
+  const [audioBlocked, setAudioBlocked] = useState(false);
   const { state, clockRef, send } = useMatchStream(params);
 
   useEffect(() => { fetch("/api/matches").then((r) => r.json()).then((d) => { setLiveOk(!!d.live_available); setLangs(d.translate?.langs ?? []); setSpeechOk(!!d.speech?.available); setMatches(d.recorded ?? []); }).catch(() => {}); }, []);
@@ -62,9 +63,22 @@ export default function App() {
   const booth = useMemo(() => new Booth(), []);
   const crowd = useMemo(() => new Crowd(), []);
   const [line, setLine] = useState<Seg | null>(null);
-  useEffect(() => { booth.onLine = (s) => { setLine(s); crowd.duck(!!s); }; }, [booth, crowd]);
+  useEffect(() => {
+    booth.onLine = (s) => { setLine(s); crowd.duck(!!s); };
+    booth.onBlocked = setAudioBlocked;
+  }, [booth, crowd]);
+  const unlockAudio = () => { booth.unlock(); crowd.resume(); };
+  // Browsers only allow sound after the viewer interacts: the first click anywhere turns it on.
+  useEffect(() => {
+    if (!audioBlocked) return;
+    const once = () => unlockAudio();
+    window.addEventListener("pointerdown", once, { once: true });
+    return () => window.removeEventListener("pointerdown", once);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [audioBlocked]);
   const reel = useReel(state.meta, clockRef, params.speed, restart, init.reel, { on: voice, booth, lang });
-  useCommentary(voice, reel.playing, state.moments, state.calls, state.lines, lang, booth, clockRef);
+  useCommentary(voice, reel.playing, state.moments, state.calls, state.lines, lang, booth, clockRef,
+                params.mode === "onair" ? undefined : (h) => send({ cmd: h ? "pause" : "play" }));
   useCrowd(voice, state.events, crowd);
 
   const { meta, snap } = state;
@@ -157,8 +171,16 @@ export default function App() {
       {meta && (
         <main className="stage">
           <div className="tv-col">
-            <Broadcast meta={meta} events={state.events} clockRef={clockRef} snap={snap}
-                       cues={state.cues} moments={state.moments} persona={persona(tv)} lang={lang} canTranslate={canTranslate} />
+            <div className="tv-wrap">
+              <Broadcast meta={meta} events={state.events} clockRef={clockRef} snap={snap}
+                         cues={state.cues} moments={state.moments} persona={persona(tv)} lang={lang} canTranslate={canTranslate} />
+              {voice && audioBlocked && (
+                <button className="tap-audio" onClick={unlockAudio}>
+                  <svg viewBox="0 0 16 16" width="18" height="18" aria-hidden="true"><path d="M2 6h3l4-3v10l-4-3H2z" fill="currentColor" /><path d="M11 5.5a3.5 3.5 0 010 5M12.8 3.8a6 6 0 010 8.4" fill="none" stroke="currentColor" strokeWidth="1.3" /></svg>
+                  {ui("Tap for live commentary")}
+                </button>
+              )}
+            </div>
             {/* Seeking only makes sense when every moment already exists (a recorded run). */}
             {meta.mode === "recorded" && <Reel reel={reel} meta={meta} lang={lang} canTranslate={canTranslate} />}
             {voice && (

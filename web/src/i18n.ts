@@ -10,7 +10,7 @@ const UI: Record<string, Record<string, string>> = {
     "{name} is sent off": "{name}, expulsado", "{team} in control": "{team} domina", "{n}-pass move": "{n} pases seguidos",
     "Full-time report": "Crónica del partido", "Player of the match": "Jugador del partido",
     "Commentator": "Narrador", "Co-commentator": "Comentarista", "Commentary box": "Cabina de comentarios",
-    "Listening for the next big moment…": "Atentos a la próxima jugada…",
+    "Listening for the next big moment…": "Atentos a la próxima jugada…", "Tap for live commentary": "Toca para escuchar la narración",
   },
   fr: {
     "Pass": "Passe", "Carry": "Percée", "Shot": "Frappe", "Beats his man": "Dribble", "Interception": "Interception",
@@ -21,7 +21,7 @@ const UI: Record<string, Record<string, string>> = {
     "{name} is sent off": "{name} est exclu", "{team} in control": "{team} contrôle le jeu",
     "{n}-pass move": "{n} passes d'affilée", "Full-time report": "Le résumé du match", "Player of the match": "Homme du match",
     "Commentator": "Commentateur", "Co-commentator": "Consultant", "Commentary box": "Cabine de commentaire",
-    "Listening for the next big moment…": "À l'affût du prochain temps fort…",
+    "Listening for the next big moment…": "À l'affût du prochain temps fort…", "Tap for live commentary": "Touchez pour le commentaire en direct",
   },
 };
 

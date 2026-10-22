@@ -61,9 +61,30 @@ export class Booth {
   private token = 0;
   private side: HTMLAudioElement | null = null;   // running play-by-play: never interrupts anything
   busy = false;
+  /** The browser refused to play audio until the viewer interacts with the page. */
+  blocked = false;
+  private retry: Seg[] | null = null;
   onLine: (s: Seg | null) => void = () => {};
+  onBlocked: (blocked: boolean) => void = () => {};
 
   get talking() { return this.busy || this.side !== null; }
+
+  private refused(e: unknown, segs: Seg[]) {
+    if ((e as DOMException)?.name !== "NotAllowedError") return false;
+    this.retry = segs;
+    if (!this.blocked) { this.blocked = true; this.onBlocked(true); }
+    return true;
+  }
+
+  /** Call from a click: the browser now allows sound. Replays the line that was refused. */
+  unlock() {
+    const silent = new Audio("data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQAAAAA=");
+    silent.play().catch(() => {});
+    this.blocked = false;
+    this.onBlocked(false);
+    const r = this.retry; this.retry = null;
+    if (r?.length) this.play(r);
+  }
 
   /** A running line, only if the box is free. */
   say(s: Seg): boolean {
@@ -73,7 +94,7 @@ export class Booth {
     this.onLine(s);
     const done = () => { if (this.side === a) { this.side = null; this.onLine(null); } };
     a.onended = done; a.onerror = done;
-    a.play().catch(done);
+    a.play().catch((e) => { this.refused(e, [s]); done(); });
     return true;
   }
 
@@ -114,7 +135,10 @@ export class Booth {
         this.onLine(list[k]);
         a.onended = () => step(k + 1);
         a.onerror = () => step(k + 1);
-        a.play().catch(() => step(k + 1));
+        a.play().catch((e) => {
+          if (this.refused(e, list.slice(k))) { this.busy = false; this.onLine(null); this.token++; return; }
+          step(k + 1);
+        });
       }, k === 0 ? 0 : list[k].gap);
     };
     step(0);
@@ -144,9 +168,12 @@ export class Booth {
  * are read out in full as they arrive. Suppressed while the highlights reel drives the booth.
  */
 export function useCommentary(on: boolean, suppress: boolean, moments: Moment[], calls: Call[], lines: PbpLine[],
-                              lang: string, booth: Booth, clockRef: MutableRefObject<ClockRef>) {
+                              lang: string, booth: Booth, clockRef: MutableRefObject<ClockRef>,
+                              hold?: (on: boolean) => void) {
+  const holding = useRef(false);
   const running = useRef<PbpLine[]>([]);
-  const lastLineAt = useRef(-1);
+  const intro = useRef<PbpLine[]>([]);
+  const seenLines = useRef<WeakSet<PbpLine>>(new WeakSet());
   const seen = useRef<Set<string>>(new Set());
   const seenCalls = useRef<Set<string>>(new Set());
   const called = useRef<Set<string>>(new Set());
@@ -156,8 +183,11 @@ export function useCommentary(on: boolean, suppress: boolean, moments: Moment[],
     seen.current = new Set(moments.map((m) => m.moment_id));
     seenCalls.current = new Set(calls.map((c) => c.signal_id));
     pending.current = null;
-    running.current = [];
-    lastLineAt.current = lines.length ? lines[lines.length - 1].at : -1;
+    // Turning commentary on mid-stream: keep what's still worth saying (the build-up, the last moment).
+    const t = matchTime(clockRef.current), speed = clockRef.current.speed || 1;
+    seenLines.current = new WeakSet(lines);
+    intro.current = on && t < 1 ? lines.filter((l) => l.kind === "intro") : [];
+    running.current = on ? lines.filter((l) => l.kind !== "intro" && l.at >= t - 2.5 * speed).slice(-3) : [];
     if (!on) booth.stop();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [on, lang, suppress]);
@@ -180,12 +210,11 @@ export function useCommentary(on: boolean, suppress: boolean, moments: Moment[],
 
   // Running play-by-play: queue new lines (the stream keeps only the last 30).
   useEffect(() => {
-    const last = lines.length ? lines[lines.length - 1].at : -1;
-    if (last < lastLineAt.current) lastLineAt.current = -1;          // a seek restarted the feed
-    const fresh = lines.filter((l) => l.at > lastLineAt.current);
-    lastLineAt.current = Math.max(lastLineAt.current, last);
+    const fresh = lines.filter((l) => !seenLines.current.has(l));
+    fresh.forEach((l) => seenLines.current.add(l));
     if (!on || suppress) return;
-    running.current = [...running.current, ...fresh].slice(-8);
+    intro.current = [...intro.current, ...fresh.filter((l) => l.kind === "intro")];
+    running.current = [...running.current, ...fresh.filter((l) => l.kind !== "intro")].slice(-8);
     // Lines arrive a few seconds early: translate them now if this language isn't native.
     for (const l of fresh) {
       if (!l.text[lang]) translateNow([l.text.en], "en", lang).then(([r]) => { if (r.ok) l.text[lang] = r.text; });
@@ -196,6 +225,19 @@ export function useCommentary(on: boolean, suppress: boolean, moments: Moment[],
     if (!on || suppress) return;
     const id = setInterval(() => {
       const t = matchTime(clockRef.current), speed = clockRef.current.speed || 1;
+      if (booth.blocked) return;                       // wait for the viewer's first click
+      const voiceOf = (l: PbpLine) => {
+        const say = l.text[lang] ? lang : "en";
+        return { text: l.text[say], lang: say, role: l.role, tone: (l.role === "pundit" ? "calm" : "pbp") as Seg["tone"], gap: 0 };
+      };
+      // The pre-match build-up, in order, before anything else. If kick-off comes before the
+      // commentators have finished (a private stream), the match waits for them.
+      if (intro.current.length || (holding.current && booth.talking)) {
+        if (hold && t > 0.5 && !holding.current) { holding.current = true; hold(true); }
+        if (intro.current.length && !booth.talking) booth.say(voiceOf(intro.current.shift()!));
+        return;
+      }
+      if (holding.current) { holding.current = false; hold?.(false); }
       // The latest running line that's due, if the box is free and no call is about to start.
       const due = running.current.filter((l) => l.at <= t);
       if (due.length) {
@@ -203,8 +245,7 @@ export function useCommentary(on: boolean, suppress: boolean, moments: Moment[],
         const l = due[due.length - 1];
         const callSoon = pending.current && !pending.current.started && pending.current.c.at - t < 3 * speed;
         if (t - l.at <= 2.5 * speed && !booth.talking && !callSoon) {
-          const say = l.text[lang] ? lang : "en";
-          booth.say({ text: l.text[say], lang: say, role: l.role, tone: l.role === "pundit" ? "calm" : "pbp", gap: 0 });
+          booth.say(voiceOf(l));
         }
       }
       const p = pending.current;
@@ -291,6 +332,8 @@ export class Crowd {
     if (!this.ctx) return;
     this.base = on ? 0.035 : 0.05;
   }
+
+  resume() { this.ctx?.resume().catch(() => {}); }
 
   stop() { this.ctx?.close(); this.ctx = null; }
 }
