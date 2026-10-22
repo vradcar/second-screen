@@ -78,7 +78,10 @@ def with_commentary(moments: list[dict], path: Path) -> list[dict]:
         own = m.get("commentary") or {}
         for lang, line in list(own.items()):
             spoken = " ".join(line.get(k, "") for k in ("build", "peak", "after", "pundit"))
-            if JARGON.search(spoken):
+            rerun = scripts.get(m["moment_id"], {}).get(lang)
+            if rerun and rerun.get("source") == "agent":          # a later commentator run wins
+                own[lang] = rerun
+            elif JARGON.search(spoken):
                 fix = scripts.get(m["moment_id"], {}).get(lang)
                 own[lang] = fix or (template_line(m["kind"], m.get("facts", {}), lang, line.get("after", "")).model_dump()
                                     | {"source": "template"})
