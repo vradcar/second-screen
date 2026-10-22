@@ -57,6 +57,7 @@ class StatsEngine:
         self.max_deficit: dict[str, int] = {}
 
         self.signals: list[Signal] = []
+        self.key_events: list[dict] = []     # goals, cards, subs: the match sheet
         self._new: list[Signal] = []
         self.next_tick = TICK
         self.momentum = 0.0
@@ -251,9 +252,15 @@ class StatsEngine:
         if self.ax(ev["team_id"], ev["x"]) > 42:
             self.teams[ev["team_id"]].ppda_def_actions += 1
 
+    def _key(self, ev: dict, kind: str, **extra) -> None:
+        self.key_events.append({"kind": kind, "team_id": ev.get("team_id"), "player_id": ev.get("player_id"),
+                                "player": ev.get("player_name"), "clock": ev["clock"], "elapsed": ev["elapsed_seconds"],
+                                **extra})
+
     def on_card(self, ev: dict) -> None:
         ts = self.teams[ev["team_id"]]
         p = self.player(ev["player_id"])
+        self._key(ev, "yellow" if ev["card"] == "yellow" else "red")
         if ev["card"] == "yellow":
             ts.yellow_cards += 1
             p.yellow_cards += 1
@@ -331,6 +338,7 @@ class StatsEngine:
                 "distance_m": round(dist, 1)}, evidence=[ev["event_id"]])
 
     def on_goal(self, ev: dict) -> None:
+        self._key(ev, "goal", assist=ev.get("assist_name"))
         team, other = ev["team_id"], self.opp(ev["team_id"])
         before_us, before_them = self.score[team], self.score[other]
         self.score = dict(ev["score"])
@@ -378,6 +386,7 @@ class StatsEngine:
 
     def on_substitution(self, ev: dict) -> None:
         on, off = self.player(ev["player_id"]), self.player(ev["player_off_id"])
+        self._key(ev, "sub", off_id=off.player_id, off=off.name)
         on.on_pitch, off.on_pitch = True, False
         self.emit("substitution", 0.2, ev["team_id"], on.player_id, facts={
             "on": on.name, "off": off.name, "off_distance_km": round(off.distance_m / 1000, 2)},

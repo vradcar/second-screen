@@ -114,8 +114,15 @@ def compact_snapshot(engine) -> dict:
     markers = [{"kind": sg.kind, "elapsed": sg.elapsed, "clock": sg.clock, "team_id": sg.team_id,
                 "label": sg.facts.get("scorer") or sg.facts.get("player") or ""}
                for sg in engine.signals if sg.kind in ("goal", "red_card")]
+    # The match sheet: every player with today's line, plus goals, cards and subs as they happen.
+    sheet = {tid: [{"player_id": p.player_id, "name": p.name, "number": p.number, "position": p.position,
+                    "on_pitch": p.on_pitch, "touches": p.touches, "passes": p.passes,
+                    "pass_completion": p.pass_completion, "shots": p.shots, "goals": p.goals, "assists": p.assists,
+                    "tackles": p.tackles_won + p.interceptions, "yellow": p.yellow_cards, "red": p.red_card,
+                    "km": round(p.distance_m / 1000, 1)} for p in ts.players.values()]
+             for tid, ts in engine.teams.items()}
     return {"clock": snap["clock"], "period": snap["period"], "score": snap["score"], "teams": snap["teams"],
-            "markers": markers,
+            "markers": markers, "sheet": sheet, "key_events": engine.key_events,
             "momentum": snap["momentum"], "regime": snap["regime"], "pressing": snap["pressing"],
             "series": snap["series"][-120:],
             "players": [{k: p[k] for k in ("player_id", "name", "team_id", "goals", "assists", "xg", "shots",
@@ -313,6 +320,25 @@ async def speak(text: str, lang: str = "en", role: str = "commentator", tone: st
         raise HTTPException(status_code=404, detail="no audio for that line")
     kind = "audio/wav" if audio[:4] == b"RIFF" else "audio/mpeg"
     return Response(audio, media_type=kind, headers={"Cache-Control": "public, max-age=86400"})
+
+
+_ANALYSIS: dict[tuple[str, int], dict] = {}
+
+
+@app.get("/api/analysis")
+def analysis(match: str, upto: float | None = None):
+    """The analyst hub's data for a match up to `upto` elapsed seconds (the viewer's clock)."""
+    from secondscreen.analysis import analyse
+    from secondscreen.cloud.feed import match_path
+    path = match_path(match, DATA)
+    if path is None:
+        raise HTTPException(status_code=404, detail=f"no match {match}")
+    key = (match, -1 if upto is None else int(upto // 5))
+    if key not in _ANALYSIS:
+        if len(_ANALYSIS) > 400:
+            _ANALYSIS.clear()
+        _ANALYSIS[key] = analyse(load_jsonl(path), None if upto is None else key[1] * 5)
+    return _ANALYSIS[key]
 
 
 @app.post("/api/translate")

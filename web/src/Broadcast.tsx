@@ -221,6 +221,11 @@ export function Broadcast({ meta, events, clockRef, snap, cues, moments, persona
     .find(({ m, cue }) => cue && now - (arrivals.current.get(m.moment_id) ?? 0) < cue.duration_s * 1000);
 
   const score = snap?.score ?? {};
+  // Red cards on the scorebug, as on TV.
+  const reds = (tid: string) => {
+    const n = (snap?.key_events ?? []).filter((k) => k.kind === "red" && k.team_id === tid).length;
+    return n ? <span className="sb-reds" aria-label={`${n} sent off`}>{Array.from({ length: n }, (_, i) => <i key={i} />)}</span> : null;
+  };
   const regime = snap?.regime ?? "balanced";
   const regimeText = regime === "chaos" ? ui("Open, chaotic phase")
     : regime.startsWith("control:") ? ui("{team} in control", { team: regime.endsWith(meta.home.team_id) ? meta.home.short_name : meta.away.short_name })
@@ -237,9 +242,9 @@ export function Broadcast({ meta, events, clockRef, snap, cues, moments, persona
                 onMouseMove={onMove} onMouseLeave={() => { hoverRef.current = null; }}
                 onClick={(ev) => setFollow(hit(ev))} />
         <div className="scorebug" aria-live="polite">
-          <span className="sb-team" style={{ background: meta.home.colors[0], color: meta.home.colors[1] }}>{meta.home.short_name}</span>
+          <span className="sb-team" style={{ background: meta.home.colors[0], color: meta.home.colors[1] }}>{meta.home.short_name}{reds(meta.home.team_id)}</span>
           <span className="sb-score">{score[meta.home.team_id] ?? 0}<i>–</i>{score[meta.away.team_id] ?? 0}</span>
-          <span className="sb-team" style={{ background: meta.away.colors[0], color: meta.away.colors[1] }}>{meta.away.short_name}</span>
+          <span className="sb-team" style={{ background: meta.away.colors[0], color: meta.away.colors[1] }}>{reds(meta.away.team_id)}{meta.away.short_name}</span>
           <span className="sb-clock">{clockRef.current.clock}</span>
         </div>
         <div className={`regime regime-${regime.split(":")[0]}`}>{regimeText}</div>

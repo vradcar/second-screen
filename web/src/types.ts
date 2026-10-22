@@ -52,6 +52,17 @@ export interface Snapshot {
   markers: { kind: "goal" | "red_card"; elapsed: number; clock: string; team_id: string | null; label: string }[];
   players: { player_id: string; name: string; team_id: string; goals: number; assists: number; xg: number;
              shots: number; touches: number; distance_m: number; top_speed_kmh: number; on_pitch: boolean }[];
+  sheet?: Record<string, SheetPlayer[]>;
+  key_events?: KeyEvent[];
+}
+export interface SheetPlayer {
+  player_id: string; name: string; number: number; position: string; on_pitch: boolean; touches: number; passes: number;
+  pass_completion: number | null; shots: number; goals: number; assists: number; tackles: number; yellow: number;
+  red: boolean; km: number;
+}
+export interface KeyEvent {
+  kind: "goal" | "yellow" | "red" | "sub"; team_id: string; player_id: string; player: string; clock: string;
+  elapsed: number; assist?: string | null; off_id?: string; off?: string;
 }
 export interface RecapDoc {
   recap: { title: string; standfirst: string; paragraphs: { text: string; moment_ids: string[] }[];

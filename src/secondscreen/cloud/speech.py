@@ -229,7 +229,16 @@ class Speech:
         if self.mock:      # silent WAV, about as long as the line would take to say
             return _silent_wav(max(0.6, 0.33 * len(text.split())))
         if self.engine == "openai":
-            return self._openai(text, lang, role, tone)
+            try:
+                return self._openai(text, lang, role, tone)
+            except Exception as e:  # noqa: BLE001
+                if "DeploymentNotFound" not in str(e) and getattr(e, "status_code", None) != 404 or not self.key:
+                    raise
+                # The gpt-4o-mini-tts deployment isn't there: use Azure Speech voices from now on.
+                import logging
+                logging.getLogger(__name__).warning("AZURE_TTS_DEPLOYMENT not found; using Azure Speech voices")
+                os.environ.pop("AZURE_TTS_DEPLOYMENT", None)
+                self.engine = "speech"
         voice = voice_for(role, lang)
         if voice in self._rejected:
             voice = VOICES[lang]

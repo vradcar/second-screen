@@ -3,6 +3,7 @@ import { Broadcast } from "./Broadcast";
 import { Explain } from "./Explain";
 import { PERSONAS } from "./personas";
 import { Phone } from "./Phone";
+import { AnalystHub } from "./AnalystHub";
 import { NATIVE, useLiveTranslate, type Lang } from "./translate";
 import { isNative, uiText } from "./i18n";
 import { Reel, useReel } from "./Reel";
@@ -220,6 +221,7 @@ export default function App() {
             </div>
             <MomentumRiver snap={snap} meta={meta} events={state.events} duration={meta.duration} />
             <DuelBars snap={snap} meta={meta} />
+            <AnalystHub meta={meta} snap={snap} clockRef={clockRef} ui={ui} />
           </div>
           <div className="phones">
             <Phone persona={persona(left)} onPersona={setLeft} moments={state.moments} cues={state.cues} meta={meta}
