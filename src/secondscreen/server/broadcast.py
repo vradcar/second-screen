@@ -147,6 +147,8 @@ class Broadcast:
             self.events.append(e)
             for c in self.spotter.feed(e):          # the feed is ahead of air: call it on time
                 self._fan_out({"t": "call", "c": c})
+            for line in self.spotter.take_lines():  # running play-by-play
+                self._fan_out({"t": "pbp", "l": line})
             if e["type"] == "match_start":
                 self.meta = {"t": "meta", "match_id": e["match_id"], "home": e["home"], "away": e["away"],
                              "mode": "onair", "speed": self.speed, "duration": NOMINAL_DURATION,

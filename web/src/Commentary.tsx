@@ -1,13 +1,13 @@
 import { useEffect, useRef, type MutableRefObject } from "react";
 import { matchTime, type ClockRef } from "./stream";
-import type { Call, CommentaryLine, MatchEvent, Moment, Persona } from "./types";
+import type { Call, CommentaryLine, MatchEvent, Moment, PbpLine, Persona } from "./types";
 
 const SPOKEN = new Set(["goal", "red_card", "penalty_awarded", "big_save", "big_chance_missed", "late_surge",
                         "hot_streak", "fatigue_fade", "pressing_spell"]);
 
 const BIG = new Set(["goal", "red_card", "penalty_awarded"]);
 
-export type Seg = { text: string; lang: string; role: "commentator" | "pundit"; tone: "call" | "after" | "calm"; gap: number };
+export type Seg = { text: string; lang: string; role: "commentator" | "pundit"; tone: "call" | "after" | "calm" | "pbp"; gap: number };
 
 /** The call's last ~second is the shout: line that up with the action. */
 export const PEAK_TAIL = 0.9;
@@ -43,8 +43,25 @@ export class Booth {
   private queue: Seg[][] = [];
   private timer = 0;
   private token = 0;
+  private side: HTMLAudioElement | null = null;   // running play-by-play: never interrupts anything
   busy = false;
   onLine: (s: Seg | null) => void = () => {};
+
+  get talking() { return this.busy || this.side !== null; }
+
+  /** A running line, only if the box is free. */
+  say(s: Seg): boolean {
+    if (this.talking) return false;
+    const a = new Audio(url(s));
+    this.side = a;
+    this.onLine(s);
+    const done = () => { if (this.side === a) { this.side = null; this.onLine(null); } };
+    a.onended = done; a.onerror = done;
+    a.play().catch(done);
+    return true;
+  }
+
+  private quiet() { if (this.side) { this.side.onended = this.side.onerror = null; this.side.pause(); this.side = null; } }
 
   /** Preload a script; resolves with the build segment's length in seconds (0 if none). */
   prepare(segs: Seg[]): Promise<number> {
@@ -65,6 +82,7 @@ export class Booth {
   play(segs?: Seg[]) {
     if (segs) { this.halt(); this.audios = segs.map((s) => new Audio(url(s))); this.pending = segs; }
     const my = ++this.token, list = this.pending, audios = this.audios;
+    this.quiet();
     this.busy = true;
     const step = (k: number) => {
       if (my !== this.token) return;
@@ -100,7 +118,7 @@ export class Booth {
     this.onLine(null);
   }
 
-  stop() { this.queue = []; this.halt(); }
+  stop() { this.queue = []; this.quiet(); this.halt(); }
 }
 
 /**
@@ -109,8 +127,10 @@ export class Booth {
  * same signal arrives, only the co-commentator speaks. Other big moments (pressing, a late surge)
  * are read out in full as they arrive. Suppressed while the highlights reel drives the booth.
  */
-export function useCommentary(on: boolean, suppress: boolean, moments: Moment[], calls: Call[], persona: Persona,
-                              booth: Booth, clockRef: MutableRefObject<ClockRef>) {
+export function useCommentary(on: boolean, suppress: boolean, moments: Moment[], calls: Call[], lines: PbpLine[],
+                              persona: Persona, booth: Booth, clockRef: MutableRefObject<ClockRef>) {
+  const running = useRef<PbpLine[]>([]);
+  const lastLineAt = useRef(-1);
   const seen = useRef<Set<string>>(new Set());
   const seenCalls = useRef<Set<string>>(new Set());
   const called = useRef<Set<string>>(new Set());
@@ -120,6 +140,8 @@ export function useCommentary(on: boolean, suppress: boolean, moments: Moment[],
     seen.current = new Set(moments.map((m) => m.moment_id));
     seenCalls.current = new Set(calls.map((c) => c.signal_id));
     pending.current = null;
+    running.current = [];
+    lastLineAt.current = lines.length ? lines[lines.length - 1].at : -1;
     if (!on) booth.stop();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [on, persona.id, suppress]);
@@ -138,12 +160,32 @@ export function useCommentary(on: boolean, suppress: boolean, moments: Moment[],
     }
   }, [on, suppress, calls, persona, booth]);
 
+  // Running play-by-play: queue new lines (the stream keeps only the last 30).
+  useEffect(() => {
+    const last = lines.length ? lines[lines.length - 1].at : -1;
+    if (last < lastLineAt.current) lastLineAt.current = -1;          // a seek restarted the feed
+    const fresh = lines.filter((l) => l.at > lastLineAt.current);
+    lastLineAt.current = Math.max(lastLineAt.current, last);
+    if (on && !suppress) running.current = [...running.current, ...fresh].slice(-8);
+  }, [on, suppress, lines]);
+
   useEffect(() => {
     if (!on || suppress) return;
     const id = setInterval(() => {
+      const t = matchTime(clockRef.current), speed = clockRef.current.speed || 1;
+      // The latest running line that's due, if the box is free and no call is about to start.
+      const due = running.current.filter((l) => l.at <= t);
+      if (due.length) {
+        running.current = running.current.filter((l) => l.at > t);
+        const l = due[due.length - 1];
+        const callSoon = pending.current && !pending.current.started && pending.current.c.at - t < 3 * speed;
+        if (t - l.at <= 2.5 * speed && !booth.talking && !callSoon) {
+          const lang = l.text[persona.lang] ? persona.lang : "en";
+          booth.say({ text: l.text[lang], lang, role: l.role, tone: l.role === "pundit" ? "calm" : "pbp", gap: 0 });
+        }
+      }
       const p = pending.current;
       if (!p || p.started) return;
-      const t = matchTime(clockRef.current), speed = clockRef.current.speed || 1;
       if ((p.build >= 0 && t >= p.c.at - Math.max(p.build - PEAK_TAIL, 0) * speed) || t >= p.c.at) {
         p.started = true;
         called.current.add(p.c.signal_id);
@@ -152,7 +194,7 @@ export function useCommentary(on: boolean, suppress: boolean, moments: Moment[],
       if (t > p.c.at + 30) pending.current = null;     // stale (a seek, say)
     }, 100);
     return () => clearInterval(id);
-  }, [on, suppress, booth, clockRef]);
+  }, [on, suppress, booth, clockRef, persona]);
 
   // Agent moments: the pundit follows a call; other big moments are read in full.
   useEffect(() => {

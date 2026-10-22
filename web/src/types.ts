@@ -60,3 +60,4 @@ export interface RecapDoc {
 }
 export interface Persona { id: string; label: string; short: string; lang: string; accent: string; focus?: string; club?: string }
 export interface Call { signal_id: string; kind: string; at: number; clock: string; commentary: Record<string, CommentaryLine> }
+export interface PbpLine { at: number; role: "commentator" | "pundit"; kind: string; key: string; text: Record<string, string> }

@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from secondscreen.agents.commentary import template_line
 from secondscreen.agents.context import build_context
+from secondscreen.agents.playbyplay import PlayByPlay
 from secondscreen.stats.engine import StatsEngine
 
 CALLED = {"goal", "red_card", "big_save", "big_chance_missed", "penalty_awarded"}
@@ -32,10 +33,18 @@ class Spotter:
         self.engine = StatsEngine()
         self.langs = langs
         self.turns: dict[str, int] = {}
+        self.pbp = PlayByPlay(self.engine, langs)
+        self.lines: list[dict] = []      # running play-by-play, collected by take_lines()
+
+    def take_lines(self) -> list[dict]:
+        out, self.lines = self.lines, []
+        return out
 
     def feed(self, ev: dict) -> list[dict]:
         calls = []
-        for sig in self.engine.ingest(ev):
+        sigs = self.engine.ingest(ev)
+        self.lines += self.pbp.feed(ev)
+        for sig in sigs:
             s = sig.to_dict()
             if s["kind"] not in CALLED:
                 continue

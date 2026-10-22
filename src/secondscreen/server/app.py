@@ -196,6 +196,7 @@ class Session:
             await self.orch.ingest(ev[i_proc])
             spotter.feed(ev[i_proc])
             i_proc += 1
+        spotter.take_lines()                     # nothing to say about the skipped part
         i_spot = i_proc
         self.orch.narrate = narrate
         clock = self.start_elapsed
@@ -219,6 +220,8 @@ class Session:
                 while i_spot < len(ev) and ev[i_spot]["elapsed_seconds"] <= clock + call_lead(self.speed, LEAD):
                     for c in spotter.feed(ev[i_spot]):
                         await self.send({"t": "call", "c": c})
+                    for line in spotter.take_lines():
+                        await self.send({"t": "pbp", "l": line})
                     i_spot += 1
                 while i_anim < len(ev) and ev[i_anim]["elapsed_seconds"] <= clock + LEAD:
                     await self.send({"t": "ev", "e": anim_event(ev[i_anim])})

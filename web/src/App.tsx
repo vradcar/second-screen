@@ -50,7 +50,7 @@ export default function App() {
   const [line, setLine] = useState<Seg | null>(null);
   useEffect(() => { booth.onLine = (s) => { setLine(s); crowd.duck(!!s); }; }, [booth, crowd]);
   const reel = useReel(state.meta, clockRef, params.speed, restart, init.reel, { on: voice, booth, persona: persona(tv) });
-  useCommentary(voice, reel.playing, state.moments, state.calls, persona(tv), booth, clockRef);
+  useCommentary(voice, reel.playing, state.moments, state.calls, state.lines, persona(tv), booth, clockRef);
   useCrowd(voice, state.events, crowd);
 
   const { meta, snap } = state;

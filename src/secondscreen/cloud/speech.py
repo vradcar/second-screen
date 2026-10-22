@@ -52,7 +52,7 @@ PUNDITS = {"en": "en-US-GuyNeural", "es": "es-ES-ElviraNeural", "fr": "fr-FR-Den
 # gpt-4o-mini-tts voices (one for each seat in the box); the accent and delivery come from the direction below.
 OPENAI_VOICES = {"commentator": "ash", "pundit": "ballad"}
 ROLES = ("commentator", "pundit")
-TONES = ("call", "after", "calm", "build", "peak")      # build/peak kept for older scripts
+TONES = ("call", "after", "calm", "pbp", "build", "peak")      # build/peak kept for older scripts
 MAX_CHARS = 300
 FORMAT = "audio-24khz-96kbitrate-mono-mp3"
 LANG_NAMES = {"en": "English", "es": "Spanish", "fr": "French", "de": "German", "pt": "Portuguese", "it": "Italian"}
@@ -68,6 +68,9 @@ DIRECTION = {
     ("commentator", "after"): (
         "You are a British TV football commentator a second after a huge moment: still buzzing, slightly out "
         "of breath, voice raised but coming down, emphatic on the name and the score. Warm and natural."),
+    ("commentator", "pbp"): (
+        "You are a British TV football commentator talking through live play as the ball moves: names said "
+        "crisply, engaged and lively but not shouting, the natural rhythm of running commentary."),
     ("pundit", "calm"): (
         "You are the co-commentator on English top-flight football on TV: a former professional player with a "
         "British accent. Relaxed, conversational and knowing, like talking to a friend at the match. Natural "
@@ -142,7 +145,7 @@ class Speech:
             self.live = self.mock or bool(_env("AZURE_TTS_ENDPOINT") or _env("AZURE_OPENAI_ENDPOINT"))
         else:
             self.live = self.mock or bool(self.key or (self.resource_id and _env("AZURE_USE_IDENTITY")))
-        self.budget = daily_chars if daily_chars is not None else int(os.environ.get("SPEECH_DAILY_CHARS", "60000"))
+        self.budget = daily_chars if daily_chars is not None else int(os.environ.get("SPEECH_DAILY_CHARS", "250000"))
         self.used, self.day = 0, date.today()
         self._lock = threading.Lock()
         self._cred, self._token, self._token_exp = None, None, 0.0
@@ -284,7 +287,21 @@ def commentary_scripts(prefix: Path) -> dict[str, dict]:
     return out
 
 
-async def prefill(prefix: Path, langs: list[str]) -> None:
+def running_lines(prefix: Path, langs: list[str]) -> list[tuple[str, str, str, str]]:
+    """(text, lang, role, tone) for the running play-by-play of a match (the spotter's lines)."""
+    if not langs:
+        return []
+    from secondscreen.agents.spotter import Spotter
+    sp, out = Spotter(langs), []
+    for line in prefix.with_suffix(".jsonl").open(encoding="utf-8"):
+        sp.feed(json.loads(line))
+        for ln in sp.take_lines():
+            tone = "calm" if ln["role"] == "pundit" else "pbp"
+            out += [(ln["text"][lang], lang, ln["role"], tone) for lang in langs]
+    return out
+
+
+async def prefill(prefix: Path, langs: list[str], pbp_langs: list[str] | None = None) -> None:
     from secondscreen.agents.llm import load_dotenv
     load_dotenv()
     sp = Speech(daily_chars=10**9)
@@ -295,6 +312,7 @@ async def prefill(prefix: Path, langs: list[str]) -> None:
     if not scripts:
         raise SystemExit(f"No commentary for {prefix.name}. Run: python -m secondscreen.agents.commentary {prefix}")
     clips = {c for script in scripts.values() for c in clips_for(script, langs)}
+    clips |= {c for c in running_lines(prefix, pbp_langs if pbp_langs is not None else langs[:1])}
     n = 0
     for text, lang, role, tone in sorted(clips):
         if await sp.speak(text, lang, role, tone):
@@ -373,6 +391,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(prog="secondscreen.cloud.speech")
     ap.add_argument("match", nargs="?", help="data/match_<id> (no extension)")
     ap.add_argument("--langs", default="en,es,fr")
+    ap.add_argument("--pbp-langs", default="en", help="languages to voice the running play-by-play in ('' for none)")
     ap.add_argument("--voices", action="store_true", help="list the voices your Speech region offers")
     ap.add_argument("--samples", action="store_true", help="voice a sample call with every option, to listen and pick")
     args = ap.parse_args()
@@ -381,7 +400,8 @@ def main() -> None:
     elif args.voices:
         show_voices()
     elif args.match:
-        asyncio.run(prefill(Path(args.match.removesuffix(".jsonl")), [x for x in args.langs.split(",") if x]))
+        asyncio.run(prefill(Path(args.match.removesuffix(".jsonl")), [x for x in args.langs.split(",") if x],
+                            [x for x in args.pbp_langs.split(",") if x]))
     else:
         ap.error("give a match, --samples or --voices")
 
