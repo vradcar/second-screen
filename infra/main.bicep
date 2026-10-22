@@ -13,6 +13,9 @@ param foundryName string
 @description('Model deployment name on the Foundry resource.')
 param modelDeployment string = 'gpt-4.1-mini'
 
+@description('Optional gpt-4o-mini-tts deployment on the Foundry resource, for the commentary voices.')
+param ttsDeployment string = ''
+
 @description('Container image to run.')
 param image string
 
@@ -136,7 +139,8 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsights.properties.ConnectionString }
             { name: 'BROADCAST_AGENTS', value: broadcastAgents }
             { name: 'ALLOW_PUBLIC_LIVE', value: allowPublicLive ? '1' : '0' }
-          ], empty(startToken) ? [] : [ { name: 'BROADCAST_START_TOKEN', secretRef: 'start-token' } ])
+          ], empty(startToken) ? [] : [ { name: 'BROADCAST_START_TOKEN', secretRef: 'start-token' } ],
+             empty(ttsDeployment) ? [] : [ { name: 'AZURE_TTS_DEPLOYMENT', value: ttsDeployment } ])
           probes: [
             { type: 'Liveness', httpGet: { path: '/api/health', port: 8000 }, periodSeconds: 30 }
           ]

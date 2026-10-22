@@ -11,6 +11,7 @@ FOUNDRY="${FOUNDRY:?set FOUNDRY to your Foundry resource name, e.g. secondscreen
 OWNER="${OWNER:-vradcar}"
 IMAGE="${IMAGE:-ghcr.io/${OWNER}/second-screen:latest}"
 AGENTS="${AGENTS:-recorded}"
+TTS="${TTS:-}"   # gpt-4o-mini-tts deployment name, if you made one
 TOKEN="${TOKEN:-$(cut -c1-12 /proc/sys/kernel/random/uuid)}"
 
 echo "==> Registering resource providers (first run only takes a minute)"
@@ -20,7 +21,7 @@ done
 
 echo "==> Deploying to $RG ($LOCATION): Container Apps, Event Hubs, Cosmos DB, App Insights"
 OUT=$(az deployment group create -g "$RG" -n second-screen -f infra/main.bicep \
-  -p location="$LOCATION" foundryName="$FOUNDRY" image="$IMAGE" broadcastAgents="$AGENTS" startToken="$TOKEN" \
+  -p location="$LOCATION" foundryName="$FOUNDRY" image="$IMAGE" broadcastAgents="$AGENTS" startToken="$TOKEN" ttsDeployment="$TTS" \
   --query properties.outputs -o json)
 
 URL=$(echo "$OUT" | python3 -c 'import json,sys; print(json.load(sys.stdin)["url"]["value"])')
