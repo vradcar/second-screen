@@ -44,7 +44,10 @@ VOICES = {
     "ja": "ja-JP-KeitaNeural", "ko": "ko-KR-InJoonNeural", "zh-Hans": "zh-CN-YunxiNeural", "id": "id-ID-ArdiNeural",
     "sw": "sw-KE-RafikiNeural",
 }
-PUNDITS = {"en": "en-GB-ThomasNeural", "es": "es-ES-ElviraNeural", "fr": "fr-FR-DeniseNeural",
+# English defaults: the pairing from StudyPod's podcast, which sounded natural (energetic host +
+# chill, deeper host), with the same gentle settings.
+COMMENTATORS = {"en": "en-US-AndrewNeural"}
+PUNDITS = {"en": "en-US-GuyNeural", "es": "es-ES-ElviraNeural", "fr": "fr-FR-DeniseNeural",
            "de": "de-DE-KatjaNeural", "pt": "pt-BR-FranciscaNeural", "it": "it-IT-ElsaNeural"}
 # gpt-4o-mini-tts voices (one for each seat in the box); the accent and delivery come from the direction below.
 OPENAI_VOICES = {"commentator": "ash", "pundit": "ballad"}
@@ -99,26 +102,29 @@ def voice_for(role: str, lang: str, eng: str | None = None) -> str:
         return _env(f"TTS_VOICE_{role.upper()}") or OPENAI_VOICES[role]
     if role == "pundit":
         return _env(f"PUNDIT_VOICE_{suffix}") or PUNDITS.get(lang) or VOICES.get(lang, VOICES["en"])
-    return _env(f"COMMENTATOR_VOICE_{suffix}") or VOICES.get(lang, VOICES["en"])
+    return _env(f"COMMENTATOR_VOICE_{suffix}") or COMMENTATORS.get(lang) or VOICES.get(lang, VOICES["en"])
 
 
 def locale_of(voice: str) -> str:
     return "-".join(voice.split(":")[0].split("-")[:2])
 
 
-def build_ssml(text: str, voice: str, tone: str) -> str:
-    """Classic voices: let the voice speak naturally. Light touches only: a short beat at '...',
-    a little more energy on calls, and a speaking style where the voice has one. (Pitch shifting
-    is what makes neural voices sound synthetic, so it is never used.)"""
+# role -> (rate, pitch). Small nudges only: a few Hz of pitch, never percentages (that's what
+# makes neural voices sound synthetic). Commentator values are StudyPod's energetic host.
+PROSODY = {"commentator": ("+12%", "+3Hz"), "pundit": ("-4%", "-2Hz")}
+
+
+def build_ssml(text: str, voice: str, tone: str, role: str | None = None) -> str:
+    """Classic voices: natural delivery with a light per-seat nudge, a short beat at '...', and a
+    speaking style where the voice has one."""
+    role = role or ("pundit" if tone == "calm" else "commentator")
     hd = ":DragonHD" in voice
     body = re.sub(r"\s*(?:\.\.\.|…)\s*", " <break time='180ms'/> ", escape(text)).strip()
-    if tone in ("call", "build", "peak", "after"):
-        inner = f"<prosody rate='+4%' volume='+15%'>{body}</prosody>"
-        style = _env("COMMENTATOR_STYLE") or ("excited" if hd else None)
-        if style:
-            inner = f"<mstts:express-as style='{style}'>{inner}</mstts:express-as>"
-    else:
-        inner = body
+    rate, pitch = (_env(f"{role.upper()}_RATE") or PROSODY[role][0]), (_env(f"{role.upper()}_PITCH") or PROSODY[role][1])
+    inner = f"<prosody rate='{rate}'" + ("" if hd else f" pitch='{pitch}'") + f">{body}</prosody>"
+    style = _env("COMMENTATOR_STYLE") or ("excited" if hd else None)
+    if style and role == "commentator":
+        inner = f"<mstts:express-as style='{style}'>{inner}</mstts:express-as>"
     return (f"<speak version='1.0' xmlns='http://www.w3.org/2001/10/synthesis' "
             f"xmlns:mstts='https://www.w3.org/2001/mstts' xml:lang='{locale_of(voice)}'>"
             f"<voice name='{voice}'>{inner}</voice></speak>")
@@ -225,14 +231,14 @@ class Speech:
         if voice in self._rejected:
             voice = VOICES[lang]
         try:
-            return self._post(build_ssml(text, voice, tone))
+            return self._post(build_ssml(text, voice, tone, role))
         except urllib.error.HTTPError as e:
             if e.code != 400:
                 raise
             # A voice or style this region doesn't have: the default voice, no style.
             self._rejected.add(voice)
             os.environ.pop("COMMENTATOR_STYLE", None)
-            return self._post(build_ssml(text, VOICES[lang], tone))
+            return self._post(build_ssml(text, VOICES[lang], tone, role))
 
     def list_voices(self) -> list[dict]:
         req = urllib.request.Request(f"https://{self.region}.tts.speech.microsoft.com/cognitiveservices/voices/list",
@@ -326,7 +332,7 @@ def samples(out: Path) -> None:
     else:
         failed.append("gpt-4o-mini-tts: skipped, AZURE_TTS_DEPLOYMENT isn't set (deploy gpt-4o-mini-tts in Foundry)")
     if sp.key:
-        voices = ["en-GB-RyanNeural", "en-GB-ThomasNeural"]
+        voices = ["en-US-AndrewNeural", "en-US-GuyNeural", "en-GB-RyanNeural", "en-GB-ThomasNeural"]
         try:
             listed = sp.list_voices()
             pick = lambda f, n: [v["ShortName"] for v in listed if f(v["ShortName"]) and v.get("Gender") == "Male"  # noqa: E731
@@ -336,8 +342,9 @@ def samples(out: Path) -> None:
             failed.append(f"voice list: {e}")
         for v in voices:
             tag = v.replace(":", "_")
-            save(f"speech_call_{tag}", lambda v=v: sp._post(build_ssml(f"{SAMPLE['call']} {SAMPLE['after']}", v, "call")))
-            save(f"speech_pundit_{tag}", lambda v=v: sp._post(build_ssml(SAMPLE["calm"], v, "calm")))
+            save(f"speech_call_{tag}", lambda v=v: sp._post(build_ssml(f"{SAMPLE['call']} {SAMPLE['after']}", v, "call",
+                                                                       "commentator")))
+            save(f"speech_pundit_{tag}", lambda v=v: sp._post(build_ssml(SAMPLE["calm"], v, "calm", "pundit")))
     print(f"{len(made)} samples in {out}:")
     for m in made:
         print("  " + m)

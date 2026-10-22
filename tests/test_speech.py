@@ -1,3 +1,4 @@
+import re
 import xml.dom.minidom
 from pathlib import Path
 
@@ -26,14 +27,15 @@ def test_ssml_is_valid_and_natural():
             ssml = build_ssml("Fallow & Quarry... rises... <b>", voice, tone)
             xml.dom.minidom.parseString(ssml)
             assert "<break" in ssml and "&amp;" in ssml
-            assert "pitch" not in ssml                      # pitch shifting is what sounds synthetic
+            assert not re.search(r"pitch='[+-]?\d+%'", ssml)   # Hz nudges only: % pitch sounds synthetic
     assert "excited" in build_ssml("x", "en-us-Andrew:DragonHDLatestNeural", "call")
 
 
 def test_engine_choice_and_direction(monkeypatch):
     from secondscreen.cloud.speech import direction, engine, voice_for
     monkeypatch.delenv("AZURE_TTS_DEPLOYMENT", raising=False)
-    assert engine() == "speech" and voice_for("commentator", "en") == "en-GB-RyanNeural"
+    assert engine() == "speech" and voice_for("commentator", "en") == "en-US-AndrewNeural"
+    assert voice_for("pundit", "en") == "en-US-GuyNeural" and voice_for("commentator", "es") == "es-ES-AlvaroNeural"
     monkeypatch.setenv("AZURE_TTS_DEPLOYMENT", "gpt-4o-mini-tts")
     assert engine() == "openai" and voice_for("pundit", "en") == "ballad"
     assert "British" in direction("commentator", "call", "en") and "Spanish" in direction("commentator", "call", "es")
@@ -44,3 +46,9 @@ def test_commentary_clips_cover_every_part():
     clips = clips_for({"en": line})
     assert clips[0] == ("a... b In!", "en", "commentator", "call")      # build-up and call in one take
     assert [c[2:] for c in clips[1:]] == [("commentator", "after"), ("pundit", "calm")]
+
+
+def test_studypod_settings():
+    call = build_ssml("And it's in!", "en-US-AndrewNeural", "call", "commentator")
+    calm = build_ssml("Lovely finish.", "en-US-GuyNeural", "calm", "pundit")
+    assert "rate='+12%' pitch='+3Hz'" in call and "rate='-4%' pitch='-2Hz'" in calm
