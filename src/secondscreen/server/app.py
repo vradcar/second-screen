@@ -252,7 +252,8 @@ PUBLIC_LIVE = os.environ.get("ALLOW_PUBLIC_LIVE", "1" if not os.environ.get("CON
 
 @app.get("/api/matches")
 def matches():
-    return {"matches": match_files(), "live_available": _model_configured() and PUBLIC_LIVE,
+    recorded = [m for m in match_files() if (DATA / f"match_{m}.moments.jsonl").exists()]
+    return {"matches": match_files(), "recorded": recorded, "live_available": _model_configured() and PUBLIC_LIVE,
             "start_protected": bool(START_TOKEN), "translate": _translator().status(),
             "speech": _speech().status()}
 

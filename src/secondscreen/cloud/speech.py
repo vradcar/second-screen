@@ -204,6 +204,20 @@ def clips_for(commentary: dict, langs: list[str] | None = None) -> list[tuple[st
     return out
 
 
+def commentary_scripts(prefix: Path) -> dict[str, dict]:
+    """moment_id -> {lang: line}: from the moments themselves (written by the workflow), else from
+    the batch file (agents.commentary) for runs recorded before the commentator existed."""
+    out: dict[str, dict] = {}
+    batch = prefix.with_suffix(".commentary.jsonl")
+    if batch.exists():
+        out |= {r["moment_id"]: r["commentary"] for r in map(json.loads, batch.open(encoding="utf-8"))}
+    moments = prefix.with_suffix(".moments.jsonl")
+    if moments.exists():
+        out |= {m["moment_id"]: m["commentary"] for m in map(json.loads, moments.open(encoding="utf-8"))
+                if m.get("commentary")}
+    return out
+
+
 async def prefill(prefix: Path, langs: list[str]) -> None:
     from secondscreen.agents.llm import load_dotenv
     load_dotenv()
@@ -211,10 +225,10 @@ async def prefill(prefix: Path, langs: list[str]) -> None:
     if not sp.live:
         raise SystemExit("Speech not configured: set AZURE_OPENAI_API_KEY (the Foundry resource key) and "
                          "AZURE_SPEECH_REGION if your resource is not in eastus.")
-    path = prefix.with_suffix(".commentary.jsonl")
-    if not path.exists():
-        raise SystemExit(f"No commentary script at {path}. Run: python -m secondscreen.agents.commentary {prefix}")
-    clips = {c for row in map(json.loads, path.open(encoding="utf-8")) for c in clips_for(row["commentary"], langs)}
+    scripts = commentary_scripts(prefix)
+    if not scripts:
+        raise SystemExit(f"No commentary for {prefix.name}. Run: python -m secondscreen.agents.commentary {prefix}")
+    clips = {c for script in scripts.values() for c in clips_for(script, langs)}
     n = 0
     for text, lang, role, tone in sorted(clips):
         if await sp.speak(text, lang, role, tone):

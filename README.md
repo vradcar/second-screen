@@ -177,6 +177,17 @@ python -m secondscreen.agents data/match_SS00076.jsonl --mode replay
 Auth: set `AZURE_OPENAI_ENDPOINT` + `AZURE_OPENAI_API_KEY`, or set `AZURE_AI_PROJECT_ENDPOINT`
 and run `az login` (grant yourself access once with `infra/grant-access.sh`).
 
+## One command: any match, ready to watch
+
+```bash
+python -m secondscreen.produce --seed 123 --serve      # or --best-of 200, or --match data/match_X.jsonl
+```
+
+Simulates the match, runs the agents (analyst, fact-checker, personas, commentator) on Foundry if
+`.env` has credentials or on the offline mock if not, pre-translates the phones, voices the
+commentary with Azure AI Speech, and opens the highlights reel for it. Each step that can't run
+(no credentials, say) is skipped with the reason. Pick any produced match from the header.
+
 ## Watch it: the broadcast + second screen UI
 
 ```bash

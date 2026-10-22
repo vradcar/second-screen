@@ -35,10 +35,11 @@ export default function App() {
   const [liveOk, setLiveOk] = useState(false);
   const [langs, setLangs] = useState<Lang[]>([]);
   const [speechOk, setSpeechOk] = useState(false);
+  const [matches, setMatches] = useState<string[]>([]);
   const [voice, setVoice] = useState(false);
   const { state, clockRef, send } = useMatchStream(params);
 
-  useEffect(() => { fetch("/api/matches").then((r) => r.json()).then((d) => { setLiveOk(!!d.live_available); setLangs(d.translate?.langs ?? []); setSpeechOk(!!d.speech?.available); }).catch(() => {}); }, []);
+  useEffect(() => { fetch("/api/matches").then((r) => r.json()).then((d) => { setLiveOk(!!d.live_available); setLangs(d.translate?.langs ?? []); setSpeechOk(!!d.speech?.available); setMatches(d.recorded ?? []); }).catch(() => {}); }, []);
   const persona = (id: string) => PERSONAS.find((p) => p.id === id) ?? PERSONAS[0];
   const setSpeed = (v: number) => { setParams((p) => ({ ...p, speed: v })); send({ cmd: "speed", value: v }); };
   const restart = (patch: Partial<typeof params>) => { setPaused(false); setParams((p) => ({ ...p, ...patch, run: p.run + 1 })); };
@@ -76,6 +77,18 @@ export default function App() {
         </div>
         {meta && <h1 className="fixture">{meta.home.name} <span>v</span> {meta.away.name}</h1>}
         <nav className="controls" aria-label="Playback">
+          {matches.length > 1 && !onAir && (
+            <label className="match-pick">
+              <span className="sr-only">Match</span>
+              <select value={params.match} onChange={(e) => {
+                const q = new URLSearchParams(location.search); q.set("match", e.target.value);
+                history.replaceState(null, "", `?${q}`);
+                restart({ match: e.target.value, at: -1, start: 0 });
+              }}>
+                {matches.map((m) => <option key={m} value={m}>{m}</option>)}
+              </select>
+            </label>
+          )}
           <div className="seg" role="group" aria-label="Agent source">
             {MODES.map(([m, label]) => (
               <button key={m} aria-pressed={params.mode === m} disabled={m === "live" && !liveOk}
