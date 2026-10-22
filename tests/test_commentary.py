@@ -68,3 +68,15 @@ def test_jargon_is_rejected_by_the_checker():
     line = template_line(r["kind"], ctx["facts"], "en")
     line.pundit = "That was a 0.91 xG chance."
     assert any("football language" in p for p in check_line(line, ctx, "en"))
+
+
+def test_recorded_jargon_is_replaced_when_served(tmp_path):
+    from secondscreen.server.app import with_commentary
+    m = {"moment_id": "M1", "kind": "big_chance_missed", "facts": {},
+         "commentary": {"en": {"lang": "en", "build": "", "peak": "Saved!", "after": "Close.",
+                               "pundit": "That was a 0.91 xG chance."}}}
+    batch = tmp_path / "c.jsonl"
+    batch.write_text('{"moment_id": "M1", "commentary": {"en": {"lang": "en", "build": "", "peak": "Saved!", '
+                     '"after": "Close.", "pundit": "He has to score there."}}}\n', encoding="utf-8")
+    out = with_commentary([m], batch)[0]["commentary"]["en"]
+    assert out["pundit"] == "He has to score there."

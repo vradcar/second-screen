@@ -69,12 +69,23 @@ INTRO_HOLD = float(os.environ.get("SECONDSCREEN_INTRO_HOLD", "20"))   # wall sec
 
 
 def with_commentary(moments: list[dict], path: Path) -> list[dict]:
-    """Attach commentary scripts written after the run (agents.commentary batch) to recorded moments."""
-    if path.exists():
-        scripts = {c["moment_id"]: c["commentary"] for c in load_jsonl(path)}
-        for m in moments:
-            if not m.get("commentary") and m["moment_id"] in scripts:
-                m["commentary"] = scripts[m["moment_id"]]
+    """Attach commentary scripts written after the run (agents.commentary batch) to recorded moments.
+    A recorded line that breaks today's rules (analytics jargon in spoken commentary, from a run
+    made before the rule existed) is replaced by the batch file's line, or by the template."""
+    from secondscreen.agents.commentary import JARGON, template_line
+    scripts = {c["moment_id"]: c["commentary"] for c in load_jsonl(path)} if path.exists() else {}
+    for m in moments:
+        own = m.get("commentary") or {}
+        for lang, line in list(own.items()):
+            spoken = " ".join(line.get(k, "") for k in ("build", "peak", "after", "pundit"))
+            if JARGON.search(spoken):
+                fix = scripts.get(m["moment_id"], {}).get(lang)
+                own[lang] = fix or (template_line(m["kind"], m.get("facts", {}), lang, line.get("after", "")).model_dump()
+                                    | {"source": "template"})
+        if own:
+            m["commentary"] = own
+        elif m["moment_id"] in scripts:
+            m["commentary"] = scripts[m["moment_id"]]
     return moments
 
 
