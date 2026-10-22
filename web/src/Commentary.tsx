@@ -187,6 +187,7 @@ export function useCommentary(on: boolean, suppress: boolean, moments: Moment[],
   const holding = useRef(false);
   const running = useRef<PbpLine[]>([]);
   const intro = useRef<PbpLine[]>([]);
+  const replies = useRef<PbpLine[]>([]);     // the other voice answering, right after a line
   const seenLines = useRef<WeakSet<PbpLine>>(new WeakSet());
   const seen = useRef<Set<string>>(new Set());
   const seenCalls = useRef<Set<string>>(new Set());
@@ -202,6 +203,7 @@ export function useCommentary(on: boolean, suppress: boolean, moments: Moment[],
     seenLines.current = new WeakSet(lines);
     intro.current = on && t < 1 ? lines.filter((l) => l.kind === "intro") : [];
     running.current = on ? lines.filter((l) => l.kind !== "intro" && l.at >= t - 2.5 * speed).slice(-3) : [];
+    replies.current = [];
     if (!on) booth.stop();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [on, lang, suppress]);
@@ -228,10 +230,13 @@ export function useCommentary(on: boolean, suppress: boolean, moments: Moment[],
     fresh.forEach((l) => seenLines.current.add(l));
     if (!on || suppress) return;
     intro.current = [...intro.current, ...fresh.filter((l) => l.kind === "intro")];
-    running.current = [...running.current, ...fresh.filter((l) => l.kind !== "intro")].slice(-8);
-    // Lines arrive a few seconds early: translate them now if this language isn't native.
-    for (const l of fresh) {
-      if (!l.text[lang]) translateNow([l.text.en], "en", lang).then(([r]) => { if (r.ok) l.text[lang] = r.text; });
+    running.current = [...running.current, ...fresh.filter((l) => l.kind !== "intro")].slice(-12);
+    // Lines arrive a few seconds early: translate them now (and their replies) if this language isn't native.
+    for (const first of fresh) {
+      for (let l: PbpLine | undefined = first; l; l = l.follow) {
+        const line = l;
+        if (!line.text[lang]) translateNow([line.text.en], "en", lang).then(([r]) => { if (r.ok) line.text[lang] = r.text; });
+      }
     }
   }, [on, suppress, lines, lang]);
 
@@ -252,6 +257,24 @@ export function useCommentary(on: boolean, suppress: boolean, moments: Moment[],
         return;
       }
       if (holding.current) { holding.current = false; hold?.(false); }
+      // A reply to the last line comes first (commentator sets it up, pundit answers).
+      if (replies.current.length) {
+        if (!booth.talking) {
+          const r = replies.current.shift()!;
+          if (t - r.at <= 12 * speed && booth.say(voiceOf(r)) && r.follow) replies.current.unshift(r.follow);
+        }
+        return;
+      }
+      // Bookings, subs, set pieces and the clock: said at the next gap, never skipped.
+      const must = running.current.filter((l) => l.priority && l.at <= t && t - l.at <= 10 * speed);
+      if (must.length) {
+        if (!booth.talking && !(pending.current && !pending.current.started && pending.current.c.at - t < 3 * speed)) {
+          const l = must[0];
+          running.current = running.current.filter((x) => x !== l);
+          if (booth.say(voiceOf(l)) && l.follow) replies.current.push(l.follow);
+        }
+        return;
+      }
       // The latest running line that's due, if the box is free and no call is about to start.
       const due = running.current.filter((l) => l.at <= t);
       if (due.length) {
@@ -259,7 +282,7 @@ export function useCommentary(on: boolean, suppress: boolean, moments: Moment[],
         const l = due[due.length - 1];
         const callSoon = pending.current && !pending.current.started && pending.current.c.at - t < 3 * speed;
         if (t - l.at <= 2.5 * speed && !booth.talking && !callSoon) {
-          booth.say(voiceOf(l));
+          if (booth.say(voiceOf(l)) && l.follow) replies.current.push(l.follow);
         }
       }
       const p = pending.current;
@@ -279,14 +302,18 @@ export function useCommentary(on: boolean, suppress: boolean, moments: Moment[],
     const fresh = moments.filter((m) => !seen.current.has(m.moment_id));
     fresh.forEach((m) => seen.current.add(m.moment_id));
     if (!on || suppress) return;
-    for (const m of fresh.filter((x) => SPOKEN.has(x.kind)).sort((a, b) => a.elapsed - b.elapsed)) {
+    // Only what is happening now: a mid-match join sends earlier moments as backlog, and the
+    // booth must not read out a red card from twenty minutes ago.
+    const now = matchTime(clockRef.current), speed = clockRef.current.speed || 1;
+    for (const m of fresh.filter((x) => SPOKEN.has(x.kind) && x.elapsed >= now - 20 * speed)
+                         .sort((a, b) => a.elapsed - b.elapsed)) {
       if (called.current.has(m.signal_id) || pending.current?.c.signal_id === m.signal_id) {
         localize(segments(m, lang).filter((s) => s.role === "pundit"), lang).then((segs) => booth.enqueue(segs));
       } else if (!booth.busy || BIG.has(m.kind)) {
         localize(segments(m, lang), lang).then((segs) => booth.play(segs));
       }
     }
-  }, [on, suppress, moments, lang, booth]);
+  }, [on, suppress, moments, lang, booth, clockRef]);
 
   useEffect(() => () => booth.stop(), [booth]);
 }

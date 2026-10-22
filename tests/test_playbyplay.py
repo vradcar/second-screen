@@ -66,3 +66,29 @@ def test_spoken_lines_use_football_language_not_analytics():
     players = [ln for ln in lines if ln["kind"] == "colour" and ln["key"].startswith("p_")]
     assert len(players) >= 8                                    # stories about players, not just teams
     assert not any(re.search(r"\bxG\b", ln["text"]["en"]) for ln in lines)
+
+
+def test_commentary_reacts_to_context_like_a_broadcast():
+    lines, _, _ = _run(("en", "es", "fr"))
+    keys = {ln["key"] for ln in lines}
+    # where the ball goes, the state of the move, and what's happened before
+    assert {"move", "back_gk", "danger_fk", "sub_touch", "keeper_busy"} <= keys
+    assert keys & {"booked_foul", "booked_tackle"} and keys & {"fresh_legs", "sub"}
+    assert {"t15", "t30", "t60", "t75"} <= keys
+    # the game's story is an exchange: commentator sets it up, the pundit answers
+    stories = [ln for ln in lines if ln["kind"] == "story"] + [ln["follow"] for ln in lines
+                                                                if ln.get("follow", {}).get("kind") == "story"]
+    stories = [s for s in stories if s["role"] == "commentator"]
+    assert stories and all(s["follow"]["role"] == "pundit" for s in stories)
+    # bookings and the clock are never dropped by the viewer's box
+    assert all(ln.get("priority") for ln in lines if ln["key"] in ("yellow", "t75", "corner"))
+    # it follows play mostly by name, not "X to Y" every line
+    flow = [ln for ln in lines if ln["key"] in ("pass", "name")]
+    assert sum(ln["key"] == "name" for ln in flow) > sum(ln["key"] == "pass" for ln in flow)
+
+
+def test_booked_player_is_remembered():
+    lines, _, events = _run(("en",))
+    first_yellow = next(e for e in events if e["type"] == "card" and e["card"] == "yellow")
+    later = [ln for ln in lines if ln["key"] in ("booked_foul", "booked_tackle")]
+    assert later and all(ln["at"] > first_yellow["elapsed_seconds"] for ln in later)

@@ -20,6 +20,7 @@ BIG_XG = 0.30        # shots at or above this are called by the spotter instead
 T = {
     "en": {
         "pass": ["{p} to {r}", "{p} finds {r}", "{p} plays it to {r}", "{p} lays it off to {r}"],
+        "name": ["{r}...", "{r}, on the ball", "{r}"],
         "long": ["{p}, long ball for {r}", "{p} goes long, looking for {r}"], "box": ["{p} slides it into the box for {r}", "{p} picks out {r} in the box", "{p} puts it into the area for {r}"],
         "third": "{p} finds {r} in the final third", "chain": "{a}... {b}... on to {c}",
         "lost": ["{p}'s pass is cut out", "{p} gives it away", "loose from {p}", "{p} can't find his man"],
@@ -58,7 +59,7 @@ T = {
         "i_ready": "Here we go!",
     },
     "es": {
-        "pass": "{p} para {r}", "long": "{p}, balón largo para {r}", "box": "{p} la mete al área para {r}",
+        "pass": "{p} para {r}", "name": "{r}...", "long": "{p}, balón largo para {r}", "box": "{p} la mete al área para {r}",
         "third": "{p} encuentra a {r} en tres cuartos", "chain": "{a}... {b}... para {c}",
         "lost": "Interceptan el pase de {p}", "carry": "{p} conduce hacia adelante", "dribble": "{p} se va de su marca",
         "dribble_fail": "{p} intenta el regate, no pasa", "tackle": "buena entrada de {p}",
@@ -90,7 +91,7 @@ T = {
         "i_ready": "¡Vamos allá!",
     },
     "fr": {
-        "pass": "{p} pour {r}", "long": "{p}, ballon long pour {r}", "box": "{p} glisse dans la surface pour {r}",
+        "pass": "{p} pour {r}", "name": "{r}...", "long": "{p}, ballon long pour {r}", "box": "{p} glisse dans la surface pour {r}",
         "third": "{p} trouve {r} dans les trente derniers mètres", "chain": "{a}... {b}... pour {c}",
         "lost": "La passe de {p} est interceptée", "carry": "{p} remonte le terrain", "dribble": "{p} élimine son vis-à-vis",
         "dribble_fail": "{p} tente le dribble, ça ne passe pas", "tackle": "beau tacle de {p}",
@@ -122,6 +123,111 @@ T = {
         "i_ready": "C'est parti !",
     },
 }
+# Context, flow and story phrases (merged into T).
+EXTRA = {
+    "en": {
+        "back_gk": ["{p} back to the keeper", "{p} plays it all the way back to the goalkeeper"],
+        "switch": ["{p} switches it out to {r} on the {side}", "{p} spreads it wide to {r}, {side} side"],
+        "wing": ["{p} drives down the {side}", "{p} carries it down the {side} flank"],
+        "back_build": ["{t} keeping it at the back", "Patient from {t}, knocking it around the back"],
+        "mid_build": ["{t} knocking it about in midfield", "{t} probing in the middle of the park"],
+        "move": ["Lovely patient move from {t}, {n} passes now", "{t} keeping the ball beautifully, {n} passes in this move"],
+        "dribble_n": ["{p} beats his man again, that's {n} today", "{p} skips past another one. {n} take-ons now"],
+        "winner": ["{p} wins it back again. He's been everywhere", "and there's {p} again, mopping up"],
+        "box_star": ["{p} finds {r} in the box... {g} goals this season, {r}", "{p} picks out {r}, their top scorer, in the area"],
+        "booked_foul": "Careful now from {p}, he's already been booked.",
+        "booked_tackle": "{p} goes in... and he's on a yellow, remember.",
+        "sub_touch": "First touch for {p} since coming on.",
+        "danger_fk": "Free kick in a dangerous position for {t}.",
+        "keeper_busy": "{k} is having a busy afternoon. That's his {nth} save.",
+        "shots_follow": "That's his {nth} shot of the day. He's the one carrying the threat.",
+        "fresh_legs": "Fresh legs for {t}: {on} on for {off}, who's run over {km} kilometres.",
+        "t15": "Quarter of an hour gone. {state}.", "t30": "Half an hour played. {state}.",
+        "t40": "Five minutes to half-time. {state}.", "t60": "An hour gone. {state}.",
+        "t75": "Fifteen minutes left. {state}.", "t85": "Five minutes to go. {state}.",
+        "stoppage": "We're into stoppage time. {state}.",
+        "n_better_level": "{t} have been the better side, but it's still level.",
+        "n_better_level_r": "They need to make it count. You don't get this many chances and get away with it.",
+        "n_better_behind": "{t} are behind, but they've had the better of it.",
+        "n_better_behind_r": "Football can be cruel. They've done everything but score.",
+        "n_lead": "{t} look happy to sit on this lead now.",
+        "n_lead_r": "Compact and hard to break down. The other lot will have to take some risks.",
+        "n_ten": "{t} digging in with ten men.",
+        "n_ten_r": "Every one of them is putting a shift in. They'll be out on their feet by the end.",
+        "n_chaos": "It's end to end now!",
+        "n_chaos_r": "Neither side's in control. The next goal could come at either end.",
+        "n_cagey": "It's been cagey so far.",
+        "n_cagey_r": "Both sides feeling each other out. Nobody wants to make the first mistake.",
+        "n_need": "Time's running out for {t}.",
+        "n_need_r": "They have to throw bodies forward now. Nothing to lose.",
+        "n_control": "{t} are in complete control here.",
+        "n_control_r": "They're not letting the other lot have a sniff of the ball.",
+        "left": "left", "right": "right",
+    },
+    "es": {
+        "back_gk": "{p} atrás, para el portero", "switch": "{p} cambia de orientación hacia {r}, por la {side}",
+        "wing": "{p} conduce por la banda {side}", "back_build": "{t} toca atrás, sin prisa",
+        "mid_build": "{t} mueve el balón en el centro del campo", "move": "Qué paciencia de {t}: ya van {n} pases",
+        "dribble_n": "{p} vuelve a irse de su marca: ya van {n}", "winner": "{p} recupera otra vez. Está en todas partes",
+        "box_star": "{p} encuentra a {r} en el área... {g} goles esta temporada",
+        "booked_foul": "Cuidado {p}, que ya tiene amarilla.", "booked_tackle": "{p} entra fuerte... y tiene amarilla.",
+        "sub_touch": "Primer balón para {p} desde que entró.", "danger_fk": "Falta peligrosa para {t}.",
+        "keeper_busy": "Tarde ajetreada para {k}: es su {nth} parada.",
+        "shots_follow": "Es el {nth} tiro de {p} hoy. Es el más peligroso.",
+        "fresh_legs": "Piernas frescas en {t}: entra {on} por {off}, que ha corrido más de {km} kilómetros.",
+        "t15": "Un cuarto de hora. {state}.", "t30": "Media hora de juego. {state}.",
+        "t40": "Cinco minutos para el descanso. {state}.", "t60": "Una hora de partido. {state}.",
+        "t75": "Quedan quince minutos. {state}.", "t85": "Cinco minutos para el final. {state}.",
+        "stoppage": "Entramos en el tiempo añadido. {state}.",
+        "n_better_level": "{t} ha sido mejor, pero sigue el empate.",
+        "n_better_level_r": "Tiene que aprovecharlo. No puedes perdonar tantas ocasiones.",
+        "n_better_behind": "{t} va perdiendo, pero ha sido mejor.", "n_better_behind_r": "El fútbol es cruel. Lo ha hecho todo menos marcar.",
+        "n_lead": "{t} parece cómodo defendiendo la ventaja.", "n_lead_r": "Bien juntos, difíciles de romper. El rival tendrá que arriesgar.",
+        "n_ten": "{t} resiste con diez.", "n_ten_r": "Todos se dejan el alma. Acabarán agotados.",
+        "n_chaos": "¡Ahora es un ida y vuelta!", "n_chaos_r": "Nadie controla el partido. El próximo gol puede caer en cualquier área.",
+        "n_cagey": "Partido de mucho respeto.", "n_cagey_r": "Los dos se estudian. Nadie quiere cometer el primer error.",
+        "n_need": "Se le acaba el tiempo a {t}.", "n_need_r": "Tiene que volcarse. No tiene nada que perder.",
+        "n_control": "{t} tiene el control total.", "n_control_r": "No le deja ni oler el balón al rival.",
+        "left": "izquierda", "right": "derecha",
+    },
+    "fr": {
+        "back_gk": "{p} en retrait pour le gardien", "switch": "{p} renverse le jeu vers {r}, côté {side}",
+        "wing": "{p} file sur le côté {side}", "back_build": "{t} fait tourner derrière",
+        "mid_build": "{t} fait circuler au milieu", "move": "Belle patience de {t} : {n} passes déjà",
+        "dribble_n": "{p} élimine encore son adversaire : {n} dribbles réussis", "winner": "{p} récupère encore. Il est partout",
+        "box_star": "{p} trouve {r} dans la surface... {g} buts cette saison",
+        "booked_foul": "Attention pour {p}, il est déjà averti.", "booked_tackle": "{p} s'engage... et il est déjà averti.",
+        "sub_touch": "Premier ballon pour {p} depuis son entrée.", "danger_fk": "Coup franc dangereux pour {t}.",
+        "keeper_busy": "{k} est très sollicité : c'est son {nth} arrêt.",
+        "shots_follow": "C'est le {nth} tir de {p} aujourd'hui. C'est lui le plus dangereux.",
+        "fresh_legs": "Du sang neuf pour {t} : {on} remplace {off}, qui a couru plus de {km} kilomètres.",
+        "t15": "Un quart d'heure de jeu. {state}.", "t30": "Une demi-heure de jeu. {state}.",
+        "t40": "Cinq minutes avant la pause. {state}.", "t60": "Une heure de jeu. {state}.",
+        "t75": "Encore quinze minutes. {state}.", "t85": "Cinq minutes à jouer. {state}.",
+        "stoppage": "Nous entrons dans le temps additionnel. {state}.",
+        "n_better_level": "{t} a été meilleur, mais c'est toujours l'égalité.",
+        "n_better_level_r": "Il faut concrétiser. On ne peut pas gâcher autant d'occasions.",
+        "n_better_behind": "{t} est mené, mais a été meilleur.", "n_better_behind_r": "Le football est cruel. Ils ont tout fait sauf marquer.",
+        "n_lead": "{t} semble se contenter de cet avantage.", "n_lead_r": "Compact, difficile à manœuvrer. L'adversaire va devoir prendre des risques.",
+        "n_ten": "{t} résiste à dix.", "n_ten_r": "Tout le monde se sacrifie. Ils vont finir sur les rotules.",
+        "n_chaos": "Ça va d'un but à l'autre maintenant !", "n_chaos_r": "Personne ne contrôle. Le prochain but peut tomber des deux côtés.",
+        "n_cagey": "Un début de match fermé.", "n_cagey_r": "Les deux équipes s'observent. Personne ne veut faire la première erreur.",
+        "n_need": "Le temps presse pour {t}.", "n_need_r": "Ils doivent tout tenter maintenant. Rien à perdre.",
+        "n_control": "{t} maîtrise complètement le match.", "n_control_r": "L'adversaire ne voit pas le ballon.",
+        "left": "gauche", "right": "droit",
+    },
+}
+ORDN = {"en": ["first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth", "ninth", "tenth"],
+        "es": ["primera", "segunda", "tercera", "cuarta", "quinta", "sexta", "séptima", "octava", "novena", "décima"],
+        "fr": ["premier", "deuxième", "troisième", "quatrième", "cinquième", "sixième", "septième", "huitième", "neuvième", "dixième"]}
+ORDN_M = {"es": ["primer", "segundo", "tercer", "cuarto", "quinto", "sexto", "séptimo", "octavo", "noveno", "décimo"]}
+for _lang, _extra in EXTRA.items():
+    T[_lang].update(_extra)
+
+# Lines the viewer must not miss: the box says them at the next gap rather than skipping them.
+MUST_SAY = {"yellow", "sub", "fresh_legs", "corner", "danger_fk", "booked_foul", "booked_tackle", "keeper_busy",
+            "ko1", "ko2", "ht", "ft", "t15", "t30", "t40", "t60", "t75", "t85", "stoppage"}
+
 # Lines that describe the moment itself are said at once; flowing play waits for the cadence.
 ORD = {"en": ["first", "second", "third", "fourth", "fifth", "sixth", "seventh", "eighth"],
        "es": ["primero", "segundo", "tercero", "cuarto", "quinto", "sexto", "séptimo", "octavo"],
@@ -167,6 +273,12 @@ class PlayByPlay:
         self.colour_turn = 0
         self.said: dict[str, float] = {}   # colour key (or player+key) -> when it was last said
         self.last_pid: str | None = None
+        self.positions: dict[str, str] = {}
+        self.booked: set[str] = set()
+        self.fresh_subs: set[str] = set()
+        self.saves: dict[str, int] = {}
+        self.move: tuple[str | None, int] = (None, 0)    # (team, completed passes in a row)
+        self.marks_said: set[str] = set()
 
     # ------------------------------------------------------------------ helpers
     def _rel_x(self, team: str, x: float | None) -> float:
@@ -183,74 +295,142 @@ class PlayByPlay:
     def _line(self, at: float, key: str, fields: dict, role: str = "commentator", kind: str = "pbp") -> dict:
         text = {}
         for lang in self.langs:
-            f = {k: (v(lang) if callable(v) else v) for k, v in fields.items()}
+            f = {k: (v(lang) if callable(v) else v) for k, v in fields.items() if not k.startswith("_")}
             tpl = T[lang][key]
             tpl = tpl[self.n % len(tpl)] if isinstance(tpl, list) else tpl
             s = tpl.format(**f)
             text[lang] = s[0].upper() + s[1:] if s else s
-        return {"at": at, "role": role, "kind": kind, "key": key, "text": text}
+        line = {"at": at, "role": role, "kind": kind, "key": key, "text": text}
+        if key in MUST_SAY:
+            line["priority"] = True       # waits for a gap rather than being skipped
+        return line
 
     # ------------------------------------------------------------------ feed
     def feed(self, ev: dict) -> list[dict]:
         """Call after the engine has ingested `ev`. Returns lines to schedule (usually none or one)."""
         t, at = ev["type"], ev["elapsed_seconds"]
-        team, p = ev.get("team_id"), _sur(ev.get("player_name"))
+        team, pid, p = ev.get("team_id"), ev.get("player_id"), _sur(ev.get("player_name"))
         out: list[dict] = []
 
         if t == "match_start":
             self.short = {ev["home"]["team_id"]: ev["home"]["short_name"], ev["away"]["team_id"]: ev["away"]["short_name"]}
+            self.positions = {q["player_id"]: q["position"] for side in ("home", "away")
+                              for q in ev[side]["starting_xi"] + ev[side]["bench"]}
             return self._intro(ev)
-        if ev.get("player_id") and t in ("pass", "carry", "dribble", "tackle", "interception", "shot"):
-            self.last_pid = ev["player_id"]
+        if pid and t in ("pass", "carry", "dribble", "tackle", "interception", "shot"):
+            self.last_pid = pid
+            if pid in self.fresh_subs:                         # a substitute's first touch
+                self.fresh_subs.discard(pid)
+                out.append(self._mark(at, self._line(at, "sub_touch", {"p": p})))
         if t == "period_start":
+            self.move = (None, 0)
             return [self._mark(at, self._line(at, "ko1" if ev["period"] == 1 else "ko2", {}))]
         if t in ("period_end", "match_end"):
             if t == "period_end" and ev["period"] == 2:
                 return out
             key = "ht" if t == "period_end" else "ft"
             return [self._mark(at, self._line(at, key, {"state": self._state}))]
+        clock_line = self._clock_marker(ev, at)
+        if clock_line:
+            return out + [self._mark(at, clock_line)]
 
         tname = self.short.get(team, team)
         if t == "pass":
-            r = _sur(ev.get("recipient_name"))
+            r, rid = _sur(ev.get("recipient_name")), ev.get("recipient_id")
+            x0, y0 = self._rel(team, ev.get("x"), ev.get("y"))
+            x1, y1 = self._rel(team, ev.get("end_x"), ev.get("end_y"))
             if ev.get("outcome") != "complete":
                 self.buf.append(("lost", {"p": p}))
-            elif self._rel_x(team, ev.get("end_x")) >= metrics.BOX_X and abs(ev.get("end_y", 34) - 34) < 20:
-                self.buf.append(("box", {"p": p, "r": r}))
-            elif (ev.get("distance_m") or 0) >= 30:
-                self.buf.append(("long", {"p": p, "r": r}))
-            elif self._rel_x(team, ev.get("x")) < 70 <= self._rel_x(team, ev.get("end_x")):
-                self.buf.append(("third", {"p": p, "r": r}))
+                self.move = (None, 0)
             else:
-                self.buf.append(("pass", {"p": p, "r": r}))
-        elif t == "carry" and self._rel_x(team, ev.get("end_x")) - self._rel_x(team, ev.get("x")) >= 10:
-            self.buf.append(("carry", {"p": p}))
+                mt, mn = self.move
+                self.move = (team, mn + 1) if mt == team else (team, 1)
+                rgoals = season().get("players", {}).get(rid, {}).get("goals", 0)
+                if self.positions.get(rid) == "GK":
+                    self.buf.append(("back_gk", {"p": p}))
+                elif x1 >= metrics.BOX_X and abs(y1 - 34) < 20:
+                    if rgoals >= 4 and self._fresh(f"{rid}:box_star", at, 900):
+                        self.buf.append(("box_star", {"p": p, "r": r, "g": rgoals}))
+                    else:
+                        self.buf.append(("box", {"p": p, "r": r}))
+                elif abs(y1 - y0) >= 28 and (ev.get("distance_m") or 0) >= 25:
+                    self.buf.append(("switch", {"p": p, "r": r, "side": self._side(y1)}))
+                elif (ev.get("distance_m") or 0) >= 30:
+                    self.buf.append(("long", {"p": p, "r": r}))
+                elif x0 < 70 <= x1:
+                    self.buf.append(("third", {"p": p, "r": r}))
+                else:
+                    self.buf.append(("pass", {"p": p, "r": r, "_x": x1}))
+        elif t == "carry":
+            x0, _ = self._rel(team, ev.get("x"), ev.get("y"))
+            x1, y1 = self._rel(team, ev.get("end_x"), ev.get("end_y"))
+            if x1 - x0 >= 10:
+                self.buf.append(("wing", {"p": p, "side": self._side(y1)}) if (y1 < 16 or y1 > 52) else ("carry", {"p": p}))
         elif t == "dribble":
-            self.buf.append(("dribble" if ev.get("outcome") == "success" else "dribble_fail", {"p": p}))
-        elif t == "tackle" and ev.get("outcome") == "won":
-            self.buf.append(("tackle", {"p": p}))
-        elif t == "interception":
-            self.buf.append(("intercept", {"p": p}))
+            ps = self.engine.player(pid)
+            if ev.get("outcome") == "success" and ps and ps.dribbles >= 3 and self._fresh(f"{pid}:dribble_n", at, 600):
+                self.buf.append(("dribble_n", {"p": p, "n": ps.dribbles}))
+            else:
+                self.buf.append(("dribble" if ev.get("outcome") == "success" else "dribble_fail", {"p": p}))
+        elif t in ("tackle", "interception"):
+            self.move = (None, 0)
+            if t == "tackle" and ev.get("outcome") != "won":
+                pass
+            elif pid in self.booked and t == "tackle" and self._fresh(f"{pid}:booked_tackle", at, 600):
+                return out + [self._mark(at, self._line(at, "booked_tackle", {"p": p}))]
+            else:
+                ps = self.engine.player(pid)
+                won = (ps.tackles_won + ps.interceptions) if ps else 0
+                if won >= 6 and self._fresh(f"{pid}:winner", at, 600):
+                    self.buf.append(("winner", {"p": p}))
+                else:
+                    self.buf.append(("tackle" if t == "tackle" else "intercept", {"p": p}))
         elif t == "clearance":
             self.buf.append(("clear", {"p": p}))
+            self.move = (None, 0)
         elif t == "shot" and ev.get("outcome") != "goal":
-            x, y = self._rel_x(team, ev.get("x")), ev.get("y", 34) if team == self.engine.home else metrics.PITCH_Y - ev.get("y", 34)
+            x, y = self._rel(team, ev.get("x"), ev.get("y"))
             xg = metrics.expected_goals(x, y, ev.get("body_part", "foot"), ev.get("situation", "open_play"))
+            self.buf.clear()
+            self.move = (None, 0)
             if xg < BIG_XG:                                     # big chances are the spotter's
                 key = {"saved": "shot_saved", "blocked": "shot_blocked", "post": "shot_post"}.get(ev.get("outcome"), "shot_wide")
-                out.append(self._mark(at, self._line(at, key, {"p": p})))
-            self.buf.clear()
+                line = self._line(at, key, {"p": p})
+                ps = self.engine.player(pid)
+                if ps and ps.shots >= 3 and self._fresh(f"{pid}:shots", at, 900):
+                    line["follow"] = self._line(at, "shots_follow", {"p": p, "nth": self._nth(ps.shots, male=True)}, "pundit")
+                out.append(self._mark(at, line))
+            return out
+        elif t == "save":
+            self.saves[pid] = self.saves.get(pid, 0) + 1
+            n = self.saves[pid]
+            if n >= 3 and self._fresh(f"{pid}:busy", at, 900):
+                return out + [self._mark(at, self._line(at, "keeper_busy", {"k": p, "nth": self._nth(n)}))]
             return out
         elif t == "foul":
-            return [self._mark(at, self._line(at, "foul", {"p": p}))]
+            self.move = (None, 0)
+            if pid in self.booked:
+                return out + [self._mark(at, self._line(at, "booked_foul", {"p": p}))]
+            fouled = self.engine.opp(team) if self.engine.home else team
+            fx, _ = self._rel(fouled, ev.get("x"), ev.get("y"))
+            if fx >= 72:
+                return out + [self._mark(at, self._line(at, "danger_fk", {"t": self.short.get(fouled, fouled)}))]
+            return out + [self._mark(at, self._line(at, "foul", {"p": p}))]
         elif t == "card" and ev.get("card") == "yellow":
-            return [self._mark(at, self._line(at, "yellow", {"p": p}))]
+            self.booked.add(pid)
+            return out + [self._mark(at, self._line(at, "yellow", {"p": p}))]
         elif t == "corner":
-            return [self._mark(at, self._line(at, "corner", {"t": tname}))]
+            return out + [self._mark(at, self._line(at, "corner", {"t": tname}))]
         elif t == "substitution":
-            return [self._mark(at, self._line(at, "sub", {"t": tname, "on": p, "off": _sur(ev.get("player_off_name"))}))]
+            self.fresh_subs.add(pid)
+            off = self.engine.player(ev.get("player_off_id"))
+            km = int(off.distance_m // 1000) if off else 0
+            key = "fresh_legs" if km >= 5 else "sub"
+            return out + [self._mark(at, self._line(at, key, {"t": tname, "on": p, "off": _sur(ev.get("player_off_name")),
+                                                             "km": km}))]
         elif t == "goal":
             self.buf.clear()
+            self.move = (None, 0)
             self.last_at = at + 8          # the call and the celebration own the next few seconds
             return out
 
@@ -260,20 +440,108 @@ class PlayByPlay:
             out.append(self._mark(at, line or self._flow(at)))
         return out
 
+    # ------------------------------------------------------------------ context helpers
+    def _rel(self, team: str | None, x: float | None, y: float | None) -> tuple[float, float]:
+        if team is None or x is None or not self.engine.home:
+            return (x or 0.0, y if y is not None else 34.0)
+        y = 34.0 if y is None else y
+        return (self.engine.ax(team, x), y if team == self.engine.home else metrics.PITCH_Y - y)
+
+    @staticmethod
+    def _side(y_rel: float):
+        """Which flank, for a team attacking left to right (their right back plays at low y)."""
+        return (lambda lang: T[lang]["left"]) if y_rel > 34 else (lambda lang: T[lang]["right"])
+
+    @staticmethod
+    def _nth(n: int, male: bool = False):
+        def word(lang: str) -> str:
+            table = (ORDN_M.get(lang) if male else None) or ORDN[lang]
+            return table[n - 1] if 1 <= n <= len(table) else str(n)
+        return word
+
+    def _clock_marker(self, ev: dict, at: float) -> dict | None:
+        """Quarter of an hour, half an hour... and stoppage time, said once each, with the score."""
+        secs, period = ev.get("clock_seconds", 0), ev.get("period", 1)
+        marks = [("t15", 1, 900), ("t30", 1, 1800), ("t40", 1, 2400), ("t60", 2, 3600), ("t75", 2, 4500),
+                 ("t85", 2, 5100), ("stoppage1", 1, 2700), ("stoppage2", 2, 5400)]
+        for key, per, sec in marks:
+            if period == per and secs >= sec and key not in self.marks_said and at - self.last_at >= 2:
+                self.marks_said.add(key)
+                line = self._line(at, "stoppage" if key.startswith("stoppage") else key, {"state": self._state})
+                if key in ("t75", "t85", "stoppage2", "t30", "t60"):
+                    story = self._narrative(at, force=True)
+                    if story:
+                        line["follow"] = story
+                return line
+        return None
+
+    def _narrative(self, at: float, force: bool = False) -> dict | None:
+        """The story of the game, as an exchange: the commentator sets it up, the pundit answers."""
+        eng = self.engine
+        if not eng.home or eng.minute < 8:
+            return None
+        h, a = eng.home, eng.away
+        ts = eng.team_summary()
+        sc = eng.score
+        S = lambda tid: self.short.get(tid, tid)  # noqa: E731
+        lead = h if sc[h] > sc[a] else a if sc[a] > sc[h] else None
+        trail = (a if lead == h else h) if lead else None
+        better = h if ts[h]["xg"] - ts[a]["xg"] >= 0.8 else a if ts[a]["xg"] - ts[h]["xg"] >= 0.8 else None
+        regime = eng.regime or ""
+        options = []
+        if trail and eng.period == 2 and eng.minute >= 80:
+            options.append(("n_need", trail))
+        short = [tm for tm in (h, a) if ts[tm]["players_on_pitch"] < 11]
+        if short and (lead in short or lead is None):
+            options.append(("n_ten", short[0]))
+        if better and lead is None:
+            options.append(("n_better_level", better))
+        if better and trail == better:
+            options.append(("n_better_behind", better))
+        if regime == "chaos":
+            options.append(("n_chaos", None))
+        if regime.startswith("control:"):
+            ctl = regime.split(":", 1)[1]
+            if (eng.momentum > 15 and ctl == h) or (eng.momentum < -15 and ctl == a):   # only when it agrees
+                options.append(("n_control", ctl))
+        if lead and eng.period == 2 and eng.minute >= 60:
+            options.append(("n_lead", lead))
+        if eng.minute < 25 and ts[h]["shots"] + ts[a]["shots"] <= 2:
+            options.append(("n_cagey", None))
+        for key, tm in options:
+            if self._fresh(key, at, 600 if force else 900):
+                line = self._line(at, key, {"t": S(tm)} if tm else {}, "commentator", "story")
+                line["follow"] = self._line(at, key + "_r", {}, "pundit", "story")
+                return line
+        return None
+
     def _mark(self, at: float, line: dict) -> dict:
         self.last_at = at
         self.buf.clear()
         return line
 
     def _flow(self, at: float) -> dict:
-        """Describe the latest passage of play: the last couple of actions, or a chain of names."""
+        """Describe the latest passage of play: a long move, a phase of build-up, the last couple of
+        actions, or a chain of names."""
+        mt, mn = self.move
+        if mt and mn >= 8 and mn // 4 > self.said.get(f"move:{mt}:{int(at // 600)}", 0):
+            self.said[f"move:{mt}:{int(at // 600)}"] = mn // 4
+            return self._line(at, "move", {"t": self.short.get(mt, mt), "n": mn})
         recent = self.buf[-3:]
+        if mt and len(recent) == 3 and all(k == "pass" for k, _ in recent) and self.n % 3 == 0:
+            xs = [f.get("_x", 50) for _, f in recent]
+            phase = "back_build" if max(xs) < 38 else "mid_build" if max(xs) < 68 else None
+            if phase:
+                return self._line(at, phase, {"t": self.short.get(mt, mt)})
         if len(recent) == 3 and all(k == "pass" for k, _ in recent):
             names = [recent[0][1]["p"], recent[1][1]["p"], recent[2][1]["p"], recent[2][1]["r"]]
             a, b, c = names[1], names[2], names[3]
             if len({a, b, c}) == 3:
                 return self._line(at, "chain", {"a": a, "b": b, "c": c})
         key, fields = recent[-1]
+        # Plain passes: mostly just the name on the ball, the way commentators follow play.
+        if key == "pass" and self.n % 3 != 0:
+            return self._line(at, "name", fields)
         # A turnover reads better with who won it: "Steen gives it away... Fontaine nips in".
         if len(recent) >= 2 and recent[-2][0] in ("lost", "tackle", "dribble") and key != recent[-2][0]:
             k0, f0 = recent[-2]
@@ -330,9 +598,13 @@ class PlayByPlay:
         if not self.engine.home or self.engine.minute < 3:
             return None
         self.colour_turn += 1
-        first, second = (self._player_colour, self._team_colour) if self.colour_turn % 2 else \
-                        (self._team_colour, self._player_colour)
-        return first(at) or second(at)
+        order = [self._narrative, self._team_colour, self._player_colour]
+        k = self.colour_turn % 3
+        for fn in order[k:] + order[:k]:
+            line = fn(at)
+            if line:
+                return line
+        return None
 
     def _fresh(self, key: str, at: float, every: float) -> bool:
         if at - self.said.get(key, -1e9) < every:
