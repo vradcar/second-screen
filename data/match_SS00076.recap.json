@@ -1,44 +1,77 @@
 {
  "recap": {
-  "title": "Halcyon City 4-2 Redmarsh Rovers",
-  "standfirst": "Ezra Lazaro scored his second goal of the match in the 90+3' minute, assisted by Emil Ilunga, extending Halcyon City's lead to 4-2 over Redmarsh Rovers in open play from close range.",
+  "title": "Halcyon City Overcomes Redmarsh Rovers' Early Dominance to Win 4-2",
+  "standfirst": "Despite Redmarsh Rovers' initial control and higher xG, Halcyon City capitalized on key moments and numerical advantage to secure a 4-2 victory.",
   "paragraphs": [
    {
-    "text": "11:55: Fontaine nets counter goal to open scoring at 12 minutes. 14:25: Isak Quarry heads Redmarsh level at 14 minutes. 51:59: Rask's counter goal completes Redmarsh comeback at 52 minutes.",
-    "moment_ids": [
-     "SS00076-M003",
-     "SS00076-M006",
-     "SS00076-M018"
-    ],
-    "facts": []
-   },
-   {
-    "text": "By the 7th minute, Redmarsh Rovers have surged ahead in momentum, holding 63% possession and creating 3 box entries with a shot on target. Halcyon City trails with just 37% possession and no shots so far. Redmarsh Rovers have swung momentum firmly in their favor at 19 minutes, registering 3 shots and 3 box entries in the last 5 minutes while Halcyon City has not managed any shots in that period. The score remains tied at 1-1. At 30 minutes, momentum swung sharply in favor of Redmarsh Rovers, moving from 30.4 to -38.9. In the last five minutes, Redmarsh recorded 1 shot and 3 box entries, while Halcyon City had no shots during this period.",
+    "text": "The match started with Redmarsh Rovers seizing early momentum, dominating possession at over 63% by the 7th minute and creating high-quality chances, including a blocked 0.91 xG shot by Luca Rask. However, Halcyon City struck first against the run of play with Bastian Fontaine's counter-attack goal at 11:55, disrupting Redmarsh's control and forcing them to respond. (moment_ids: [\"SS00076-M001\",\"SS00076-M002\",\"SS00076-M003\"], facts: [\"stats.Redmarsh Rovers.possession_pct\",\"potm.1.xg\",\"potm.1.name\",\"stats.Halcyon City.goals\"])",
     "moment_ids": [
      "SS00076-M001",
-     "SS00076-M007",
-     "SS00076-M011"
+     "SS00076-M002",
+     "SS00076-M003"
     ],
-    "facts": []
+    "facts": [
+     "stats.Redmarsh Rovers.possession_pct",
+     "potm.1.xg",
+     "potm.1.name",
+     "stats.Halcyon City.goals"
+    ]
    },
    {
-    "text": "79:46: Ezra Lazaro heads Halcyon City level at 2-2 with 10 men down. 86:06: Lenny Amsel's header puts Halcyon City ahead with 4 minutes left. 90+3': Lazaro nets second to extend Halcyon City's lead to 4-2.",
+    "text": "Redmarsh quickly equalized through Isak Quarry's header at 14:25, regaining momentum with increased possession and shots. For much of the first half, Redmarsh maintained control, holding up to 73% possession and doubling Halcyon's pressing actions. Despite this, Halcyon City's pressing spells began disrupting Redmarsh's rhythm, leading to turnovers and a more balanced contest approaching halftime. (moment_ids: [\"SS00076-M006\",\"SS00076-M009\",\"SS00076-M012\",\"SS00076-M013\"], facts: [\"stats.Redmarsh Rovers.possession_pct\",\"stats.Redmarsh Rovers.shots\",\"stats.Halcyon City.ppda\"])",
     "moment_ids": [
+     "SS00076-M006",
+     "SS00076-M009",
+     "SS00076-M012",
+     "SS00076-M013"
+    ],
+    "facts": [
+     "stats.Redmarsh Rovers.possession_pct",
+     "stats.Redmarsh Rovers.shots",
+     "stats.Halcyon City.ppda"
+    ]
+   },
+   {
+    "text": "The second half saw a shift to chaos with rapid possession changes, but Redmarsh took the lead at 51:59 with Luca Rask's counter goal. Shortly after, Redmarsh was reduced to 10 men following a second yellow card to Kian Steen, yet remarkably maintained momentum and pressure. Halcyon City responded by intensifying pressing efforts, exploiting Redmarsh's fatigue and reduced passing accuracy to regain control in the final stages. (moment_ids: [\"SS00076-M016\",\"SS00076-M018\",\"SS00076-M019\",\"SS00076-M021\",\"SS00076-M022\"], facts: [\"potm.1.name\",\"stats.Redmarsh Rovers.players_on_pitch\",\"stats.Redmarsh Rovers.pass_completion\"])",
+    "moment_ids": [
+     "SS00076-M016",
+     "SS00076-M018",
+     "SS00076-M019",
+     "SS00076-M021",
+     "SS00076-M022"
+    ],
+    "facts": [
+     "potm.1.name",
+     "stats.Redmarsh Rovers.players_on_pitch",
+     "stats.Redmarsh Rovers.pass_completion"
+    ]
+   },
+   {
+    "text": "Halcyon City's persistence paid off late in the match as they seized momentum with a series of box entries and shots, culminating in Ezra Lazaro's equalizer at 79:46. They then took the lead through Lenny Amsel's header at 86:06 and sealed the win with Lazaro's second goal in stoppage time. Despite having lower overall xG (2.36 to 5.02), Halcyon's clinical finishing and sustained pressure, especially with a full squad against ten, proved decisive. (moment_ids: [\"SS00076-M023\",\"SS00076-M025\",\"SS00076-M030\",\"SS00076-M031\"], facts: [\"stats.Halcyon City.xg\",\"stats.Redmarsh Rovers.xg\",\"stats.Halcyon City.players_on_pitch\",\"stats.Redmarsh Rovers.players_on_pitch\"])",
+    "moment_ids": [
+     "SS00076-M023",
      "SS00076-M025",
      "SS00076-M030",
      "SS00076-M031"
     ],
-    "facts": []
+    "facts": [
+     "stats.Halcyon City.xg",
+     "stats.Redmarsh Rovers.xg",
+     "stats.Halcyon City.players_on_pitch",
+     "stats.Redmarsh Rovers.players_on_pitch"
+    ]
    }
   ],
   "player_of_the_match": "Ezra Lazaro",
-  "player_of_the_match_reason": "Ezra Lazaro was involved in 3 goals.",
+  "player_of_the_match_reason": "Ezra Lazaro was instrumental in Halcyon City's comeback, scoring two crucial goals including the equalizer and the late winner, while also providing an assist and covering the most distance on the pitch, demonstrating his pivotal role in the team's offensive and defensive efforts.",
   "player_of_the_match_facts": [
-   "potm.0.name",
+   "potm.0.goals",
+   "potm.0.assists",
+   "potm.0.distance_km",
    "potm.0.goal_involvements"
   ]
  },
- "source": "fallback",
+ "source": "agent",
  "facts": {
   "team.home.name": "Halcyon City",
   "match.score.home": 4,
@@ -95,15 +128,7 @@
  "log": [
   {
    "attempt": 1,
-   "issues": [
-    "Paragraph 3 uses 80, which its cited moments and facts don't contain."
-   ]
-  },
-  {
-   "attempt": 2,
-   "issues": [
-    "Paragraph 3 uses 80, which its cited moments and facts don't contain."
-   ]
+   "issues": []
   }
  ]
 }
