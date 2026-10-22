@@ -63,6 +63,16 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="Second Screen", lifespan=lifespan)
 
 
+def with_commentary(moments: list[dict], path: Path) -> list[dict]:
+    """Attach commentary scripts written after the run (agents.commentary batch) to recorded moments."""
+    if path.exists():
+        scripts = {c["moment_id"]: c["commentary"] for c in load_jsonl(path)}
+        for m in moments:
+            if not m.get("commentary") and m["moment_id"] in scripts:
+                m["commentary"] = scripts[m["moment_id"]]
+    return moments
+
+
 def load_jsonl(path: Path) -> list[dict]:
     return [json.loads(line) for line in path.open(encoding="utf-8")] if path.exists() else []
 
@@ -108,7 +118,8 @@ class Session:
         self.start_elapsed = min(max(at, 0.0), duration - 1) if at >= 0 else self._elapsed_at_minute(start_min)
         self.paused = False
         self.out: asyncio.Queue = asyncio.Queue()
-        self.recorded_moments = load_jsonl(DATA / f"match_{match}.moments.jsonl") if mode == "recorded" else []
+        self.recorded_moments = with_commentary(load_jsonl(DATA / f"match_{match}.moments.jsonl"),
+                                                DATA / f"match_{match}.commentary.jsonl") if mode == "recorded" else []
         self.recorded_cues = [c for c in load_jsonl(DATA / f"match_{match}.cues.jsonl") if not c.get("moment_id")] \
             if mode == "recorded" else []
         recap = DATA / f"match_{match}.recap.json"
@@ -259,13 +270,15 @@ def _speech() -> Speech:
 
 
 @app.get("/api/speak")
-async def speak(text: str, lang: str = "en"):
-    """MP3 commentary for a strap, from Azure AI Speech (cached)."""
+async def speak(text: str, lang: str = "en", role: str = "commentator", tone: str = "after"):
+    """MP3 for one commentary segment, from Azure AI Speech (cached). role: commentator | pundit;
+    tone: build | peak | after | calm."""
     from fastapi.responses import Response
-    audio = await _speech().speak(text, lang)
+    audio = await _speech().speak(text, lang, role, tone)
     if audio is None:
         raise HTTPException(status_code=404, detail="no audio for that line")
-    return Response(audio, media_type="audio/mpeg", headers={"Cache-Control": "public, max-age=86400"})
+    kind = "audio/wav" if audio[:4] == b"RIFF" else "audio/mpeg"
+    return Response(audio, media_type=kind, headers={"Cache-Control": "public, max-age=86400"})
 
 
 @app.post("/api/translate")

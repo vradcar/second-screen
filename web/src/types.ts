@@ -11,7 +11,8 @@ export interface Meta {
   chapters: Chapter[];
   highlights?: Clip[];
 }
-export interface Clip { moment_id: string; kind: string; clock: string; elapsed: number; start: number; end: number; headline: string }
+export interface Clip { moment_id: string; kind: string; clock: string; elapsed: number; start: number; end: number; headline: string;
+  commentary?: Record<string, CommentaryLine> }
 export interface MatchEvent {
   event_id: string; seq: number; type: string; team_id?: string; player_id?: string; player_name?: string;
   x?: number; y?: number; end_x?: number; end_y?: number; outcome?: string; recipient_id?: string;
@@ -34,7 +35,9 @@ export interface Moment {
   team_id: string | null; player_id: string | null; importance: number; source: "agent" | "fallback";
   attempts: number; draft: Draft; renderings: Rendering[]; cues: Cue[]; evidence: string[];
   check_log: Record<string, unknown>[]; facts?: Record<string, unknown>; latency_s?: number;
+  commentary?: Record<string, CommentaryLine>;
 }
+export interface CommentaryLine { lang: string; build: string; peak: string; after: string; pundit: string; source?: string }
 export interface TeamSummary {
   team_id: string; name: string; goals: number; xg: number; shots: number; shots_on_target: number;
   big_chances: number; possession_pct: number; field_tilt_pct: number; passes: number;

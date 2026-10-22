@@ -16,7 +16,7 @@ All clubs, players, and match data are fictional and synthetically generated.
 | Render | Timed, machine-readable overlay cues (lower thirds, player tags, stat pops) | ✅ |
 | Personalize | Persona agent: analyst / casual, favourite club, player cam, EN / ES / FR | ✅ |
 | Any language | Azure AI Translator on every phone (18 languages), numbers checked against the original | ✅ |
-| Voice | Azure AI Speech reads out each big moment's fact-checked strap | ✅ |
+| Commentary | Commentator agent writes play-by-play + co-commentator lines (EN / ES / FR), fact-checked; two-voice Azure AI Speech booth with a generated crowd | ✅ |
 | Highlights | Auto-played reel of every goal, red card and story moment | ✅ |
 | Dataset | 56-match synthetic season with ground-truth labels, Parquet → Microsoft Fabric | ✅ |
 | Operate | Container Apps + Event Hubs + Cosmos DB, managed identity, OpenTelemetry → Foundry tracing, Foundry evaluations | ✅ |
@@ -290,7 +290,9 @@ Fill the caches once from a machine with the Foundry key in `.env`:
 
 ```bash
 python -m secondscreen.cloud.translate data/match_SS00076 --to de,pt,hi,ja,ar,sw
-python -m secondscreen.cloud.speech data/match_SS00076
+python -m secondscreen.agents.commentary data/match_SS00076 --mode record   # commentary script (Foundry)
+python -m secondscreen.cloud.speech --voices                                 # pick voices for your region
+python -m secondscreen.cloud.speech data/match_SS00076                       # voice it
 ```
 
 ## Tech stack

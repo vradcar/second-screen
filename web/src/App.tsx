@@ -1,11 +1,11 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Broadcast } from "./Broadcast";
 import { Explain } from "./Explain";
 import { PERSONAS } from "./personas";
 import { Phone } from "./Phone";
 import type { Lang } from "./translate";
 import { Reel, useReel } from "./Reel";
-import { useCommentary } from "./Commentary";
+import { Booth, Crowd, useCommentary, useCrowd, type Seg } from "./Commentary";
 import { DuelBars, MomentumRiver } from "./Stats";
 import { useMatchStream } from "./stream";
 import { Timeline } from "./Timeline";
@@ -44,8 +44,13 @@ export default function App() {
   const restart = (patch: Partial<typeof params>) => { setPaused(false); setParams((p) => ({ ...p, ...patch, run: p.run + 1 })); };
   const togglePause = () => { send({ cmd: paused ? "play" : "pause" }); setPaused(!paused); };
   const closeExplain = useCallback(() => setExplain(null), []);
-  useCommentary(voice, state.moments, persona(tv));
-  const reel = useReel(state.meta, clockRef, params.speed, restart, init.reel);
+  const booth = useMemo(() => new Booth(), []);
+  const crowd = useMemo(() => new Crowd(), []);
+  const [line, setLine] = useState<Seg | null>(null);
+  useEffect(() => { booth.onLine = (s) => { setLine(s); crowd.duck(!!s); }; }, [booth, crowd]);
+  const reel = useReel(state.meta, clockRef, params.speed, restart, init.reel, { on: voice, booth, persona: persona(tv) });
+  useCommentary(voice, reel.playing, state.moments, persona(tv), booth);
+  useCrowd(voice, state.events, crowd);
 
   const { meta, snap } = state;
   const onAir = params.mode === "onair";
@@ -111,6 +116,12 @@ export default function App() {
                        cues={state.cues} moments={state.moments} persona={persona(tv)} />
             {/* Seeking only makes sense when every moment already exists (a recorded run). */}
             {meta.mode === "recorded" && <Reel reel={reel} meta={meta} />}
+            {voice && (
+              <p className={`booth-line ${line ? "booth-live" : ""}`} aria-live="polite">
+                <span className="booth-who">{line ? (line.role === "pundit" ? "Co-commentator" : "Commentator") : "Commentary box"}</span>
+                <span className={`booth-text ${line?.tone === "peak" ? "booth-peak" : ""}`}>{line ? line.text : "Listening for the next big moment…"}</span>
+              </p>
+            )}
             {meta.mode === "recorded" && !reel.playing && <Timeline meta={meta} clockRef={clockRef} onSeek={(at) => restart({ at })} />}
             <div className="tv-caption">
               <label>On-air graphics for

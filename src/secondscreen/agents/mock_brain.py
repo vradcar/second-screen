@@ -20,6 +20,12 @@ def respond(role: str, payload: dict, call_no: int, inject_error_every: int) -> 
             draft.summary += " It is their 37th attack of the half."
         return draft.model_dump()
 
+    if role == "commentary":
+        from secondscreen.agents.commentary import template_line
+        return {"lines": [template_line(payload["kind"], payload["facts"], lang, payload["moment"]["headline"],
+                                        payload.get("turn")).model_dump()
+                          for lang in payload["langs"]]}
+
     if role == "judge":
         n = len(payload["draft"]["claims"])
         return {"verdicts": [{"index": i, "supported": True, "reason": "matches cited facts"} for i in range(n)],

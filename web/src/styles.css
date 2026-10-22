@@ -260,3 +260,11 @@ button, select { font: inherit; color: inherit; }
 .voice { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line, #d8dde4); border-radius: 999px;
   background: transparent; padding: 4px 11px; font: 600 12px/1 inherit; color: var(--ink-2); cursor: pointer; }
 .voice-on { background: var(--ink, #16202E); border-color: var(--ink, #16202E); color: #fff; }
+
+/* Commentary box caption */
+.booth-line { display: flex; gap: 10px; align-items: baseline; margin: 8px 0 0; padding: 7px 12px; border-radius: 10px;
+  background: var(--panel, #fff); border: 1px solid var(--line, #d8dde4); font-size: 14px; color: var(--ink-2); min-height: 36px; }
+.booth-live { border-color: var(--ink, #16202E); color: var(--ink, #16202E); }
+.booth-who { font: 700 11px/1 var(--cond, inherit); text-transform: uppercase; letter-spacing: .07em; white-space: nowrap; color: var(--ink-2); }
+.booth-text { flex: 1; }
+.booth-peak { font-weight: 800; text-transform: uppercase; letter-spacing: .01em; }

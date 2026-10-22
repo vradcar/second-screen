@@ -24,9 +24,10 @@ from agent_framework import Agent, Executor, WorkflowBuilder, WorkflowContext, h
 from secondscreen.agents import prompts
 from secondscreen.agents.factcheck import check_draft, check_rendering
 from secondscreen.agents.personas import DEFAULT_PERSONAS, Persona
-from secondscreen.agents.schemas import (AnalystRequest, ApprovedMoment, CheckedDraft, FailedDraft, JudgeVerdict,
+from secondscreen.agents.schemas import (RenderedMoment, AnalystRequest, ApprovedMoment, CheckedDraft, FailedDraft, JudgeVerdict,
                                          MomentDraft, PersonaBatch, PersonaVerdicts, PublishedMoment, Rendering)
 from secondscreen.agents.templates import template_draft
+from secondscreen.agents.commentary import CommentaryExecutor, langs_for
 
 MAX_ATTEMPTS = 3   # first draft + 2 revisions
 
@@ -148,7 +149,7 @@ class PersonaExecutor(Executor):
         self.match = match_id_ref   # {"match_id": ..., "count": n}
 
     @handler
-    async def render(self, msg: ApprovedMoment, ctx: WorkflowContext[Any, PublishedMoment]) -> None:
+    async def render(self, msg: ApprovedMoment, ctx: WorkflowContext[RenderedMoment]) -> None:
         req, draft = msg.request, msg.draft
         renderings: dict[str, Rendering] = {}
         log = msg.check_log
@@ -187,12 +188,12 @@ class PersonaExecutor(Executor):
         cited, _ = resolve_keys({k for c in draft.claims for k in c.facts}, req.context["facts"],
                                 req.context.get("story_so_far"))
         cited_facts = {k: req.context["facts"][k] for k in cited if k in req.context["facts"]}
-        await ctx.yield_output(PublishedMoment(
+        await ctx.send_message(RenderedMoment(draft=draft, context=req.context, published=PublishedMoment(
             moment_id=moment_id, signal_id=sig["signal_id"], kind=sig["kind"], clock=sig["clock"],
             minute=sig["minute"], elapsed=sig["elapsed"], team_id=sig.get("team_id"), player_id=sig.get("player_id"),
             importance=sig["importance"], source=msg.source, attempts=req.attempt, draft=draft.model_dump(),
             renderings=[r.model_dump() for r in renderings.values()], cues=cues,
-            evidence=sig.get("evidence", []), check_log=log, facts=cited_facts))
+            evidence=sig.get("evidence", []), check_log=log, facts=cited_facts)))
 
 
 async def _judge_renderings(judge: Agent, renderings: dict, draft: MomentDraft, context: dict, log: list) -> None:
@@ -229,6 +230,10 @@ def build_moment_workflow(client, personas: list[Persona] | None = None, match_r
     pe = PersonaExecutor(persona, personas or DEFAULT_PERSONAS,
                          match_ref if match_ref is not None else {"match_id": "M", "count": 0}, judge=persona_judge)
 
+    commentator = Agent(client, prompts.COMMENTARY, name="commentator",
+                        description="Writes play-by-play and co-commentator lines for big moments.")
+    co = CommentaryExecutor(commentator, langs_for(personas or DEFAULT_PERSONAS))
+
     return (WorkflowBuilder(name="second_screen_moment", start_executor=a, max_iterations=20)
             .add_edge(a, fc, condition=lambda m: isinstance(m, CheckedDraft))
             .add_edge(a, fb, condition=lambda m: isinstance(m, FailedDraft))
@@ -236,4 +241,5 @@ def build_moment_workflow(client, personas: list[Persona] | None = None, match_r
             .add_edge(fc, pe, condition=lambda m: isinstance(m, ApprovedMoment))
             .add_edge(fc, fb, condition=lambda m: isinstance(m, FailedDraft))
             .add_edge(fb, pe)
+            .add_edge(pe, co)
             .build())

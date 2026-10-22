@@ -12,6 +12,19 @@ Theme = Literal["game_state", "pressing", "momentum", "control_vs_chaos", "indiv
 
 
 # ---------------------------------------------------------------- LLM outputs
+class CommentaryLine(BaseModel):
+    lang: str = Field(description="Language code: en, es or fr.")
+    build: str = Field(description="Play-by-play build-up before the peak, a few short bursts. May be empty.")
+    peak: str = Field(description="The call itself, the loudest moment. A few words.")
+    after: str = Field(description="Straight after the peak: who, and what it means (score, numbers on the pitch).")
+    pundit: str = Field(description="The co-commentator's calmer analysis, one or two sentences.")
+    facts: list[str] = Field(description="FACT keys behind every number or claim used.")
+
+
+class Commentary(BaseModel):
+    lines: list[CommentaryLine]
+
+
 class Claim(BaseModel):
     text: str = Field(description="One factual sentence.")
     facts: list[str] = Field(description="Keys from the FACTS block that support this sentence.")
@@ -130,3 +143,12 @@ class PublishedMoment:
     evidence: list[str]
     check_log: list[dict]
     facts: dict = field(default_factory=dict)   # values of the facts the claims cite
+    commentary: dict = field(default_factory=dict)   # lang -> spoken commentary script (big moments only)
+
+
+@dataclass
+class RenderedMoment:
+    """A published moment on its way to the commentary step, with the context it was written from."""
+    published: PublishedMoment
+    draft: MomentDraft
+    context: dict

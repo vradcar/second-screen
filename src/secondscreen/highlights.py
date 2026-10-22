@@ -27,5 +27,6 @@ def pick(moments: list[dict], limit: int = 10, persona: str = "studio_analyst") 
         pre, post = ALWAYS.get(m["kind"]) or EXTRA[m["kind"]]
         r = next((r for r in m["renderings"] if r["persona_id"] == persona), m["renderings"][0])
         clips.append({"moment_id": m["moment_id"], "kind": m["kind"], "clock": m["clock"], "elapsed": m["elapsed"],
-                      "start": max(m["elapsed"] - pre, 0), "end": m["elapsed"] + post, "headline": r["lower_third"]})
+                      "start": max(m["elapsed"] - pre, 0), "end": m["elapsed"] + post, "headline": r["lower_third"],
+                      "commentary": m.get("commentary") or {}})
     return clips

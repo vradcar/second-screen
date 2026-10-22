@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState, type MutableRefObject } from "react";
+import { segments, type Booth } from "./Commentary";
 import { kindLabel } from "./personas";
 import { matchTime, type ClockRef } from "./stream";
-import type { Clip, Meta } from "./types";
+import type { Clip, Meta, Persona } from "./types";
 
 const REEL_SPEED = 3;
 
@@ -12,26 +13,43 @@ export interface ReelState { playing: boolean; i: number; clips: Clip[]; play: (
  * its graphics, move on. Recorded mode only (every moment already exists).
  */
 export function useReel(meta: Meta | null | undefined, clockRef: MutableRefObject<ClockRef>, speed: number,
-                        restart: (p: { at?: number; speed?: number }) => void, auto: boolean): ReelState {
+                        restart: (p: { at?: number; speed?: number }) => void, auto: boolean,
+                        voice: { on: boolean; booth: Booth; persona: Persona }): ReelState {
   const [i, setI] = useState(-1);
   const saved = useRef(speed);
   const autoDone = useRef(false);
   const clips = meta?.mode === "recorded" ? meta.highlights ?? [] : [];
 
+  // Commentary sync: the build-up is timed so the call lands as the moment happens.
+  const cue = useRef({ build: -1, started: false });
   const go = (k: number) => {
+    voice.booth.stop();
     if (k >= clips.length) { stop(); return; }
+    cue.current = { build: -1, started: false };
+    if (voice.on) voice.booth.prepare(segments(clips[k], voice.persona)).then((d) => { cue.current.build = d; });
     setI(k);
     restart({ at: clips[k].start, speed: REEL_SPEED });
   };
   const play = () => { saved.current = speed; go(0); };
   const stop = () => {
     setI(-1);
+    voice.booth.stop();
     restart({ at: Math.floor(matchTime(clockRef.current)), speed: saved.current });
   };
 
   useEffect(() => {
     if (i < 0 || !clips[i]) return;
-    const id = setInterval(() => { if (matchTime(clockRef.current) >= clips[i].end) go(i + 1); }, 200);
+    const c = clips[i];
+    const id = setInterval(() => {
+      const t = matchTime(clockRef.current), q = cue.current;
+      if (voice.on && !q.started && t >= c.start && (
+          (q.build >= 0 && t >= c.elapsed - q.build * REEL_SPEED - 0.4) || t >= c.elapsed)) {
+        q.started = true;
+        voice.booth.play();
+      }
+      const talking = voice.on && (!q.started || voice.booth.busy);
+      if ((t >= c.end && !talking) || t >= c.end + 40) go(i + 1);
+    }, 100);
     return () => clearInterval(id);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [i, clips.length]);

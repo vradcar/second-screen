@@ -199,7 +199,8 @@ class Broadcast:
             return [], [], None
         d = self.data_dir
         load = lambda p: [json.loads(x) for x in p.open(encoding="utf-8")] if p.exists() else []  # noqa: E731
-        moments = load(d / f"match_{self.match}.moments.jsonl")
+        from secondscreen.server.app import with_commentary
+        moments = with_commentary(load(d / f"match_{self.match}.moments.jsonl"), d / f"match_{self.match}.commentary.jsonl")
         cues = [c for c in load(d / f"match_{self.match}.cues.jsonl") if not c.get("moment_id")]
         recap_p = d / f"match_{self.match}.recap.json"
         recap = json.loads(recap_p.read_text(encoding="utf-8")) if recap_p.exists() else None
