@@ -7,6 +7,7 @@ set -euo pipefail
 
 RG="${RG:-rg-second-screen}"
 LOCATION="${LOCATION:-eastus}"
+COSMOS_LOCATION="${COSMOS_LOCATION:-$LOCATION}"   # Cosmos can be full in a region: e.g. COSMOS_LOCATION=northcentralus
 FOUNDRY="${FOUNDRY:?set FOUNDRY to your Foundry resource name, e.g. secondscreen-ai-ae9ze}"
 OWNER="${OWNER:-vradcar}"
 IMAGE="${IMAGE:-ghcr.io/${OWNER}/second-screen:latest}"
@@ -21,7 +22,7 @@ done
 
 echo "==> Deploying to $RG ($LOCATION): Container Apps, Event Hubs, Cosmos DB, App Insights"
 OUT=$(az deployment group create -g "$RG" -n second-screen -f infra/main.bicep \
-  -p location="$LOCATION" foundryName="$FOUNDRY" image="$IMAGE" broadcastAgents="$AGENTS" startToken="$TOKEN" ttsDeployment="$TTS" \
+  -p location="$LOCATION" cosmosLocation="$COSMOS_LOCATION" foundryName="$FOUNDRY" image="$IMAGE" broadcastAgents="$AGENTS" startToken="$TOKEN" ttsDeployment="$TTS" \
   --query properties.outputs -o json)
 
 URL=$(echo "$OUT" | python3 -c 'import json,sys; print(json.load(sys.stdin)["url"]["value"])')

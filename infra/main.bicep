@@ -7,6 +7,9 @@
 @description('Region for new resources. Student subscriptions restrict regions; eastus is allowed.')
 param location string = 'eastus'
 
+@description('Region for Cosmos DB (it can run out of capacity in a region; any region works).')
+param cosmosLocation string = location
+
 @description('Name of the existing Foundry (AI Services) resource in this resource group.')
 param foundryName string
 
@@ -67,14 +70,14 @@ resource matchEvents 'Microsoft.EventHub/namespaces/eventhubs@2024-01-01' = {
 // -------------------------------------------------------------- shared store
 resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {
   name: 'cosmos-secondscreen-${suffix}'
-  location: location
+  location: cosmosLocation
   tags: tags
   kind: 'GlobalDocumentDB'
   properties: {
     databaseAccountOfferType: 'Standard'
     capabilities: [ { name: 'EnableServerless' } ]
     consistencyPolicy: { defaultConsistencyLevel: 'Session' }
-    locations: [ { locationName: location, failoverPriority: 0 } ]
+    locations: [ { locationName: cosmosLocation, failoverPriority: 0 } ]
     disableLocalAuth: true
   }
 }
