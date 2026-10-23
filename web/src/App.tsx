@@ -5,10 +5,9 @@ import { PERSONAS } from "./personas";
 import { Phone } from "./Phone";
 import { AnalystHub } from "./AnalystHub";
 import { NATIVE, useLiveTranslate, type Lang } from "./translate";
-import { isNative, uiText } from "./i18n";
+import { hasLabel, isNative, uiText } from "./i18n";
 import { Reel, useReel } from "./Reel";
 import { Booth, Crowd, useCommentary, useCrowd, type Seg } from "./Commentary";
-import { DuelBars, MomentumRiver } from "./Stats";
 import { useMatchStream } from "./stream";
 import { Timeline } from "./Timeline";
 import type { Moment } from "./types";
@@ -48,7 +47,7 @@ export default function App() {
   const rtl = !!allLangs.find((l) => l.code === lang)?.rtl;
   const tr = useLiveTranslate(canTranslate ? lang : null);
   const ui = (t: string, vars: Record<string, string | number> = {}) =>
-    isNative(lang) ? uiText(t, lang, vars) : tr(uiText(t, "en", vars), "en").text;
+    isNative(lang) && hasLabel(lang, t) ? uiText(t, lang, vars) : tr(uiText(t, "en", vars), "en").text;
   const [speechOk, setSpeechOk] = useState(false);
   const [matches, setMatches] = useState<string[]>([]);
   const [voice, setVoice] = useState(true);          // commentary on from kick-off
@@ -219,9 +218,6 @@ export default function App() {
                 {onAir && state.status === "ended" && <button className="linkish" onClick={() => startBroadcast(true)}>Kick off another match</button>}
               </span>
             </div>
-            <MomentumRiver snap={snap} meta={meta} events={state.events} duration={meta.duration} />
-            <DuelBars snap={snap} meta={meta} />
-            <AnalystHub meta={meta} snap={snap} clockRef={clockRef} ui={ui} />
           </div>
           <div className="phones">
             <Phone persona={persona(left)} onPersona={setLeft} moments={state.moments} cues={state.cues} meta={meta}
@@ -229,6 +225,7 @@ export default function App() {
             <Phone persona={persona(right)} onPersona={setRight} moments={state.moments} cues={state.cues} meta={meta}
                    score={score} clock={state.clock} onExplain={setExplain} lang={lang} rtl={rtl} canTranslate={canTranslate} />
           </div>
+          <AnalystHub meta={meta} snap={snap} clockRef={clockRef} ui={ui} />
           {state.recap && (
             <section className="recap" aria-label={ui("Full-time report")} lang={lang} dir={rtl ? "rtl" : undefined}>
               <h2>{tr(state.recap.recap.title, "en").text}</h2>

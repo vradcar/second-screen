@@ -62,6 +62,8 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Second Screen", lifespan=lifespan)
+from fastapi.middleware.gzip import GZipMiddleware  # noqa: E402
+app.add_middleware(GZipMiddleware, minimum_size=2000)
 
 
 SPOT_LANGS = ["en", "es", "fr"]
@@ -342,6 +344,17 @@ def analysis(match: str, upto: float | None = None):
             _ANALYSIS.clear()
         _ANALYSIS[key] = analyse(load_jsonl(path), None if upto is None else key[1] * 5)
     return _ANALYSIS[key]
+
+
+@app.get("/api/analysis/player")
+def analysis_player(match: str, player: str, upto: float | None = None):
+    """One player's passes, touches and actions up to the viewer's clock (the player profile)."""
+    from secondscreen.analysis import player_detail
+    from secondscreen.cloud.feed import match_path
+    path = match_path(match, DATA)
+    if path is None:
+        raise HTTPException(status_code=404, detail=f"no match {match}")
+    return player_detail(load_jsonl(path), player, upto)
 
 
 @app.post("/api/translate")

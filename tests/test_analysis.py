@@ -34,3 +34,11 @@ def test_minutes_follow_subs_and_red_cards():
 def test_only_what_has_happened_so_far():
     early = analyse(EVENTS, upto=700)
     assert early["clock"] < "11:55" and not [k for k in early["key_events"] if k["kind"] == "goal"]
+
+
+def test_desk_series_line_up_with_the_match_clock():
+    a = analyse(EVENTS)
+    assert [r["label"] for r in a["ppda"]] == ["0-15'", "15-30'", "30-45'", "45-60'", "60-75'", "75-90'"]
+    assert all(s["elapsed"] >= 0 for s in a["shots"]) and a["second_half"]
+    assert len(a["zones"]) == 18
+    assert all(z["share"] is None or 0 <= z["share"] <= 1 for z in a["zones"])

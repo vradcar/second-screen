@@ -13,7 +13,8 @@ const UI: Record<string, Record<string, string>> = {
     "Listening for the next big moment…": "Atentos a la próxima jugada…", "Tap for live commentary": "Toca para escuchar la narración",
     "Match centre": "Centro del partido", "Key events": "Momentos clave", "Substitutes": "Suplentes", "touches": "toques",
     "No goals, bookings or substitutions yet.": "Aún no hay goles, tarjetas ni cambios.",
-    "Analyst hub": "Centro de análisis", "Data to": "Datos hasta", "Waiting for kick-off…": "Esperando el inicio…",
+    "Analyst hub": "Centro de análisis", "Match analysis": "Análisis del partido", "Attack": "Ataque",
+    "Defence": "Defensa", "Match flow": "Desarrollo del partido", "Territory": "Territorio", "Passing network": "Red de pases", "Data to": "Datos hasta", "Waiting for kick-off…": "Esperando el inicio…",
     "Overview": "Resumen", "Line-ups": "Alineaciones", "Players": "Jugadores", "Shots": "Tiros", "Passing": "Pases",
     "Heatmaps": "Mapas de calor", "Physical": "Físico", "Team comparison": "Comparativa", "xG race": "Carrera de xG",
     "Possession": "Posesión", "Expected goals (xG)": "Goles esperados (xG)", "On target": "A puerta",
@@ -44,7 +45,8 @@ const UI: Record<string, Record<string, string>> = {
     "Listening for the next big moment…": "À l'affût du prochain temps fort…", "Tap for live commentary": "Touchez pour le commentaire en direct",
     "Match centre": "Centre du match", "Key events": "Faits marquants", "Substitutes": "Remplaçants", "touches": "ballons",
     "No goals, bookings or substitutions yet.": "Pas encore de but, de carton ni de changement.",
-    "Analyst hub": "Centre d'analyse", "Data to": "Données à", "Waiting for kick-off…": "En attente du coup d'envoi…",
+    "Analyst hub": "Centre d'analyse", "Match analysis": "Analyse du match", "Attack": "Attaque",
+    "Defence": "Défense", "Match flow": "Physionomie du match", "Territory": "Territoire", "Passing network": "Réseau de passes", "Data to": "Données à", "Waiting for kick-off…": "En attente du coup d'envoi…",
     "Overview": "Résumé", "Line-ups": "Compositions", "Players": "Joueurs", "Shots": "Tirs", "Passing": "Passes",
     "Heatmaps": "Cartes de chaleur", "Physical": "Physique", "Team comparison": "Comparaison", "xG race": "Course aux xG",
     "Possession": "Possession", "Expected goals (xG)": "Buts attendus (xG)", "On target": "Cadrés",
@@ -66,6 +68,8 @@ const UI: Record<string, Record<string, string>> = {
 };
 
 export const isNative = (lang: string) => lang === "en" || lang in UI;
+/** True when this label has a hand-written translation; anything else goes through the translator. */
+export const hasLabel = (lang: string, template: string) => lang === "en" || template in (UI[lang] ?? {});
 
 /** Fill a template in the viewer's language if it's native; else English (for translation). */
 export function uiText(template: string, lang: string, vars: Record<string, string | number> = {}): string {

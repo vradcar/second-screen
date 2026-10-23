@@ -21,6 +21,8 @@ from secondscreen import metrics
 from secondscreen.stats.engine import StatsEngine
 
 CELL = 5.0
+BIN = 180.0                     # match-flow bins: 3 minutes of match time
+DEF_TYPES = {"tackle", "interception", "block", "clearance"}
 TOUCH_TYPES = {"pass", "carry", "dribble", "shot", "tackle", "interception", "clearance", "save", "block", "pressure"}
 
 
@@ -54,8 +56,37 @@ def analyse(events: list[dict], upto: float | None = None) -> dict:
     links: dict[str, Counter] = {home: Counter(), away: Counter()}
     spots: dict[str, list[tuple[float, float]]] = defaultdict(list)
     heat: dict[str, Counter] = defaultdict(Counter)
+    flow: dict[int, dict] = {}
+    defence: dict[str, list] = {home: [], away: []}
+    zones = {home: Counter(), away: Counter()}
+    ppda_win: dict[str, Counter] = {home: Counter(), away: Counter()}   # (window -> opp passes / def actions)
+    second_half = None
     for ev in seen:
         t, team, pid = ev["type"], ev.get("team_id"), ev.get("player_id")
+        if t == "period_start" and ev.get("period") == 2:
+            second_half = ev["elapsed_seconds"]
+        if team in (home, away):
+            b = flow.setdefault(int(ev["elapsed_seconds"] // BIN), {home: Counter(), away: Counter()})[team]
+            rx, ry = rel(team, ev.get("x"), ev.get("y")) if ev.get("x") is not None else (None, None)
+            if t == "pass":
+                b["passes"] += 1
+                ex, ey = rel(team, ev.get("end_x"), ev.get("end_y")) if ev.get("end_x") is not None else (0, 0)
+                if ev.get("outcome") == "complete" and ex >= metrics.BOX_X and abs(ey - 34) < 20:
+                    b["box_entries"] += 1
+            if rx is not None and t in TOUCH_TYPES:
+                if rx >= 70:
+                    b["final_third"] += 1
+                # zone control on the home side's frame (home attacking right), so the halves line up
+                zx, zy = (rx, ry) if team == home else (105 - rx, 68 - ry)
+                zones[team][(min(max(int(zx // 17.5), 0), 5), min(max(int(zy // (68 / 3)), 0), 2))] += 1
+            if t in DEF_TYPES and pid and rx is not None and not (t == "tackle" and ev.get("outcome") != "won"):
+                defence[team].append([rx, ry, t, ev["clock"], ev.get("player_name")])
+            half = 1 if ev.get("period") == 2 else 0          # 15-minute spells; stoppage time joins the last one
+            w = half * 3 + min(int((ev["clock_seconds"] - 2700 * half) // 900), 2)
+            if t == "pass" and rx is not None and rx <= 63:     # opponent passes in their own 60% (PPDA)
+                ppda_win[eng.opp(team)][(w, "opp_passes")] += 1
+            if t in ("tackle", "interception", "foul") and rx is not None and rx >= 42:
+                ppda_win[team][(w, "def_actions")] += 1
         if t == "substitution":
             on_at[pid] = ev["clock_seconds"]
             off_at[ev["player_off_id"]] = ev["clock_seconds"]
@@ -66,10 +97,13 @@ def analyse(events: list[dict], upto: float | None = None) -> dict:
             xg = metrics.expected_goals(x, y, ev.get("body_part", "foot"), ev.get("situation", "open_play"))
             cum[team] += xg
             shots.append({"team_id": team, "player_id": pid, "player": ev.get("player_name"), "clock": ev["clock"],
-                          "minute": int(ev["clock_seconds"] // 60) + 1, "x": x, "y": y, "xg": round(xg, 2),
+                          "minute": int(ev["clock_seconds"] // 60) + 1, "elapsed": round(ev["elapsed_seconds"]), "x": x, "y": y, "xg": round(xg, 2),
                           "outcome": ev.get("outcome"), "body_part": ev.get("body_part"),
                           "situation": ev.get("situation"), "speed_kmh": ev.get("shot_speed_kmh")})
             xg_flow[team].append([round(ev["elapsed_seconds"]), round(cum[team], 2)])
+            fb = flow.setdefault(int(ev["elapsed_seconds"] // BIN), {home: Counter(), away: Counter()})[team]
+            fb["shots"] += 1
+            fb["xg"] += xg
         if t == "pass" and ev.get("outcome") == "complete" and ev.get("recipient_id"):
             links[team][(pid, ev["recipient_id"])] += 1
             spots[pid].append(rel(team, ev["x"], ev["y"]))
@@ -124,6 +158,30 @@ def analyse(events: list[dict], upto: float | None = None) -> dict:
         edges = [{"a": a, "b": b, "count": n} for (a, b), n in pair.most_common() if n >= 3]
         networks[tm] = {"nodes": nodes, "edges": edges}
 
+    # ---------------------------------------------------------------- match flow, pressing, territory
+    flow_rows = []
+    for i in range(0, int(end_elapsed // BIN) + 1):
+        row = {"t0": i * BIN, "t1": (i + 1) * BIN}
+        for tm in (home, away):
+            c = flow.get(i, {}).get(tm, Counter())
+            row[tm] = {"passes": c["passes"], "final_third": c["final_third"], "box_entries": c["box_entries"],
+                       "shots": c["shots"], "xg": round(c["xg"], 2),
+                       "threat": round(c["final_third"] + 3 * c["box_entries"] + 12 * c["xg"], 1)}
+        flow_rows.append(row)
+    ppda_rows = []
+    for w in sorted({k[0] for tm in (home, away) for k in ppda_win[tm] if isinstance(k, tuple)}):
+        row = {"window": w, "label": f"{w * 15}-{w * 15 + 15}'"}
+        for tm in (home, away):
+            opp, act = ppda_win[tm][(w, "opp_passes")], ppda_win[tm][(w, "def_actions")]
+            row[tm] = round(opp / act, 1) if act else None
+        ppda_rows.append(row)
+    zone_rows = []
+    for i in range(6):
+        for j in range(3):
+            hn, an = zones[home][(i, j)], zones[away][(i, j)]
+            zone_rows.append({"i": i, "j": j, home: hn, away: an,
+                              "share": round(hn / (hn + an), 2) if hn + an else None})
+
     teams = eng.team_summary()
     return {
         "ready": True, "match_id": eng.match_id, "clock": eng.clock, "elapsed": end_elapsed, "home": home, "away": away,
@@ -132,4 +190,35 @@ def analyse(events: list[dict], upto: float | None = None) -> dict:
         "teams": teams, "players": players, "shots": shots, "xg_flow": xg_flow, "pass_networks": networks,
         "heatmaps": {pid: [[i, j, n] for (i, j), n in grid.items()] for pid, grid in heat.items()},
         "key_events": eng.key_events,
+        "flow": flow_rows, "second_half": second_half, "ppda": ppda_rows, "zones": zone_rows,
+        "defence": defence,
     }
+
+
+def player_detail(events: list[dict], player_id: str, upto: float | None = None) -> dict:
+    """One player's afternoon: every pass (start, end, outcome), every touch, and his actions in order."""
+    eng = StatsEngine()
+    passes, touches, actions = [], [], []
+    for ev in events:
+        if upto is not None and ev["elapsed_seconds"] > upto:
+            break
+        eng.ingest(ev)
+        if ev.get("player_id") != player_id or not eng.home:
+            continue
+        team = ev["team_id"]
+
+        def rel(x, y):
+            return (round(eng.ax(team, x), 1), round(y if team == eng.home else metrics.PITCH_Y - y, 1))
+        t = ev["type"]
+        if ev.get("x") is not None and t in TOUCH_TYPES:
+            touches.append(rel(ev["x"], ev["y"]))
+        if t == "pass" and ev.get("end_x") is not None:
+            (x0, y0), (x1, y1) = rel(ev["x"], ev["y"]), rel(ev["end_x"], ev["end_y"])
+            passes.append({"x0": x0, "y0": y0, "x1": x1, "y1": y1, "ok": ev.get("outcome") == "complete",
+                           "progressive": (ev.get("progressive_m") or 0) >= 10, "clock": ev["clock"],
+                           "to": ev.get("recipient_name")})
+        if t in ("shot", "goal", "dribble", "tackle", "interception", "foul", "card", "substitution", "save", "block"):
+            actions.append({"clock": ev["clock"], "type": t, "outcome": ev.get("outcome") or ev.get("card")})
+    ps = eng.player(player_id)
+    return {"player_id": player_id, "name": ps.name if ps else player_id, "passes": passes, "touches": touches,
+            "actions": actions[-40:]}
