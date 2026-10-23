@@ -10,6 +10,12 @@ param location string = 'eastus'
 @description('Region for Cosmos DB (it can run out of capacity in a region; any region works).')
 param cosmosLocation string = location
 
+@description('Region for the Container Apps environment and app (if the environment fails to provision in one region).')
+param appLocation string = location
+
+@description('Create Cosmos DB for saved moments. Off: the app keeps moments in memory (fine with one replica).')
+param useCosmos bool = true
+
 @description('Name of the existing Foundry (AI Services) resource in this resource group.')
 param foundryName string
 
@@ -68,7 +74,7 @@ resource matchEvents 'Microsoft.EventHub/namespaces/eventhubs@2024-01-01' = {
 }
 
 // -------------------------------------------------------------- shared store
-resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {
+resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = if (useCosmos) {
   name: 'cosmos-secondscreen-${suffix}'
   location: cosmosLocation
   tags: tags
@@ -82,13 +88,13 @@ resource cosmos 'Microsoft.DocumentDB/databaseAccounts@2024-05-15' = {
   }
 }
 
-resource db 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2024-05-15' = {
+resource db 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases@2024-05-15' = if (useCosmos) {
   parent: cosmos
   name: 'secondscreen'
   properties: { resource: { id: 'secondscreen' } }
 }
 
-resource containers 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2024-05-15' = [for c in ['moments', 'cues', 'runs']: {
+resource containers 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containers@2024-05-15' = [for c in (useCosmos ? ['moments', 'cues', 'runs'] : []): {
   parent: db
   name: c
   properties: { resource: { id: c, partitionKey: { paths: [ '/run_id' ], kind: 'Hash' } } }
@@ -97,7 +103,7 @@ resource containers 'Microsoft.DocumentDB/databaseAccounts/sqlDatabases/containe
 // ------------------------------------------------------------------ the app
 resource env 'Microsoft.App/managedEnvironments@2024-03-01' = {
   name: 'cae-secondscreen-${suffix}'
-  location: location
+  location: appLocation
   tags: tags
   properties: {
     appLogsConfiguration: {
@@ -113,7 +119,7 @@ resource foundry 'Microsoft.CognitiveServices/accounts@2024-10-01' existing = {
 
 resource app 'Microsoft.App/containerApps@2024-03-01' = {
   name: 'second-screen'
-  location: location
+  location: appLocation
   tags: tags
   identity: { type: 'SystemAssigned' }
   properties: {
@@ -136,13 +142,13 @@ resource app 'Microsoft.App/containerApps@2024-03-01' = {
             { name: 'AZURE_TRANSLATOR_REGION', value: foundry.location }
             { name: 'AZURE_SPEECH_REGION', value: foundry.location }
             { name: 'AZURE_SPEECH_RESOURCE_ID', value: foundry.id }
-            { name: 'COSMOS_ENDPOINT', value: cosmos.properties.documentEndpoint }
             { name: 'EVENTHUB_NAMESPACE', value: '${eventHubs.name}.servicebus.windows.net' }
             { name: 'EVENTHUB_NAME', value: matchEvents.name }
             { name: 'APPLICATIONINSIGHTS_CONNECTION_STRING', value: appInsights.properties.ConnectionString }
             { name: 'BROADCAST_AGENTS', value: broadcastAgents }
             { name: 'ALLOW_PUBLIC_LIVE', value: allowPublicLive ? '1' : '0' }
-          ], empty(startToken) ? [] : [ { name: 'BROADCAST_START_TOKEN', secretRef: 'start-token' } ],
+          ], useCosmos ? [ { name: 'COSMOS_ENDPOINT', value: cosmos.properties.documentEndpoint } ] : [],
+             empty(startToken) ? [] : [ { name: 'BROADCAST_START_TOKEN', secretRef: 'start-token' } ],
              empty(ttsDeployment) ? [] : [ { name: 'AZURE_TTS_DEPLOYMENT', value: ttsDeployment } ])
           probes: [
             { type: 'Liveness', httpGet: { path: '/api/health', port: 8000 }, periodSeconds: 30 }
@@ -191,7 +197,7 @@ resource aiUserRole 'Microsoft.Authorization/roleAssignments@2022-04-01' = {
 }
 
 // Cosmos DB data-plane role: Built-in Data Contributor.
-resource cosmosRole 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2024-05-15' = {
+resource cosmosRole 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@2024-05-15' = if (useCosmos) {
   parent: cosmos
   name: guid(cosmos.id, app.id, 'data-contributor')
   properties: {
@@ -203,5 +209,5 @@ resource cosmosRole 'Microsoft.DocumentDB/databaseAccounts/sqlRoleAssignments@20
 
 output url string = 'https://${app.properties.configuration.ingress.fqdn}'
 output eventHubsNamespace string = '${eventHubs.name}.servicebus.windows.net'
-output cosmosEndpoint string = cosmos.properties.documentEndpoint
+output cosmosEndpoint string = useCosmos ? cosmos.properties.documentEndpoint : 'not deployed'
 output appInsightsName string = appInsights.name

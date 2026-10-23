@@ -8,6 +8,8 @@ set -euo pipefail
 RG="${RG:-rg-second-screen}"
 LOCATION="${LOCATION:-eastus}"
 COSMOS_LOCATION="${COSMOS_LOCATION:-$LOCATION}"   # Cosmos can be full in a region: e.g. COSMOS_LOCATION=northcentralus
+APP_LOCATION="${APP_LOCATION:-$LOCATION}"         # where the Container Apps environment runs
+USE_COSMOS="${USE_COSMOS:-true}"                  # false: keep moments in memory (no Cosmos DB)
 FOUNDRY="${FOUNDRY:?set FOUNDRY to your Foundry resource name, e.g. secondscreen-ai-ae9ze}"
 OWNER="${OWNER:-vradcar}"
 IMAGE="${IMAGE:-ghcr.io/${OWNER}/second-screen:latest}"
@@ -20,9 +22,9 @@ for ns in Microsoft.App Microsoft.OperationalInsights Microsoft.Insights Microso
   az provider register --namespace "$ns" -o none
 done
 
-echo "==> Deploying to $RG ($LOCATION): Container Apps, Event Hubs, Cosmos DB, App Insights"
+echo "==> Deploying to $RG: app in $APP_LOCATION, Event Hubs + App Insights in $LOCATION, Cosmos DB: $USE_COSMOS"
 OUT=$(az deployment group create -g "$RG" -n second-screen -f infra/main.bicep \
-  -p location="$LOCATION" cosmosLocation="$COSMOS_LOCATION" foundryName="$FOUNDRY" image="$IMAGE" broadcastAgents="$AGENTS" startToken="$TOKEN" ttsDeployment="$TTS" \
+  -p location="$LOCATION" cosmosLocation="$COSMOS_LOCATION" appLocation="$APP_LOCATION" useCosmos="$USE_COSMOS" foundryName="$FOUNDRY" image="$IMAGE" broadcastAgents="$AGENTS" startToken="$TOKEN" ttsDeployment="$TTS" \
   --query properties.outputs -o json)
 
 URL=$(echo "$OUT" | python3 -c 'import json,sys; print(json.load(sys.stdin)["url"]["value"])')
